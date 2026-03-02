@@ -181,7 +181,7 @@
 ## FASE 5: Paginas Publicas del Cliente
 > Home, Menu, Product Details, Locations, Reservations, Jobs, Contact, About Us.
 
-- [ ] **5.1** **Home Page:**
+- [x] **5.1** **Home Page:**
   - Hero section con imagen de fondo, titulo "Authentic Venezuelan Cuisine in the Heart of Texas", botones CTA (View Our Menu, Reserve a Table), efecto Glassmorphism en overlay
   - Banner de descuento "Get Discount Voucher Up To 20%"
   - Seccion "Taste of Venezuela" con grid de 6 imagenes de platos
@@ -191,14 +191,14 @@
   - Seccion FAQ "Got Questions? We've Got Answers" con acordeon
   - Animaciones Framer Motion en scroll (fade-in, slide-up)
 
-- [ ] **5.2** **Menu Page (SSG para SEO):**
+- [x] **5.2** **Menu Page (SSG para SEO):**
   - Header con titulo "Our Menu" y subtitulo
   - Sidebar de categorias con filtro (All Items, Arepas, Main Courses, Appetizers, Sides, Drinks, Desserts) con iconos
   - Grid de ProductCards: imagen, tag de categoria, nombre, descripcion, precio, boton "+ Add"
   - Generacion estatica con `generateStaticParams` para cada categoria
   - Metadatos dinamicos por categoria
 
-- [ ] **5.3** **Product Details Page:**
+- [x] **5.3** **Product Details Page:**
   - Imagen grande del plato a la izquierda
   - Info: categoria tag, nombre, precio, descripcion completa
   - Tags (Popular, Gluten-Free, etc.)
@@ -208,30 +208,30 @@
   - Seccion "Ingredients" (lista con bullets)
   - Seccion "You may also like" con 3 ProductCards relacionados
 
-- [ ] **5.4** **Locations Page:**
+- [x] **5.4** **Locations Page:**
   - Header "Our Locations"
   - Imagen aerea/mapa grande
   - 3 cards de ubicaciones (Houston Flagship, East Austin, Deep Ellum Dallas): badge ciudad, nombre, direccion, horario, telefono, boton "Get Directions"
 
-- [ ] **5.5** **Reservations Page (MEJORA: Mapa interactivo de mesas):**
+- [x] **5.5** **Reservations Page (MEJORA: Mapa interactivo de mesas):**
   - Formulario de reservacion: Date picker, Time slots (chips seleccionables), Party size (chips 1-7+), Full name, Email, Phone, Occasion (chips seleccionables multiples), Special requests (textarea), boton "Confirm reservation"
   - Panel lateral: Opening hours (tabla dia/hora), Contact us (telefono, email, direccion)
   - **MEJORA SOLICITADA:** Mapa visual interactivo de mesas (SVG/flex-grid): Renderizar las mesas del restaurante con formas (redonda/cuadrada), colores por estado (verde=libre, rojo=ocupada, amarillo=reservada), click en mesa libre para seleccionarla, tooltip con info de la mesa (numero, capacidad)
 
-- [ ] **5.6** **Jobs Page:**
+- [x] **5.6** **Jobs Page:**
   - Header "Join our familia" con badge "We're hiring"
   - Filtros (All locations, Full-time, Part-time)
   - Lista de posiciones: titulo, ubicacion, tipo badge, rango salarial, descripcion, boton "Apply now"
   - Seccion "Why work with us": 3 cards (Health benefits, Free meals, Growth opportunities) con iconos
 
-- [ ] **5.7** **Contact Page:**
+- [x] **5.7** **Contact Page:**
   - Header oscuro "Get in touch"
   - Formulario: Email, Phone, Subject (select), Message (textarea), boton "Send message"
   - Cards info: Email, Phone, Hours
   - Seccion "Visit us" con mapa placeholder
   - Banner newsletter "Subscribe to our newsletter"
 
-- [ ] **5.8** **About Us Page:**
+- [x] **5.8** **About Us Page:**
   - Header oscuro "Our Passion for Authentic Venezuelan Cuisine"
   - Seccion historia "A Journey from Caracas to Your Table" con foto
   - Seccion "Our Purpose & Values" (3 cards: Mission, Vision, Values)
@@ -239,7 +239,7 @@
   - Seccion equipo "The People Behind the Flavor" con cards de chef/staff
   - CTA final "Come Experience the Taste of Venezuela"
 
-- [ ] **5.9** Implementar internacionalizacion (i18n) con `next-intl`: archivos de traduccion ES/EN para todas las paginas publicas, switcher de idioma, `<html lang="">` dinamico, meta tags hreflang
+- [x] **5.9** Implementar internacionalizacion (i18n) con `next-intl`: archivos de traduccion ES/EN para todas las paginas publicas, switcher de idioma, `<html lang="">` dinamico, meta tags hreflang
 
 ---
 
