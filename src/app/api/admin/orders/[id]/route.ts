@@ -42,22 +42,48 @@ export async function PATCH(
 
     const { id } = await params;
     const body = sanitize(await req.json());
-    const { status } = body;
 
-    if (!status || !VALID_STATUSES.includes(status)) {
+    const existing = await Order.findById(id);
+    if (!existing) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    // Status-only update (works for any current status)
+    if (body.status && Object.keys(body).length === 1) {
+      if (!VALID_STATUSES.includes(body.status)) {
+        return NextResponse.json(
+          { error: `Invalid status. Must be one of: ${VALID_STATUSES.join(", ")}` },
+          { status: 400 }
+        );
+      }
+      existing.status = body.status;
+      await existing.save();
+      return NextResponse.json(existing.toObject());
+    }
+
+    // Full edit only allowed while status is "New"
+    if (existing.status !== "New") {
       return NextResponse.json(
-        { error: `Invalid status. Must be one of: ${VALID_STATUSES.join(", ")}` },
+        { error: "Orders can only be edited while in 'New' status" },
         { status: 400 }
       );
     }
 
-    const order = await Order.findByIdAndUpdate(id, { status }, { new: true }).lean();
-
-    if (!order) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    const allowedFields = [
+      "items", "deliveryType", "tableNumber", "paymentMethod",
+      "paymentStatus", "subtotal", "taxAmount", "taxRate", "total", "notes",
+    ];
+    for (const field of allowedFields) {
+      if (body[field] !== undefined) {
+        (existing as unknown as Record<string, unknown>)[field] = body[field];
+      }
+    }
+    if (body.status && VALID_STATUSES.includes(body.status)) {
+      existing.status = body.status;
     }
 
-    return NextResponse.json(order);
+    await existing.save();
+    return NextResponse.json(existing.toObject());
   } catch (error) {
     console.error("Admin order PATCH error:", error);
     return NextResponse.json({ error: "Failed to update order" }, { status: 500 });

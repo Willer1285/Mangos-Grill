@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Fragment } from "react";
 import {
   Card,
   CardContent,
@@ -22,13 +22,14 @@ import {
   SelectValue,
   Textarea,
 } from "@/components/ui";
-import { ChevronDown, ChevronUp, Eye, Package, Plus, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Package, Plus, X, Pencil, Ban } from "lucide-react";
 
 interface OrderItem {
   name: string;
   quantity: number;
   price: number;
   subtotal: number;
+  product?: string;
 }
 
 interface Order {
@@ -37,12 +38,16 @@ interface Order {
   customer?: { firstName: string; lastName: string; email: string };
   items: OrderItem[];
   total: number;
+  subtotal: number;
+  taxAmount: number;
+  taxRate: number;
   status: "New" | "Preparing" | "Ready" | "InTransit" | "Delivered" | "Cancelled";
   deliveryType: "Dine-in" | "Delivery" | "Pickup";
   deliveryAddress?: { street?: string; city?: string };
   tableNumber?: string;
   paymentMethod: string;
   paymentStatus: string;
+  notes?: string;
   createdAt: string;
 }
 
@@ -95,6 +100,23 @@ export default function OrdersManagementPage() {
     notes: "",
     customerName: "",
   });
+
+  // Edit modal state
+  const [editOpen, setEditOpen] = useState(false);
+  const [editOrderId, setEditOrderId] = useState("");
+  const [editItems, setEditItems] = useState<
+    Array<{ productId: string; name: string; price: number; quantity: number }>
+  >([]);
+  const [editForm, setEditForm] = useState({
+    deliveryType: "Dine-in",
+    tableNumber: "",
+    paymentMethod: "Cash",
+    paymentStatus: "Pending",
+    notes: "",
+  });
+  const [editError, setEditError] = useState("");
+  const [editSubmitting, setEditSubmitting] = useState(false);
+
   const limit = 20;
 
   const fetchOrders = useCallback(async () => {
@@ -149,9 +171,14 @@ export default function OrdersManagementPage() {
     }
   }
 
-  // Fetch products when the create modal opens
+  async function handleCancelOrder(orderId: string) {
+    if (!confirm("Are you sure you want to cancel this order?")) return;
+    await changeStatus(orderId, "Cancelled");
+  }
+
+  // Fetch products when the create or edit modal opens
   useEffect(() => {
-    if (!createOpen) return;
+    if (!createOpen && !editOpen) return;
     let cancelled = false;
     (async () => {
       try {
@@ -166,7 +193,7 @@ export default function OrdersManagementPage() {
     return () => {
       cancelled = true;
     };
-  }, [createOpen]);
+  }, [createOpen, editOpen]);
 
   function openCreateModal() {
     setOrderItems([]);
@@ -182,11 +209,35 @@ export default function OrdersManagementPage() {
     setCreateOpen(true);
   }
 
-  function addProduct(productId: string) {
+  function openEditModal(order: Order) {
+    setEditOrderId(order._id);
+    setEditItems(
+      order.items.map((i) => ({
+        productId: i.product || "",
+        name: i.name,
+        price: i.price,
+        quantity: i.quantity,
+      }))
+    );
+    setEditForm({
+      deliveryType: order.deliveryType,
+      tableNumber: order.tableNumber || "",
+      paymentMethod: order.paymentMethod,
+      paymentStatus: order.paymentStatus,
+      notes: order.notes || "",
+    });
+    setEditError("");
+    setEditOpen(true);
+  }
+
+  // --- Shared product helpers ---
+  function addProductTo(
+    productId: string,
+    setItems: React.Dispatch<React.SetStateAction<Array<{ productId: string; name: string; price: number; quantity: number }>>>
+  ) {
     const product = products.find((p) => p._id === productId);
     if (!product) return;
-    // If already in list, increment quantity
-    setOrderItems((prev) => {
+    setItems((prev) => {
       const existing = prev.find((i) => i.productId === productId);
       if (existing) {
         return prev.map((i) =>
@@ -197,13 +248,20 @@ export default function OrdersManagementPage() {
     });
   }
 
-  function removeItem(productId: string) {
-    setOrderItems((prev) => prev.filter((i) => i.productId !== productId));
+  function removeItemFrom(
+    productId: string,
+    setItems: React.Dispatch<React.SetStateAction<Array<{ productId: string; name: string; price: number; quantity: number }>>>
+  ) {
+    setItems((prev) => prev.filter((i) => i.productId !== productId));
   }
 
-  function updateItemQuantity(productId: string, quantity: number) {
+  function updateItemQtyIn(
+    productId: string,
+    quantity: number,
+    setItems: React.Dispatch<React.SetStateAction<Array<{ productId: string; name: string; price: number; quantity: number }>>>
+  ) {
     if (quantity < 1) return;
-    setOrderItems((prev) =>
+    setItems((prev) =>
       prev.map((i) => (i.productId === productId ? { ...i, quantity } : i))
     );
   }
@@ -211,6 +269,10 @@ export default function OrdersManagementPage() {
   const createSubtotal = orderItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const createTax = createSubtotal * 0.1;
   const createTotal = createSubtotal + createTax;
+
+  const editSubtotal = editItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const editTax = editSubtotal * 0.1;
+  const editTotal = editSubtotal + editTax;
 
   async function handleCreateOrder() {
     if (orderItems.length === 0) {
@@ -259,6 +321,52 @@ export default function OrdersManagementPage() {
     }
   }
 
+  async function handleEditOrder() {
+    if (editItems.length === 0) {
+      setEditError("Please add at least one product.");
+      return;
+    }
+    setEditSubmitting(true);
+    setEditError("");
+    try {
+      const body = {
+        items: editItems.map((i) => ({
+          product: i.productId,
+          name: i.name,
+          quantity: i.quantity,
+          price: i.price,
+          subtotal: i.price * i.quantity,
+        })),
+        deliveryType: editForm.deliveryType,
+        ...(editForm.deliveryType === "Dine-in" && editForm.tableNumber
+          ? { tableNumber: editForm.tableNumber }
+          : { tableNumber: "" }),
+        paymentMethod: editForm.paymentMethod,
+        paymentStatus: editForm.paymentStatus,
+        subtotal: editSubtotal,
+        taxAmount: editTax,
+        taxRate: 0.1,
+        total: editTotal,
+        notes: editForm.notes,
+      };
+      const res = await fetch(`/api/admin/orders/${editOrderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || err.message || "Failed to update order");
+      }
+      setEditOpen(false);
+      fetchOrders();
+    } catch (e: unknown) {
+      setEditError(e instanceof Error ? e.message : "Failed to update order");
+    } finally {
+      setEditSubmitting(false);
+    }
+  }
+
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   const nextStatus: Record<string, string> = {
@@ -266,6 +374,186 @@ export default function OrdersManagementPage() {
     Preparing: "Ready",
     Ready: "Delivered",
   };
+
+  // Shared items list renderer
+  function renderItemsList(
+    items: Array<{ productId: string; name: string; price: number; quantity: number }>,
+    setItems: React.Dispatch<React.SetStateAction<Array<{ productId: string; name: string; price: number; quantity: number }>>>,
+    subtotal: number
+  ) {
+    return (
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-brown-500">Products</h3>
+        <Select onValueChange={(v) => addProductTo(v, setItems)} value="">
+          <SelectTrigger label="Add a product">
+            <SelectValue placeholder="Select a product..." />
+          </SelectTrigger>
+          <SelectContent>
+            {products.map((p) => (
+              <SelectItem key={p._id} value={p._id}>
+                {p.name.en} &mdash; ${p.price.toFixed(2)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {items.length > 0 && (
+          <div className="rounded-lg border border-cream-200 bg-cream-50/50">
+            <div className="divide-y divide-cream-200">
+              {items.map((item) => (
+                <div key={item.productId} className="flex items-center gap-3 px-4 py-3">
+                  <div className="flex-1">
+                    <span className="text-sm font-medium text-brown-900">{item.name}</span>
+                    <span className="ml-2 text-xs text-brown-500">${item.price.toFixed(2)} each</span>
+                  </div>
+                  <input
+                    type="number"
+                    min={1}
+                    value={item.quantity}
+                    onChange={(e) =>
+                      updateItemQtyIn(item.productId, parseInt(e.target.value, 10) || 1, setItems)
+                    }
+                    className="h-8 w-16 rounded-md border border-cream-300 bg-white px-2 text-center text-sm text-brown-900 focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
+                  />
+                  <span className="w-20 text-right text-sm font-medium text-brown-900">
+                    ${(item.price * item.quantity).toFixed(2)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeItemFrom(item.productId, setItems)}
+                    className="rounded-md p-1 text-brown-400 transition-colors hover:bg-cream-200 hover:text-brown-700"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="border-t border-cream-200 px-4 py-2 text-right text-sm font-semibold text-brown-900">
+              Subtotal: ${subtotal.toFixed(2)}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Shared order details form renderer
+  function renderOrderDetailsForm<T extends { deliveryType: string; tableNumber: string; paymentMethod: string; paymentStatus: string; notes: string }>(
+    form: T,
+    setForm: React.Dispatch<React.SetStateAction<T>>,
+    options?: { showCustomerName?: boolean; customerName?: string; onCustomerNameChange?: (v: string) => void }
+  ) {
+    return (
+      <>
+        <hr className="my-4 border-cream-200" />
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-brown-500">Order Details</h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {options?.showCustomerName && (
+              <Input
+                label="Customer Name"
+                placeholder="Guest"
+                value={options.customerName || ""}
+                onChange={(e) => options.onCustomerNameChange?.(e.target.value)}
+              />
+            )}
+            <Select
+              value={form.deliveryType}
+              onValueChange={(v) => setForm((f) => ({ ...f, deliveryType: v }))}
+            >
+              <SelectTrigger label="Delivery Type">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Dine-in">Dine-in</SelectItem>
+                <SelectItem value="Delivery">Delivery</SelectItem>
+                <SelectItem value="Pickup">Pickup</SelectItem>
+              </SelectContent>
+            </Select>
+            {form.deliveryType === "Dine-in" && (
+              <Input
+                label="Table Number"
+                placeholder="e.g. 5"
+                value={form.tableNumber}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, tableNumber: e.target.value }))
+                }
+              />
+            )}
+          </div>
+          <Textarea
+            label="Notes"
+            placeholder="Special instructions..."
+            value={form.notes}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, notes: e.target.value }))
+            }
+            rows={2}
+          />
+        </div>
+
+        <hr className="my-4 border-cream-200" />
+
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-brown-500">Payment</h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Select
+              value={form.paymentMethod}
+              onValueChange={(v) => setForm((f) => ({ ...f, paymentMethod: v }))}
+            >
+              <SelectTrigger label="Payment Method">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Cash">Cash</SelectItem>
+                <SelectItem value="Visa">Visa</SelectItem>
+                <SelectItem value="Mastercard">Mastercard</SelectItem>
+                <SelectItem value="Amex">Amex</SelectItem>
+                <SelectItem value="Zelle">Zelle</SelectItem>
+                <SelectItem value="Binance">Binance</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={form.paymentStatus}
+              onValueChange={(v) => setForm((f) => ({ ...f, paymentStatus: v }))}
+            >
+              <SelectTrigger label="Payment Status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Pending">Pending</SelectItem>
+                <SelectItem value="Completed">Completed</SelectItem>
+                <SelectItem value="Failed">Failed</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Shared summary renderer
+  function renderSummary(subtotal: number, tax: number, totalAmount: number) {
+    return (
+      <>
+        <hr className="my-4 border-cream-200" />
+        <div className="rounded-lg bg-cream-50 px-4 py-3 text-sm">
+          <div className="flex justify-between text-brown-700">
+            <span>Subtotal</span>
+            <span>${subtotal.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between text-brown-700">
+            <span>Tax (10%)</span>
+            <span>${tax.toFixed(2)}</span>
+          </div>
+          <div className="mt-1 flex justify-between border-t border-cream-200 pt-1 font-semibold text-brown-900">
+            <span>Total</span>
+            <span>${totalAmount.toFixed(2)}</span>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -311,7 +599,7 @@ export default function OrdersManagementPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-cream-200">
-                    <th className="px-5 py-3 text-left text-xs font-medium text-brown-500" />
+                    <th className="w-10 px-5 py-3 text-left text-xs font-medium text-brown-500" />
                     <th className="px-5 py-3 text-left text-xs font-medium text-brown-500">Order #</th>
                     <th className="px-5 py-3 text-left text-xs font-medium text-brown-500">Customer</th>
                     <th className="px-5 py-3 text-left text-xs font-medium text-brown-500">Items</th>
@@ -328,13 +616,14 @@ export default function OrdersManagementPage() {
                       ? `${order.customer.firstName} ${order.customer.lastName}`
                       : "Guest";
                     const itemsSummary = order.items.map((i) => i.name).join(", ");
+                    const isNew = order.status === "New";
                     return (
-                      <tbody key={order._id}>
+                      <Fragment key={order._id}>
                         <tr
                           className="cursor-pointer border-b border-cream-100 transition-colors hover:bg-cream-50"
                           onClick={() => toggleRow(order._id)}
                         >
-                          <td className="px-5 py-3 text-brown-400">
+                          <td className="w-10 px-5 py-3 text-brown-400">
                             {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                           </td>
                           <td className="px-5 py-3 font-medium text-brown-900">{order.orderNumber}</td>
@@ -351,14 +640,36 @@ export default function OrdersManagementPage() {
                           </td>
                           <td className="px-5 py-3 text-right">
                             <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                              {isNew && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={() => openEditModal(order)}
+                                  title="Edit order"
+                                >
+                                  <Pencil className="h-4 w-4 text-brown-500" />
+                                </Button>
+                              )}
                               {nextStatus[order.status] && (
                                 <Button
                                   variant="ghost"
                                   size="icon-sm"
                                   disabled={updatingId === order._id}
                                   onClick={() => changeStatus(order._id, nextStatus[order.status])}
+                                  title={`Move to ${nextStatus[order.status]}`}
                                 >
                                   <Package className="h-4 w-4" />
+                                </Button>
+                              )}
+                              {isNew && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  disabled={updatingId === order._id}
+                                  onClick={() => handleCancelOrder(order._id)}
+                                  title="Cancel order"
+                                >
+                                  <Ban className="h-4 w-4 text-error-500" />
                                 </Button>
                               )}
                             </div>
@@ -398,7 +709,7 @@ export default function OrdersManagementPage() {
                             </td>
                           </tr>
                         )}
-                      </tbody>
+                      </Fragment>
                     );
                   })}
                 </tbody>
@@ -424,164 +735,13 @@ export default function OrdersManagementPage() {
             </ModalDescription>
           </ModalHeader>
 
-          {/* Products Section */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-brown-500">Products</h3>
-            <Select onValueChange={addProduct} value="">
-              <SelectTrigger label="Add a product">
-                <SelectValue placeholder="Select a product..." />
-              </SelectTrigger>
-              <SelectContent>
-                {products.map((p) => (
-                  <SelectItem key={p._id} value={p._id}>
-                    {p.name.en} &mdash; ${p.price.toFixed(2)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {orderItems.length > 0 && (
-              <div className="rounded-lg border border-cream-200 bg-cream-50/50">
-                <div className="divide-y divide-cream-200">
-                  {orderItems.map((item) => (
-                    <div key={item.productId} className="flex items-center gap-3 px-4 py-3">
-                      <div className="flex-1">
-                        <span className="text-sm font-medium text-brown-900">{item.name}</span>
-                        <span className="ml-2 text-xs text-brown-500">${item.price.toFixed(2)} each</span>
-                      </div>
-                      <input
-                        type="number"
-                        min={1}
-                        value={item.quantity}
-                        onChange={(e) =>
-                          updateItemQuantity(item.productId, parseInt(e.target.value, 10) || 1)
-                        }
-                        className="h-8 w-16 rounded-md border border-cream-300 bg-white px-2 text-center text-sm text-brown-900 focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
-                      />
-                      <span className="w-20 text-right text-sm font-medium text-brown-900">
-                        ${(item.price * item.quantity).toFixed(2)}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => removeItem(item.productId)}
-                        className="rounded-md p-1 text-brown-400 transition-colors hover:bg-cream-200 hover:text-brown-700"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                <div className="border-t border-cream-200 px-4 py-2 text-right text-sm font-semibold text-brown-900">
-                  Subtotal: ${createSubtotal.toFixed(2)}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <hr className="my-4 border-cream-200" />
-
-          {/* Order Details Section */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-brown-500">Order Details</h3>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Input
-                label="Customer Name"
-                placeholder="Guest"
-                value={orderForm.customerName}
-                onChange={(e) =>
-                  setOrderForm((f) => ({ ...f, customerName: e.target.value }))
-                }
-              />
-              <Select
-                value={orderForm.deliveryType}
-                onValueChange={(v) => setOrderForm((f) => ({ ...f, deliveryType: v }))}
-              >
-                <SelectTrigger label="Delivery Type">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Dine-in">Dine-in</SelectItem>
-                  <SelectItem value="Delivery">Delivery</SelectItem>
-                  <SelectItem value="Pickup">Pickup</SelectItem>
-                </SelectContent>
-              </Select>
-              {orderForm.deliveryType === "Dine-in" && (
-                <Input
-                  label="Table Number"
-                  placeholder="e.g. 5"
-                  value={orderForm.tableNumber}
-                  onChange={(e) =>
-                    setOrderForm((f) => ({ ...f, tableNumber: e.target.value }))
-                  }
-                />
-              )}
-            </div>
-            <Textarea
-              label="Notes"
-              placeholder="Special instructions..."
-              value={orderForm.notes}
-              onChange={(e) =>
-                setOrderForm((f) => ({ ...f, notes: e.target.value }))
-              }
-              rows={2}
-            />
-          </div>
-
-          <hr className="my-4 border-cream-200" />
-
-          {/* Payment Section */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-brown-500">Payment</h3>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Select
-                value={orderForm.paymentMethod}
-                onValueChange={(v) => setOrderForm((f) => ({ ...f, paymentMethod: v }))}
-              >
-                <SelectTrigger label="Payment Method">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Cash">Cash</SelectItem>
-                  <SelectItem value="Visa">Visa</SelectItem>
-                  <SelectItem value="Mastercard">Mastercard</SelectItem>
-                  <SelectItem value="Amex">Amex</SelectItem>
-                  <SelectItem value="Zelle">Zelle</SelectItem>
-                  <SelectItem value="Binance">Binance</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select
-                value={orderForm.paymentStatus}
-                onValueChange={(v) => setOrderForm((f) => ({ ...f, paymentStatus: v }))}
-              >
-                <SelectTrigger label="Payment Status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                  <SelectItem value="Failed">Failed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <hr className="my-4 border-cream-200" />
-
-          {/* Order Summary */}
-          <div className="rounded-lg bg-cream-50 px-4 py-3 text-sm">
-            <div className="flex justify-between text-brown-700">
-              <span>Subtotal</span>
-              <span>${createSubtotal.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-brown-700">
-              <span>Tax (10%)</span>
-              <span>${createTax.toFixed(2)}</span>
-            </div>
-            <div className="mt-1 flex justify-between border-t border-cream-200 pt-1 font-semibold text-brown-900">
-              <span>Total</span>
-              <span>${createTotal.toFixed(2)}</span>
-            </div>
-          </div>
+          {renderItemsList(orderItems, setOrderItems, createSubtotal)}
+          {renderOrderDetailsForm(orderForm, setOrderForm, {
+            showCustomerName: true,
+            customerName: orderForm.customerName,
+            onCustomerNameChange: (v) => setOrderForm((f) => ({ ...f, customerName: v })),
+          })}
+          {renderSummary(createSubtotal, createTax, createTotal)}
 
           {createError && (
             <p className="mt-2 text-sm text-red-600">{createError}</p>
@@ -593,6 +753,35 @@ export default function OrdersManagementPage() {
             </Button>
             <Button onClick={handleCreateOrder} loading={submitting} disabled={orderItems.length === 0}>
               Create Order
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Edit Order Modal */}
+      <Modal open={editOpen} onOpenChange={setEditOpen}>
+        <ModalContent className="max-w-2xl">
+          <ModalHeader>
+            <ModalTitle>Edit Order</ModalTitle>
+            <ModalDescription>
+              Modify items, delivery, and payment details for this order.
+            </ModalDescription>
+          </ModalHeader>
+
+          {renderItemsList(editItems, setEditItems, editSubtotal)}
+          {renderOrderDetailsForm(editForm, setEditForm)}
+          {renderSummary(editSubtotal, editTax, editTotal)}
+
+          {editError && (
+            <p className="mt-2 text-sm text-red-600">{editError}</p>
+          )}
+
+          <ModalFooter>
+            <Button variant="secondary" onClick={() => setEditOpen(false)} disabled={editSubmitting}>
+              Cancel
+            </Button>
+            <Button onClick={handleEditOrder} loading={editSubmitting} disabled={editItems.length === 0}>
+              Save Changes
             </Button>
           </ModalFooter>
         </ModalContent>
