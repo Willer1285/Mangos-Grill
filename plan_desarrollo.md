@@ -150,31 +150,31 @@
 ## FASE 3: Base de Datos - Modelos Mongoose
 > Definir todos los modelos de datos con tipado estricto, indices y validaciones.
 
-- [ ] **3.1** Conexion a MongoDB: singleton con cache de conexion para serverless (patron recomendado Next.js)
-- [ ] **3.2** Modelo `User`: firstName, lastName, email (unique, index), phone, password (hashed), dateOfBirth, gender, role (enum: SuperAdmin/Staff/Client), status (Active/Disabled), avatar, provider (credentials/google/apple), addresses (subdocument array), notificationPreferences, loyaltyPoints, favorites (ref Product[]), createdAt, updatedAt
-- [ ] **3.3** Modelo `Category`: name (ES/EN), description (ES/EN), image, status (Active/Inactive), sortOrder, productsCount (virtual), timestamps
-- [ ] **3.4** Modelo `Product` (MenuItem): name (ES/EN), description (ES/EN), price, category (ref), image, status (Available/Unavailable), tags (Popular, Gluten-Free, etc.), nutritionalInfo (calories, protein, carbs, fat), ingredients (ES/EN array), modifiers (array: name, options[]), extras (array: name, price), featured, sortOrder, timestamps
-- [ ] **3.5** Modelo `Order`: orderNumber (auto-generado secuencial #ORD-XXXX), customer (ref User), items (subdoc array: product ref, quantity, price, modifiers, extras, subtotal), deliveryType (Dine-in/Delivery/Pickup), deliveryAddress, tableNumber, status (enum: New/Preparing/Ready/InTransit/Delivered/Cancelled), paymentMethod, paymentStatus (Pending/Completed/Failed/Refunded), subtotal, taxAmount, taxRate, shippingCost, tip, total, promoCode, notes, timestamps
-- [ ] **3.6** Modelo `Payment` (Transaction): transactionId (auto-generado TXN-XXXXXX), order (ref), customer (ref User), amount, status (Completed/Pending/Failed/Refunded), method (Visa/Mastercard/Amex/Zelle/Binance/Cash), cardLast4, zelleReference, binanceReference, receiptImage, approvedBy (ref User, para Zelle/Binance), timestamps
-- [ ] **3.7** Modelo `Reservation`: customer (ref User o guest info: name, phone, email), date, time, partySize, table (ref Table), occasion (enum con todas las opciones del formulario), specialRequests, status (Confirmed/Pending/Cancelled/Completed/Seated/No-show), location, timestamps
-- [ ] **3.8** Modelo `Table`: number, name, capacity, location (ref Location o string), status (Available/Occupied/Reserved), position (x, y para mapa interactivo SVG), shape (round/square/rectangle), timestamps
-- [ ] **3.9** Modelo `Job`: title, department (enum), employmentType (Full-time/Part-time/Contract), location, description (ES/EN), requirements (ES/EN), salaryMin, salaryMax, status (Active/Draft/Closed), applications (subdoc array: name, email, phone, experience, status enum, appliedAt), postedAt, timestamps
-- [ ] **3.10** Modelo `Notification`: user (ref), type (enum: order_confirmed, promo, reservation_reminder, order_delivered, rate_order), title, message, read (boolean), data (object flexible para links/acciones), timestamps
-- [ ] **3.11** Modelo `Location`: name, city, address, phone, email, hours (subdoc: day, open, close), isFlagship (boolean), mapCoordinates, timestamps
-- [ ] **3.12** Crear indices MongoDB necesarios y middleware de sanitizacion anti-NoSQL injection en todos los modelos
+- [x] **3.1** Conexion a MongoDB: singleton con cache de conexion para serverless (patron recomendado Next.js)
+- [x] **3.2** Modelo `User`: firstName, lastName, email (unique, index), phone, password (hashed), dateOfBirth, gender, role (enum: SuperAdmin/Staff/Client), status (Active/Disabled), avatar, provider (credentials/google/apple), addresses (subdocument array), notificationPreferences, loyaltyPoints, favorites (ref Product[]), createdAt, updatedAt
+- [x] **3.3** Modelo `Category`: name (ES/EN), description (ES/EN), image, status (Active/Inactive), sortOrder, productsCount (virtual), timestamps
+- [x] **3.4** Modelo `Product` (MenuItem): name (ES/EN), description (ES/EN), price, category (ref), image, status (Available/Unavailable), tags (Popular, Gluten-Free, etc.), nutritionalInfo (calories, protein, carbs, fat), ingredients (ES/EN array), modifiers (array: name, options[]), extras (array: name, price), featured, sortOrder, timestamps
+- [x] **3.5** Modelo `Order`: orderNumber (auto-generado secuencial #ORD-XXXX), customer (ref User), items (subdoc array: product ref, quantity, price, modifiers, extras, subtotal), deliveryType (Dine-in/Delivery/Pickup), deliveryAddress, tableNumber, status (enum: New/Preparing/Ready/InTransit/Delivered/Cancelled), paymentMethod, paymentStatus (Pending/Completed/Failed/Refunded), subtotal, taxAmount, taxRate, shippingCost, tip, total, promoCode, notes, timestamps
+- [x] **3.6** Modelo `Payment` (Transaction): transactionId (auto-generado TXN-XXXXXX), order (ref), customer (ref User), amount, status (Completed/Pending/Failed/Refunded), method (Visa/Mastercard/Amex/Zelle/Binance/Cash), cardLast4, zelleReference, binanceReference, receiptImage, approvedBy (ref User, para Zelle/Binance), timestamps
+- [x] **3.7** Modelo `Reservation`: customer (ref User o guest info: name, phone, email), date, time, partySize, table (ref Table), occasion (enum con todas las opciones del formulario), specialRequests, status (Confirmed/Pending/Cancelled/Completed/Seated/No-show), location, timestamps
+- [x] **3.8** Modelo `Table`: number, name, capacity, location (ref Location o string), status (Available/Occupied/Reserved), position (x, y para mapa interactivo SVG), shape (round/square/rectangle), timestamps
+- [x] **3.9** Modelo `Job`: title, department (enum), employmentType (Full-time/Part-time/Contract), location, description (ES/EN), requirements (ES/EN), salaryMin, salaryMax, status (Active/Draft/Closed), applications (subdoc array: name, email, phone, experience, status enum, appliedAt), postedAt, timestamps
+- [x] **3.10** Modelo `Notification`: user (ref), type (enum: order_confirmed, promo, reservation_reminder, order_delivered, rate_order), title, message, read (boolean), data (object flexible para links/acciones), timestamps
+- [x] **3.11** Modelo `Location`: name, city, address, phone, email, hours (subdoc: day, open, close), isFlagship (boolean), mapCoordinates, timestamps
+- [x] **3.12** Crear indices MongoDB necesarios y middleware de sanitizacion anti-NoSQL injection en todos los modelos
 
 ---
 
 ## FASE 4: Autenticacion y Autorizacion (NextAuth.js)
 > Login, Registro, Recuperacion, OAuth, RBAC con 3 roles.
 
-- [ ] **4.1** Configurar NextAuth.js con App Router: Credentials Provider (email + password con bcrypt), Google Provider, Apple Provider
-- [ ] **4.2** Pagina de Login: formulario email + password, links "Forgot password?" y "Create account", botones OAuth (Google, Apple), validacion Zod frontend + backend
-- [ ] **4.3** Pagina de Registro: firstName, lastName, email, phone, password, confirmPassword. Sin verificacion de correo (registro directo). Validacion Zod estricta
-- [ ] **4.4** Flujo de Recuperacion de Contrasena: Pagina "Forgot Password" (input email), envio de link/OTP via Resend, pagina de Reset Password (nueva contrasena + confirmacion)
-- [ ] **4.5** Middleware de autorizacion RBAC: proteger rutas `/admin` (solo SuperAdmin y Staff), rutas `/customer` (solo Client autenticado), rutas `/api/admin/*` con verificacion de rol en cada request
-- [ ] **4.6** Rate limiting en endpoints sensibles: Login (5 intentos/15min), Register (3/hora), Forgot Password (3/hora), usando un middleware ligero con Map en memoria o upstash/ratelimit
-- [ ] **4.7** Proteccion CSRF habilitada por defecto en NextAuth. Validacion de tokens en todas las mutaciones
+- [x] **4.1** Configurar NextAuth.js con App Router: Credentials Provider (email + password con bcrypt), Google Provider, Apple Provider
+- [x] **4.2** Pagina de Login: formulario email + password, links "Forgot password?" y "Create account", botones OAuth (Google, Apple), validacion Zod frontend + backend
+- [x] **4.3** Pagina de Registro: firstName, lastName, email, phone, password, confirmPassword. Sin verificacion de correo (registro directo). Validacion Zod estricta
+- [x] **4.4** Flujo de Recuperacion de Contrasena: Pagina "Forgot Password" (input email), envio de link/OTP via Resend, pagina de Reset Password (nueva contrasena + confirmacion)
+- [x] **4.5** Middleware de autorizacion RBAC: proteger rutas `/admin` (solo SuperAdmin y Staff), rutas `/customer` (solo Client autenticado), rutas `/api/admin/*` con verificacion de rol en cada request
+- [x] **4.6** Rate limiting en endpoints sensibles: Login (5 intentos/15min), Register (3/hora), Forgot Password (3/hora), usando un middleware ligero con Map en memoria o upstash/ratelimit
+- [x] **4.7** Proteccion CSRF habilitada por defecto en NextAuth. Validacion de tokens en todas las mutaciones
 
 ---
 
