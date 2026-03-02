@@ -15,7 +15,7 @@ import {
   ModalTitle,
   ModalFooter,
 } from "@/components/ui";
-import { CalendarDays, Users, Plus, Search, Edit2, XCircle } from "lucide-react";
+import { CalendarDays, Users, Plus, Search, XCircle, Trash2 } from "lucide-react";
 
 interface Reservation {
   _id: string;
@@ -131,6 +131,30 @@ export default function ReservationsManagementPage() {
     }
   }
 
+  async function handleStatusChange(id: string, newStatus: string) {
+    try {
+      const res = await fetch(`/api/admin/reservations/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) fetchReservations();
+    } catch {
+      /* empty */
+    }
+  }
+
+  async function handleDeleteRes(id: string) {
+    if (!confirm("Are you sure you want to delete this reservation?")) return;
+    try {
+      const res = await fetch(`/api/admin/reservations/${id}`, { method: "DELETE" });
+      if (res.ok) fetchReservations();
+      else alert("Failed to delete reservation");
+    } catch {
+      alert("Failed to delete reservation");
+    }
+  }
+
   const todayCount = reservations.length;
   const guestsExpected = reservations.reduce((sum, r) => sum + r.partySize, 0);
 
@@ -243,7 +267,21 @@ export default function ReservationsManagementPage() {
                         </td>
                         <td className="px-5 py-3 text-right">
                           <div className="flex items-center justify-end gap-1">
-                            <Button variant="ghost" size="icon-sm"><Edit2 className="h-4 w-4" /></Button>
+                            <select
+                              value={res.status}
+                              onChange={(e) => handleStatusChange(res._id, e.target.value)}
+                              className="h-8 rounded border border-cream-300 bg-white px-2 text-xs text-brown-900 focus:border-terracotta-500 focus:outline-none"
+                            >
+                              <option value="Pending">Pending</option>
+                              <option value="Confirmed">Confirmed</option>
+                              <option value="Seated">Seated</option>
+                              <option value="Completed">Completed</option>
+                              <option value="Cancelled">Cancelled</option>
+                              <option value="No-show">No-show</option>
+                            </select>
+                            <Button variant="ghost" size="icon-sm" onClick={() => handleDeleteRes(res._id)}>
+                              <Trash2 className="h-4 w-4 text-error-500" />
+                            </Button>
                           </div>
                         </td>
                       </tr>

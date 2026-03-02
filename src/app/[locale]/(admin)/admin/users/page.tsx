@@ -33,20 +33,24 @@ interface User {
   createdAt: string;
 }
 
-const EMPTY_FORM: {
+interface FormData {
   firstName: string;
   lastName: string;
   email: string;
   phone: string;
   password: string;
   role: "SuperAdmin" | "Staff" | "Client";
-} = {
+  status: "Active" | "Disabled";
+}
+
+const EMPTY_FORM: FormData = {
   firstName: "",
   lastName: "",
   email: "",
   phone: "",
   password: "",
   role: "Client",
+  status: "Active",
 };
 
 export default function UsersPage() {
@@ -58,7 +62,8 @@ export default function UsersPage() {
   const [statusFilter, setStatusFilter] = useState<Status>("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
-  const [formData, setFormData] = useState(EMPTY_FORM);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState<FormData>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const limit = 10;
@@ -94,22 +99,60 @@ export default function UsersPage() {
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
-  async function handleCreate(e: React.FormEvent) {
+  function openCreate() {
+    setEditingId(null);
+    setFormData(EMPTY_FORM);
+    setError("");
+    setModalOpen(true);
+  }
+
+  function openEdit(user: User) {
+    setEditingId(user._id);
+    setFormData({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phone: user.phone || "",
+      password: "",
+      role: user.role,
+      status: user.status,
+    });
+    setError("");
+    setModalOpen(true);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to create user");
+      if (editingId) {
+        // Edit user
+        const { password: _, ...updateData } = formData;
+        const res = await fetch(`/api/admin/users/${editingId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updateData),
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Failed to update user");
+        }
+      } else {
+        // Create user
+        const res = await fetch("/api/admin/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Failed to create user");
+        }
       }
       setModalOpen(false);
       setFormData(EMPTY_FORM);
+      setEditingId(null);
       fetchUsers();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
@@ -118,12 +161,27 @@ export default function UsersPage() {
     }
   }
 
+  async function handleDelete(id: string) {
+    if (!confirm("Are you sure you want to delete this user?")) return;
+    try {
+      const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Failed to delete");
+        return;
+      }
+      fetchUsers();
+    } catch {
+      alert("Failed to delete user");
+    }
+  }
+
   return (
     <div className="min-h-screen bg-cream-50 p-6 lg:p-8">
       {/* Header */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-3xl font-bold text-brown-900">User Management</h1>
-        <Button onClick={() => setModalOpen(true)}>
+        <Button onClick={openCreate}>
           <Plus className="h-4 w-4" />
           Add User
         </Button>
@@ -210,10 +268,10 @@ export default function UsersPage() {
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <Button variant="icon" size="icon-sm" aria-label="Edit user">
+                          <Button variant="icon" size="icon-sm" aria-label="Edit user" onClick={() => openEdit(user)}>
                             <Edit2 className="h-4 w-4" />
                           </Button>
-                          <Button variant="icon" size="icon-sm" aria-label="Delete user">
+                          <Button variant="icon" size="icon-sm" aria-label="Delete user" onClick={() => handleDelete(user._id)}>
                             <Trash2 className="h-4 w-4 text-error-500" />
                           </Button>
                         </div>
@@ -234,13 +292,13 @@ export default function UsersPage() {
         </div>
       )}
 
-      {/* Create User Modal */}
+      {/* Create/Edit User Modal */}
       <Modal open={modalOpen} onOpenChange={setModalOpen}>
         <ModalContent>
           <ModalHeader>
-            <ModalTitle>Add New User</ModalTitle>
+            <ModalTitle>{editingId ? "Edit User" : "Add New User"}</ModalTitle>
           </ModalHeader>
-          <form onSubmit={handleCreate} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {error && <p className="text-sm text-error-500">{error}</p>}
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -254,31 +312,50 @@ export default function UsersPage() {
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-brown-700">Email</label>
-              <Input required type="email" value={formData.email} onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))} />
+              <Input required type="email" value={formData.email} onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))} disabled={!!editingId} />
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-brown-700">Phone</label>
               <Input value={formData.phone} onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))} />
             </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-brown-700">Password</label>
-              <Input required type="password" minLength={6} value={formData.password} onChange={(e) => setFormData((p) => ({ ...p, password: e.target.value }))} />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-brown-700">Role</label>
-              <select
-                value={formData.role}
-                onChange={(e) => setFormData((p) => ({ ...p, role: e.target.value as "SuperAdmin" | "Staff" | "Client" }))}
-                className="h-10 w-full rounded-md border border-cream-300 bg-white px-3 text-sm text-brown-900 focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
-              >
-                <option value="Client">Client</option>
-                <option value="Staff">Staff</option>
-                <option value="SuperAdmin">SuperAdmin</option>
-              </select>
+            {!editingId && (
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-brown-700">Password</label>
+                <Input required type="password" minLength={6} value={formData.password} onChange={(e) => setFormData((p) => ({ ...p, password: e.target.value }))} />
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-brown-700">Role</label>
+                <select
+                  value={formData.role}
+                  onChange={(e) => setFormData((p) => ({ ...p, role: e.target.value as "SuperAdmin" | "Staff" | "Client" }))}
+                  className="h-10 w-full rounded-md border border-cream-300 bg-white px-3 text-sm text-brown-900 focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
+                >
+                  <option value="Client">Client</option>
+                  <option value="Staff">Staff</option>
+                  <option value="SuperAdmin">SuperAdmin</option>
+                </select>
+              </div>
+              {editingId && (
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-brown-700">Status</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData((p) => ({ ...p, status: e.target.value as "Active" | "Disabled" }))}
+                    className="h-10 w-full rounded-md border border-cream-300 bg-white px-3 text-sm text-brown-900 focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Disabled">Disabled</option>
+                  </select>
+                </div>
+              )}
             </div>
             <ModalFooter>
               <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={submitting}>{submitting ? "Creating..." : "Create User"}</Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? "Saving..." : editingId ? "Save Changes" : "Create User"}
+              </Button>
             </ModalFooter>
           </form>
         </ModalContent>

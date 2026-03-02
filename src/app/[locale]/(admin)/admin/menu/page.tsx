@@ -15,7 +15,7 @@ import {
   ModalTitle,
   ModalFooter,
 } from "@/components/ui";
-import { UtensilsCrossed, Plus, Edit2 } from "lucide-react";
+import { UtensilsCrossed, Plus, Edit2, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface Category {
@@ -58,6 +58,7 @@ export default function MenuPage() {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("All");
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -88,33 +89,76 @@ export default function MenuPage() {
 
   async function handleToggle(product: Product) {
     const newStatus = product.status === "Available" ? "Unavailable" : "Available";
+    // Optimistic update
     setProducts((prev) =>
       prev.map((p) => (p._id === product._id ? { ...p, status: newStatus } : p))
     );
-    // Optimistic update — no PATCH endpoint exists yet, but UI reflects instantly
+    try {
+      const res = await fetch(`/api/admin/products/${product._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) {
+        // Revert on failure
+        setProducts((prev) =>
+          prev.map((p) => (p._id === product._id ? { ...p, status: product.status } : p))
+        );
+      }
+    } catch {
+      setProducts((prev) =>
+        prev.map((p) => (p._id === product._id ? { ...p, status: product.status } : p))
+      );
+    }
   }
 
-  async function handleCreate(e: React.FormEvent) {
+  function openCreate() {
+    setEditingId(null);
+    setFormData(EMPTY_FORM);
+    setError("");
+    setModalOpen(true);
+  }
+
+  function openEdit(item: Product) {
+    setEditingId(item._id);
+    setFormData({
+      nameEn: item.name.en,
+      nameEs: item.name.es,
+      descEn: item.description.en,
+      descEs: item.description.es,
+      price: String(item.price),
+      category: item.category?._id || "",
+    });
+    setError("");
+    setModalOpen(true);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setError("");
+    const payload = {
+      name: { en: formData.nameEn, es: formData.nameEs },
+      description: { en: formData.descEn, es: formData.descEs },
+      price: parseFloat(formData.price),
+      category: formData.category,
+    };
     try {
-      const res = await fetch("/api/admin/products", {
-        method: "POST",
+      const url = editingId
+        ? `/api/admin/products/${editingId}`
+        : "/api/admin/products";
+      const res = await fetch(url, {
+        method: editingId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: { en: formData.nameEn, es: formData.nameEs },
-          description: { en: formData.descEn, es: formData.descEs },
-          price: parseFloat(formData.price),
-          category: formData.category,
-        }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to create product");
+        throw new Error(data.error || "Failed to save product");
       }
       setModalOpen(false);
       setFormData(EMPTY_FORM);
+      setEditingId(null);
       fetchData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
@@ -123,11 +167,26 @@ export default function MenuPage() {
     }
   }
 
+  async function handleDelete(id: string) {
+    if (!confirm("Are you sure you want to delete this dish?")) return;
+    try {
+      const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Failed to delete");
+        return;
+      }
+      fetchData();
+    } catch {
+      alert("Failed to delete product");
+    }
+  }
+
   return (
     <div className="min-h-screen bg-cream-50 p-6 lg:p-8">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-3xl font-bold text-brown-900">Menu Management</h1>
-        <Button onClick={() => setModalOpen(true)}>
+        <Button onClick={openCreate}>
           <Plus className="h-4 w-4" />
           Add Dish
         </Button>
@@ -187,6 +246,7 @@ export default function MenuPage() {
                 <CardContent className="p-4">
                   <div className="mb-2">
                     <h3 className="font-semibold text-brown-900">{item.name.en}</h3>
+                    <p className="text-xs text-brown-500">{item.name.es}</p>
                     <p className="mt-1 text-sm text-brown-600">{item.description.en}</p>
                   </div>
                   <p className="mb-4 text-lg font-bold text-terracotta-500">
@@ -198,9 +258,14 @@ export default function MenuPage() {
                       onCheckedChange={() => handleToggle(item)}
                       label={item.status === "Available" ? "Available" : "Unavailable"}
                     />
-                    <Button variant="ghost" size="icon-sm" aria-label="Edit dish">
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="icon-sm" aria-label="Edit dish" onClick={() => openEdit(item)}>
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon-sm" aria-label="Delete dish" onClick={() => handleDelete(item._id)}>
+                        <Trash2 className="h-4 w-4 text-error-500" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -209,13 +274,13 @@ export default function MenuPage() {
         </motion.div>
       )}
 
-      {/* Create Product Modal */}
+      {/* Create/Edit Product Modal */}
       <Modal open={modalOpen} onOpenChange={setModalOpen}>
         <ModalContent>
           <ModalHeader>
-            <ModalTitle>Add New Dish</ModalTitle>
+            <ModalTitle>{editingId ? "Edit Dish" : "Add New Dish"}</ModalTitle>
           </ModalHeader>
-          <form onSubmit={handleCreate} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {error && <p className="text-sm text-error-500">{error}</p>}
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -257,7 +322,9 @@ export default function MenuPage() {
             </div>
             <ModalFooter>
               <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={submitting}>{submitting ? "Creating..." : "Create Dish"}</Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? "Saving..." : editingId ? "Save Changes" : "Create Dish"}
+              </Button>
             </ModalFooter>
           </form>
         </ModalContent>

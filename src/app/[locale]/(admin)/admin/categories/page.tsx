@@ -41,6 +41,7 @@ export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -63,25 +64,49 @@ export default function CategoriesPage() {
     fetchCategories();
   }, [fetchCategories]);
 
-  async function handleCreate(e: React.FormEvent) {
+  function openCreate() {
+    setEditingId(null);
+    setFormData(EMPTY_FORM);
+    setError("");
+    setModalOpen(true);
+  }
+
+  function openEdit(cat: Category) {
+    setEditingId(cat._id);
+    setFormData({
+      nameEn: cat.name.en,
+      nameEs: cat.name.es,
+      descEn: cat.description.en,
+      descEs: cat.description.es,
+    });
+    setError("");
+    setModalOpen(true);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setError("");
+    const payload = {
+      name: { en: formData.nameEn, es: formData.nameEs },
+      description: { en: formData.descEn, es: formData.descEs },
+    };
     try {
-      const res = await fetch("/api/admin/categories", {
-        method: "POST",
+      const url = editingId
+        ? `/api/admin/categories/${editingId}`
+        : "/api/admin/categories";
+      const res = await fetch(url, {
+        method: editingId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: { en: formData.nameEn, es: formData.nameEs },
-          description: { en: formData.descEn, es: formData.descEs },
-        }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to create category");
+        throw new Error(data.error || "Failed to save category");
       }
       setModalOpen(false);
       setFormData(EMPTY_FORM);
+      setEditingId(null);
       fetchCategories();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
@@ -90,11 +115,26 @@ export default function CategoriesPage() {
     }
   }
 
+  async function handleDelete(id: string) {
+    if (!confirm("Are you sure you want to delete this category?")) return;
+    try {
+      const res = await fetch(`/api/admin/categories/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Failed to delete");
+        return;
+      }
+      fetchCategories();
+    } catch {
+      alert("Failed to delete category");
+    }
+  }
+
   return (
     <div className="min-h-screen bg-cream-50 p-6 lg:p-8">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-3xl font-bold text-brown-900">Categories</h1>
-        <Button onClick={() => setModalOpen(true)}>
+        <Button onClick={openCreate}>
           <Plus className="h-4 w-4" />
           Add Category
         </Button>
@@ -133,10 +173,10 @@ export default function CategoriesPage() {
                       )}
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button variant="icon" size="icon-sm" aria-label="Edit category">
+                      <Button variant="icon" size="icon-sm" aria-label="Edit category" onClick={() => openEdit(category)}>
                         <Edit2 className="h-4 w-4" />
                       </Button>
-                      <Button variant="icon" size="icon-sm" aria-label="Delete category">
+                      <Button variant="icon" size="icon-sm" aria-label="Delete category" onClick={() => handleDelete(category._id)}>
                         <Trash2 className="h-4 w-4 text-error-500" />
                       </Button>
                     </div>
@@ -151,9 +191,9 @@ export default function CategoriesPage() {
       <Modal open={modalOpen} onOpenChange={setModalOpen}>
         <ModalContent>
           <ModalHeader>
-            <ModalTitle>Add New Category</ModalTitle>
+            <ModalTitle>{editingId ? "Edit Category" : "Add New Category"}</ModalTitle>
           </ModalHeader>
-          <form onSubmit={handleCreate} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {error && <p className="text-sm text-error-500">{error}</p>}
             <div>
               <label className="mb-1.5 block text-sm font-medium text-brown-700">Name (English)</label>
@@ -173,7 +213,9 @@ export default function CategoriesPage() {
             </div>
             <ModalFooter>
               <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={submitting}>{submitting ? "Creating..." : "Create Category"}</Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? "Saving..." : editingId ? "Save Changes" : "Create Category"}
+              </Button>
             </ModalFooter>
           </form>
         </ModalContent>
