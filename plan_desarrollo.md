@@ -259,82 +259,82 @@
 ## FASE 7: Panel del Cliente (Dashboard Autenticado)
 > Todas las subpaginas del area de cuenta del cliente.
 
-- [ ] **7.1** **Layout del Cliente:** Sidebar izquierda con avatar (iniciales), nombre, email, badge "Gold Member", navegacion (Dashboard, My Profile, Order History, Addresses, Favorites, Reservations, Settings, Log Out). Responsive: en mobile, navegacion horizontal o menu desplegable
-- [ ] **7.2** **Dashboard (Account Page):** Cards resumen (Total Orders, Favorites, Reservations, Loyalty Points con iconos), tabla "Recent Orders" (order#, date, items, total, status badge, link), seccion "Upcoming Reservation" (card con fecha, hora, ubicacion, guests, botones Modify/Cancel), seccion "Favorite Dishes" (cards con imagen, nombre, precio, boton Reorder)
-- [ ] **7.3** **My Profile Page:** Seccion "Personal Information" (FirstName, LastName, Email, Phone, DOB, Gender) con boton Edit, seccion "Change Password" (current, new, confirm), seccion "Notification Preferences" (toggles: Order Updates, Promotions, Reservation Reminders, Newsletter), seccion "Delete Account" destructiva con confirmacion
-- [ ] **7.4** **Order History Page:** Filtro "All Orders", lista de pedidos agrupados por tarjeta: order#, fecha, status badge, total, items con imagen/nombre/cantidad/precio, botones "Reorder" o "Track Order" segun estado, link "View Details"
-- [ ] **7.5** **Addresses Page:** Grid de cards de direccion (tipo Home/Office, badge Default, nombre, direccion completa, telefono, iconos edit/delete), boton "+ Add Address", modal para crear/editar
-- [ ] **7.6** **Favorites Page:** Grid de cards (imagen, nombre, descripcion corta, precio, icono corazon rojo, boton "Add to Cart"), contador "X dishes saved"
-- [ ] **7.7** **Reservations Page (cliente):** Seccion "Upcoming" con card detallada (fecha grande con mes/dia, titulo, hora, guests, ubicacion, status badge, botones Modify/Cancel), seccion "Past Reservations" con lista, boton "+ New Reservation"
-- [ ] **7.8** **Settings Page:** Seccion "Language & Region" (selects: Language, Timezone, Currency), seccion "App Preferences" (toggles: Dark Mode, Push Notifications, Email Notifications, SMS Notifications)
+- [x] **7.1** **Layout del Cliente:** Sidebar izquierda con avatar (iniciales), nombre, email, badge "Gold Member", navegacion (Dashboard, My Profile, Order History, Addresses, Favorites, Reservations, Settings, Log Out). Responsive: en mobile, navegacion horizontal o menu desplegable
+- [x] **7.2** **Dashboard (Account Page):** Cards resumen (Total Orders, Favorites, Reservations, Loyalty Points con iconos), tabla "Recent Orders" (order#, date, items, total, status badge, link), seccion "Upcoming Reservation" (card con fecha, hora, ubicacion, guests, botones Modify/Cancel), seccion "Favorite Dishes" (cards con imagen, nombre, precio, boton Reorder)
+- [x] **7.3** **My Profile Page:** Seccion "Personal Information" (FirstName, LastName, Email, Phone, DOB, Gender) con boton Edit, seccion "Change Password" (current, new, confirm), seccion "Notification Preferences" (toggles: Order Updates, Promotions, Reservation Reminders, Newsletter), seccion "Delete Account" destructiva con confirmacion
+- [x] **7.4** **Order History Page:** Filtro "All Orders", lista de pedidos agrupados por tarjeta: order#, fecha, status badge, total, items con imagen/nombre/cantidad/precio, botones "Reorder" o "Track Order" segun estado, link "View Details"
+- [x] **7.5** **Addresses Page:** Grid de cards de direccion (tipo Home/Office, badge Default, nombre, direccion completa, telefono, iconos edit/delete), boton "+ Add Address", modal para crear/editar
+- [x] **7.6** **Favorites Page:** Grid de cards (imagen, nombre, descripcion corta, precio, icono corazon rojo, boton "Add to Cart"), contador "X dishes saved"
+- [x] **7.7** **Reservations Page (cliente):** Seccion "Upcoming" con card detallada (fecha grande con mes/dia, titulo, hora, guests, ubicacion, status badge, botones Modify/Cancel), seccion "Past Reservations" con lista, boton "+ New Reservation"
+- [x] **7.8** **Settings Page:** Seccion "Language & Region" (selects: Language, Timezone, Currency), seccion "App Preferences" (toggles: Dark Mode, Push Notifications, Email Notifications, SMS Notifications)
 
 ---
 
 ## FASE 8: Panel de Administracion
 > Dashboard, CRUD de todas las entidades, gestion de pedidos y pagos.
 
-- [ ] **8.1** **Admin Dashboard:** Cards KPI (Total Orders, Revenue $, Active Users, Pending Reservations con porcentajes vs mes anterior), grafico "Revenue Overview" (barras por dia de la semana, toggle This Month/Last Month), panel "Quick Actions" (4 botones: New Order, Add Menu Item, New Reservation, Export Report), tabla "Recent Orders" (order#, customer, items, total, status badge, actions)
-- [ ] **8.2** **User Management:** Barra busqueda + filtros (Role dropdown, Status dropdown), tabla (Name con avatar, Email, Role, Status badge, Last Login, Actions: edit/disable/delete), paginacion, boton "+ Add User". Modal Create/Edit User (FirstName, LastName, Email, Phone, Role select, Status select, Password)
-- [ ] **8.3** **Menu Management:** Filtro por categorias (chips), grid de cards de plato (icono utensilio, nombre, descripcion, precio, toggle disponibilidad on/off), boton "+ Add Dish". Modal Create/Edit Item (Item Name, Category select, Description textarea, Price, Status select, Item Image upload con drag&drop)
-- [ ] **8.4** **Categories Management:** Grid de cards (imagen, nombre, contador "X products", botones Edit/Delete), boton "+ Add Category". Modal Create/Edit Category (Name, Description, Image upload, Status select)
-- [ ] **8.5** **Orders Management:** Filtro por status (tabs: All con contador, New, Preparing, Ready, Delivered, Cancelled), tabla expandible (order#, customer, items, total, status badge, date, actions: view/cambiar estado). Fila expandida muestra: Order details (items con precios), Delivery info (tipo, mesa/direccion, notas), Payment (metodo, referencia, subtotal), boton "+ New Order"
-- [ ] **8.6** **Payment Processing:** Filtros (rango de fechas, status dropdown), tabla "Transactions" (TXN ID, Customer, Amount, Status badge, Date, Payment Method), paginacion, boton Export. **Para Zelle/Binance:** boton para ver comprobante subido y aprobar/rechazar manualmente
-- [ ] **8.7** **Reservations Management:** Cards KPI (Today's reservations, Guests expected, Capacity %, Cancellations + No-shows), barra busqueda + filtros (Today/date, Status), tabla (Guest Name, Party Size, Date, Time, Status badge, Table, Actions: edit/cancel), boton "+ New Reservation", badge "X/Y seats booked". Modal Create/Edit Reservation (Customer Name, Phone, Email, Date, Time, Party Size, Table select, Status, Occasion chips, Special Requests)
-- [ ] **8.8** **Jobs Management:** Cards KPI (Active Jobs, Applications, Interviews, Hired), tabs (All Jobs, Active, Draft, Closed), tabla de jobs (Title, Department, Type, Applications count, Posted date, Status badge, Actions), seccion "Recent Applications" (tabla: Applicant con avatar, Position, Applied date, Experience, Status badge, Actions), boton "+ Post New Job". Modal Post Job (Title, Department select, Employment Type select, Location select, Description textarea, Requirements textarea, Min/Max Salary, botones Save as Draft / Publish Job)
+- [x] **8.1** **Admin Dashboard:** Cards KPI (Total Orders, Revenue $, Active Users, Pending Reservations con porcentajes vs mes anterior), grafico "Revenue Overview" (barras por dia de la semana, toggle This Month/Last Month), panel "Quick Actions" (4 botones: New Order, Add Menu Item, New Reservation, Export Report), tabla "Recent Orders" (order#, customer, items, total, status badge, actions)
+- [x] **8.2** **User Management:** Barra busqueda + filtros (Role dropdown, Status dropdown), tabla (Name con avatar, Email, Role, Status badge, Last Login, Actions: edit/disable/delete), paginacion, boton "+ Add User". Modal Create/Edit User (FirstName, LastName, Email, Phone, Role select, Status select, Password)
+- [x] **8.3** **Menu Management:** Filtro por categorias (chips), grid de cards de plato (icono utensilio, nombre, descripcion, precio, toggle disponibilidad on/off), boton "+ Add Dish". Modal Create/Edit Item (Item Name, Category select, Description textarea, Price, Status select, Item Image upload con drag&drop)
+- [x] **8.4** **Categories Management:** Grid de cards (imagen, nombre, contador "X products", botones Edit/Delete), boton "+ Add Category". Modal Create/Edit Category (Name, Description, Image upload, Status select)
+- [x] **8.5** **Orders Management:** Filtro por status (tabs: All con contador, New, Preparing, Ready, Delivered, Cancelled), tabla expandible (order#, customer, items, total, status badge, date, actions: view/cambiar estado). Fila expandida muestra: Order details (items con precios), Delivery info (tipo, mesa/direccion, notas), Payment (metodo, referencia, subtotal), boton "+ New Order"
+- [x] **8.6** **Payment Processing:** Filtros (rango de fechas, status dropdown), tabla "Transactions" (TXN ID, Customer, Amount, Status badge, Date, Payment Method), paginacion, boton Export. **Para Zelle/Binance:** boton para ver comprobante subido y aprobar/rechazar manualmente
+- [x] **8.7** **Reservations Management:** Cards KPI (Today's reservations, Guests expected, Capacity %, Cancellations + No-shows), barra busqueda + filtros (Today/date, Status), tabla (Guest Name, Party Size, Date, Time, Status badge, Table, Actions: edit/cancel), boton "+ New Reservation", badge "X/Y seats booked". Modal Create/Edit Reservation (Customer Name, Phone, Email, Date, Time, Party Size, Table select, Status, Occasion chips, Special Requests)
+- [x] **8.8** **Jobs Management:** Cards KPI (Active Jobs, Applications, Interviews, Hired), tabs (All Jobs, Active, Draft, Closed), tabla de jobs (Title, Department, Type, Applications count, Posted date, Status badge, Actions), seccion "Recent Applications" (tabla: Applicant con avatar, Position, Applied date, Experience, Status badge, Actions), boton "+ Post New Job". Modal Post Job (Title, Department select, Employment Type select, Location select, Description textarea, Requirements textarea, Min/Max Salary, botones Save as Draft / Publish Job)
 
 ---
 
 ## FASE 9: API Routes y Logica de Negocio
 > Todos los endpoints REST protegidos con validacion doble capa.
 
-- [ ] **9.1** API Auth: `POST /api/auth/register`, `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`. Todas con validacion Zod server-side, sanitizacion de inputs, rate limiting
-- [ ] **9.2** API Users (Admin): CRUD `/api/admin/users` con proteccion de rol SuperAdmin/Staff
-- [ ] **9.3** API Categories: `GET /api/categories` (publico, SSG), CRUD `/api/admin/categories` (protegido)
-- [ ] **9.4** API Products: `GET /api/products` y `GET /api/products/[slug]` (publico, SSG), CRUD `/api/admin/products` (protegido)
-- [ ] **9.5** API Orders: `POST /api/orders` (cliente crea pedido), `GET /api/orders/my-orders` (cliente), `GET/PATCH /api/admin/orders` (admin: listar, cambiar estado)
-- [ ] **9.6** API Payments: `POST /api/payments/create-intent` (Stripe), `POST /api/payments/upload-receipt` (Zelle/Binance), `PATCH /api/admin/payments/[id]/approve` (admin aprueba manual)
-- [ ] **9.7** API Reservations: `POST /api/reservations` (cliente/guest), `GET /api/reservations/my-reservations` (cliente), CRUD `/api/admin/reservations` (admin)
-- [ ] **9.8** API Tables: `GET /api/tables` (publico, para mapa interactivo), CRUD `/api/admin/tables` (admin)
-- [ ] **9.9** API Jobs: `GET /api/jobs` (publico), `POST /api/jobs/[id]/apply` (publico), CRUD `/api/admin/jobs` (admin)
-- [ ] **9.10** API Notifications: `GET /api/notifications` (cliente), `PATCH /api/notifications/mark-read`
-- [ ] **9.11** API Contact: `POST /api/contact` (envio email via Resend)
-- [ ] **9.12** API Newsletter: `POST /api/newsletter/subscribe`
-- [ ] **9.13** Middleware global de seguridad: sanitizacion anti-NoSQL injection en todos los body/query params, validacion Zod en cada endpoint, headers de seguridad (X-Content-Type-Options, X-Frame-Options, etc.)
+- [x] **9.1** API Auth: `POST /api/auth/register`, `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`. Todas con validacion Zod server-side, sanitizacion de inputs, rate limiting
+- [x] **9.2** API Users (Admin): CRUD `/api/admin/users` con proteccion de rol SuperAdmin/Staff
+- [x] **9.3** API Categories: `GET /api/categories` (publico, SSG), CRUD `/api/admin/categories` (protegido)
+- [x] **9.4** API Products: `GET /api/products` y `GET /api/products/[slug]` (publico, SSG), CRUD `/api/admin/products` (protegido)
+- [x] **9.5** API Orders: `POST /api/orders` (cliente crea pedido), `GET /api/orders/my-orders` (cliente), `GET/PATCH /api/admin/orders` (admin: listar, cambiar estado)
+- [x] **9.6** API Payments: `POST /api/payments/create-intent` (Stripe), `POST /api/payments/upload-receipt` (Zelle/Binance), `PATCH /api/admin/payments/[id]/approve` (admin aprueba manual)
+- [x] **9.7** API Reservations: `POST /api/reservations` (cliente/guest), `GET /api/reservations/my-reservations` (cliente), CRUD `/api/admin/reservations` (admin)
+- [x] **9.8** API Tables: `GET /api/tables` (publico, para mapa interactivo), CRUD `/api/admin/tables` (admin)
+- [x] **9.9** API Jobs: `GET /api/jobs` (publico), `POST /api/jobs/[id]/apply` (publico), CRUD `/api/admin/jobs` (admin)
+- [x] **9.10** API Notifications: `GET /api/notifications` (cliente), `PATCH /api/notifications/mark-read`
+- [x] **9.11** API Contact: `POST /api/contact` (envio email via Resend)
+- [x] **9.12** API Newsletter: `POST /api/newsletter/subscribe`
+- [x] **9.13** Middleware global de seguridad: sanitizacion anti-NoSQL injection en todos los body/query params, validacion Zod en cada endpoint, headers de seguridad (X-Content-Type-Options, X-Frame-Options, etc.)
 
 ---
 
 ## FASE 10: Integraciones Externas
 > Stripe, Resend, Logica de impuestos Texas.
 
-- [ ] **10.1** **Stripe:** Crear PaymentIntent desde el backend, confirmar en frontend con Stripe Elements, webhook para confirmar pago completado (`payment_intent.succeeded`), actualizar estado de Order/Payment
-- [ ] **10.2** **Resend:** Templates de correo transaccional: Bienvenida, Confirmacion de pedido, Estado de pedido actualizado, Reset de contrasena (OTP/Link), Confirmacion de reservacion
-- [ ] **10.3** **Impuestos Texas:** Constante `TX_TAX_RATE = 0.0825` (8.25%), calculo aplicado en carrito y checkout, mostrado como linea separada "Tax (8.25%)" en todos los resumenes de orden
-- [ ] **10.4** **Flujo Zelle/Binance:** Mostrar datos de pago del restaurante, subida de comprobante (imagen) via upload a storage, admin ve el comprobante y aprueba/rechaza manualmente, notificacion al cliente del resultado
+- [x] **10.1** **Stripe:** Crear PaymentIntent desde el backend, confirmar en frontend con Stripe Elements, webhook para confirmar pago completado (`payment_intent.succeeded`), actualizar estado de Order/Payment
+- [x] **10.2** **Resend:** Templates de correo transaccional: Bienvenida, Confirmacion de pedido, Estado de pedido actualizado, Reset de contrasena (OTP/Link), Confirmacion de reservacion
+- [x] **10.3** **Impuestos Texas:** Constante `TX_TAX_RATE = 0.0825` (8.25%), calculo aplicado en carrito y checkout, mostrado como linea separada "Tax (8.25%)" en todos los resumenes de orden
+- [x] **10.4** **Flujo Zelle/Binance:** Mostrar datos de pago del restaurante, subida de comprobante (imagen) via upload a storage, admin ve el comprobante y aprueba/rechaza manualmente, notificacion al cliente del resultado
 
 ---
 
 ## FASE 11: SEO Tecnico y Rendimiento
 > Metadatos, Schema.org, sitemap, robots, optimizacion de imagenes.
 
-- [ ] **11.1** Metadatos dinamicos en cada pagina con `generateMetadata`: titulos, descripciones, OpenGraph, Twitter Cards. Orientados a keywords ("best arepas in Texas", "authentic Venezuelan food near me", "Venezuelan restaurant Houston")
-- [ ] **11.2** Marcado Schema.org JSON-LD: `Restaurant`, `LocalBusiness` (nombre, direccion, horarios, telefono, coordenadas), `MenuItem` en cada producto, `FAQPage` en home
-- [ ] **11.3** Sitemap automatico con `app/sitemap.ts`: URLs de todas las paginas publicas, productos, categorias, trabajos. Soporte multilingue (es/en)
-- [ ] **11.4** `robots.txt` con `app/robots.ts`: permitir crawlers en paginas publicas, bloquear `/admin`, `/api`, `/customer`
-- [ ] **11.5** Optimizacion de imagenes: Todas con componente `<Image />` de Next.js, formato WebP, `loading="lazy"` para below-the-fold, `priority` para hero/LCP, tamanos responsivos con `sizes`
-- [ ] **11.6** Tags `<link rel="alternate" hreflang="es">` y `hreflang="en"` en cada pagina para SEO multilingue
-- [ ] **11.7** Auditar Core Web Vitals > 90/100: reducir CLS, optimizar LCP (hero image priority), minimizar FID/INP
+- [x] **11.1** Metadatos dinamicos en cada pagina con `generateMetadata`: titulos, descripciones, OpenGraph, Twitter Cards. Orientados a keywords ("best arepas in Texas", "authentic Venezuelan food near me", "Venezuelan restaurant Houston")
+- [x] **11.2** Marcado Schema.org JSON-LD: `Restaurant`, `LocalBusiness` (nombre, direccion, horarios, telefono, coordenadas), `MenuItem` en cada producto, `FAQPage` en home
+- [x] **11.3** Sitemap automatico con `app/sitemap.ts`: URLs de todas las paginas publicas, productos, categorias, trabajos. Soporte multilingue (es/en)
+- [x] **11.4** `robots.txt` con `app/robots.ts`: permitir crawlers en paginas publicas, bloquear `/admin`, `/api`, `/customer`
+- [x] **11.5** Optimizacion de imagenes: Todas con componente `<Image />` de Next.js, formato WebP, `loading="lazy"` para below-the-fold, `priority` para hero/LCP, tamanos responsivos con `sizes`
+- [x] **11.6** Tags `<link rel="alternate" hreflang="es">` y `hreflang="en"` en cada pagina para SEO multilingue
+- [x] **11.7** Auditar Core Web Vitals > 90/100: reducir CLS, optimizar LCP (hero image priority), minimizar FID/INP
 
 ---
 
 ## FASE 12: PWA, Seguridad Final y Despliegue
 > Service workers, seguridad reforzada, configuracion Vercel.
 
-- [ ] **12.1** Configuracion PWA completa: `manifest.json` con iconos en multiples resoluciones, colores del tema (brown-900 + terracotta), service worker para cache offline de assets estaticos, prompt de instalacion
-- [ ] **12.2** Revision de seguridad: Verificar prevencion NoSQL injection en todos los modelos, XSS sanitizado en todos los inputs renderizados, CSRF activo en NextAuth, rate limiting en todos los endpoints sensibles, headers de seguridad en `next.config.js`
-- [ ] **12.3** Archivo `vercel.json` optimizado si es necesario, configuracion de variables de entorno en Vercel, dominio personalizado
-- [ ] **12.4** Seed script para base de datos: crear SuperAdmin inicial, categorias base, productos de ejemplo, mesas del restaurante para el mapa interactivo
-- [ ] **12.5** Testing final end-to-end: flujo completo de compra (registro > menu > carrito > checkout > pago > confirmacion), flujo de reservacion con mapa de mesas, flujo admin (gestionar pedidos, aprobar pagos, CRUD entidades)
-- [ ] **12.6** Actualizar este archivo `plan_desarrollo.md` marcando todas las fases como completadas
+- [x] **12.1** Configuracion PWA completa: `manifest.json` con iconos en multiples resoluciones, colores del tema (brown-900 + terracotta), service worker para cache offline de assets estaticos, prompt de instalacion
+- [x] **12.2** Revision de seguridad: Verificar prevencion NoSQL injection en todos los modelos, XSS sanitizado en todos los inputs renderizados, CSRF activo en NextAuth, rate limiting en todos los endpoints sensibles, headers de seguridad en `next.config.js`
+- [x] **12.3** Archivo `vercel.json` optimizado si es necesario, configuracion de variables de entorno en Vercel, dominio personalizado
+- [x] **12.4** Seed script para base de datos: crear SuperAdmin inicial, categorias base, productos de ejemplo, mesas del restaurante para el mapa interactivo
+- [x] **12.5** Testing final end-to-end: flujo completo de compra (registro > menu > carrito > checkout > pago > confirmacion), flujo de reservacion con mapa de mesas, flujo admin (gestionar pedidos, aprobar pagos, CRUD entidades)
+- [x] **12.6** Actualizar este archivo `plan_desarrollo.md` marcando todas las fases como completadas
 
 ---
 

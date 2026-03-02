@@ -8,6 +8,7 @@ import { HeroSection } from "./_components/hero-section";
 import { TasteGrid } from "./_components/taste-grid";
 import { FeaturedDishes } from "./_components/featured-dishes";
 import { ReservationCta } from "./_components/reservation-cta";
+import { restaurantSchema, faqSchema } from "@/lib/seo/schema";
 
 export const metadata: Metadata = {
   title: "Mango's Grill | Authentic Venezuelan Cuisine in Texas",
@@ -43,6 +44,18 @@ export default function HomePage() {
 
   return (
     <>
+      {/* Schema.org JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(restaurantSchema()) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(faqSchema(faqs.map((f) => ({ question: f.q, answer: f.a })))),
+        }}
+      />
+
       <HeroSection />
 
       {/* Discount Banner */}
