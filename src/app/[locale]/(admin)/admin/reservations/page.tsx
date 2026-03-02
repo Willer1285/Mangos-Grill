@@ -104,7 +104,7 @@ export default function ReservationsManagementPage() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [dateFilter, setDateFilter] = useState("today");
+  const [dateFilter, setDateFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
   const [modalOpen, setModalOpen] = useState(false);
   const [formData, setFormData] = useState(EMPTY_FORM);
@@ -120,7 +120,7 @@ export default function ReservationsManagementPage() {
       if (searchQuery) params.set("search", searchQuery);
       if (dateFilter === "today") {
         params.set("date", new Date().toISOString().split("T")[0]);
-      } else if (dateFilter) {
+      } else if (dateFilter && dateFilter !== "all") {
         params.set("date", dateFilter);
       }
 
@@ -260,6 +260,14 @@ export default function ReservationsManagementPage() {
             </div>
             <div className="flex gap-2">
               <button
+                onClick={() => setDateFilter("")}
+                className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+                  !dateFilter || dateFilter === "all" ? "bg-terracotta-500 text-white" : "border border-cream-200 bg-white text-brown-600 hover:bg-cream-100"
+                }`}
+              >
+                All
+              </button>
+              <button
                 onClick={() => setDateFilter("today")}
                 className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
                   dateFilter === "today" ? "bg-terracotta-500 text-white" : "border border-cream-200 bg-white text-brown-600 hover:bg-cream-100"
@@ -267,7 +275,7 @@ export default function ReservationsManagementPage() {
               >
                 Today
               </button>
-              <Input type="date" value={dateFilter === "today" ? "" : dateFilter} onChange={(e) => setDateFilter(e.target.value || "today")} className="w-auto" />
+              <Input type="date" value={dateFilter === "today" || !dateFilter ? "" : dateFilter} onChange={(e) => setDateFilter(e.target.value || "")} className="w-auto" />
             </div>
             <select
               value={statusFilter}
