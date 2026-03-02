@@ -64,7 +64,7 @@ export default async function LocaleLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
-      <body className="min-h-screen bg-cream-100 font-sans text-brown-900 antialiased">
+      <body className="min-h-screen bg-cream-100 font-sans text-brown-900 antialiased" suppressHydrationWarning>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <CartProvider>
           {children}
