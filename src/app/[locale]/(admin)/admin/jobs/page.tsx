@@ -16,7 +16,13 @@ import {
   ModalContent,
   ModalHeader,
   ModalTitle,
+  ModalDescription,
   ModalFooter,
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
 } from "@/components/ui";
 import { Briefcase, Users, UserCheck, Clock, Plus, Eye, Edit2 } from "lucide-react";
 
@@ -313,74 +319,84 @@ export default function JobsManagementPage() {
         <ModalContent className="max-w-2xl">
           <ModalHeader>
             <ModalTitle>Post New Job</ModalTitle>
+            <ModalDescription>Create a new job listing with bilingual descriptions.</ModalDescription>
           </ModalHeader>
-          <form onSubmit={handleCreate} className="space-y-4">
-            {error && <p className="text-sm text-error-500">{error}</p>}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Title</label>
-                <Input required value={formData.title} onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))} />
+          <form onSubmit={handleCreate} className="space-y-6">
+            {error && (
+              <div className="rounded-lg border border-error-500/20 bg-error-500/5 px-4 py-3 text-sm text-error-600">
+                {error}
               </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Department</label>
-                <select required value={formData.department} onChange={(e) => setFormData((p) => ({ ...p, department: e.target.value }))} className="h-10 w-full rounded-md border border-cream-300 bg-white px-3 text-sm text-brown-900 focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500">
-                  <option value="Kitchen">Kitchen</option>
-                  <option value="Front of House">Front of House</option>
-                  <option value="Management">Management</option>
-                  <option value="Operations">Operations</option>
-                </select>
+            )}
+
+            <div className="space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Job Details</p>
+              <div className="grid grid-cols-2 gap-4">
+                <Input label="Title" required value={formData.title} onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))} placeholder="e.g. Head Chef" />
+                <Select value={formData.department} onValueChange={(v) => setFormData((p) => ({ ...p, department: v }))}>
+                  <SelectTrigger label="Department">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Kitchen">Kitchen</SelectItem>
+                    <SelectItem value="Front of House">Front of House</SelectItem>
+                    <SelectItem value="Management">Management</SelectItem>
+                    <SelectItem value="Operations">Operations</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Employment Type</label>
-                <select required value={formData.employmentType} onChange={(e) => setFormData((p) => ({ ...p, employmentType: e.target.value }))} className="h-10 w-full rounded-md border border-cream-300 bg-white px-3 text-sm text-brown-900 focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500">
-                  <option value="Full-time">Full-time</option>
-                  <option value="Part-time">Part-time</option>
-                  <option value="Contract">Contract</option>
-                </select>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Location</label>
-                <Input required value={formData.location} onChange={(e) => setFormData((p) => ({ ...p, location: e.target.value }))} />
-              </div>
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-brown-700">Description (English)</label>
-              <Textarea required rows={3} value={formData.descEn} onChange={(e) => setFormData((p) => ({ ...p, descEn: e.target.value }))} />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-brown-700">Description (Spanish)</label>
-              <Textarea required rows={3} value={formData.descEs} onChange={(e) => setFormData((p) => ({ ...p, descEs: e.target.value }))} />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-brown-700">Requirements (English)</label>
-              <Textarea required rows={2} value={formData.reqEn} onChange={(e) => setFormData((p) => ({ ...p, reqEn: e.target.value }))} />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-brown-700">Requirements (Spanish)</label>
-              <Textarea required rows={2} value={formData.reqEs} onChange={(e) => setFormData((p) => ({ ...p, reqEs: e.target.value }))} />
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Min Salary ($)</label>
-                <Input type="number" min="0" value={formData.salaryMin} onChange={(e) => setFormData((p) => ({ ...p, salaryMin: e.target.value }))} />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Max Salary ($)</label>
-                <Input type="number" min="0" value={formData.salaryMax} onChange={(e) => setFormData((p) => ({ ...p, salaryMax: e.target.value }))} />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Status</label>
-                <select value={formData.status} onChange={(e) => setFormData((p) => ({ ...p, status: e.target.value }))} className="h-10 w-full rounded-md border border-cream-300 bg-white px-3 text-sm text-brown-900 focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500">
-                  <option value="Draft">Draft</option>
-                  <option value="Active">Active</option>
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <Select value={formData.employmentType} onValueChange={(v) => setFormData((p) => ({ ...p, employmentType: v }))}>
+                  <SelectTrigger label="Employment Type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Full-time">Full-time</SelectItem>
+                    <SelectItem value="Part-time">Part-time</SelectItem>
+                    <SelectItem value="Contract">Contract</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input label="Location" required value={formData.location} onChange={(e) => setFormData((p) => ({ ...p, location: e.target.value }))} />
               </div>
             </div>
+
+            <div className="border-t border-cream-200" />
+
+            <div className="space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Description</p>
+              <Textarea label="English" required rows={3} value={formData.descEn} onChange={(e) => setFormData((p) => ({ ...p, descEn: e.target.value }))} />
+              <Textarea label="Spanish" required rows={3} value={formData.descEs} onChange={(e) => setFormData((p) => ({ ...p, descEs: e.target.value }))} />
+            </div>
+
+            <div className="border-t border-cream-200" />
+
+            <div className="space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Requirements</p>
+              <Textarea label="English" required rows={2} value={formData.reqEn} onChange={(e) => setFormData((p) => ({ ...p, reqEn: e.target.value }))} />
+              <Textarea label="Spanish" required rows={2} value={formData.reqEs} onChange={(e) => setFormData((p) => ({ ...p, reqEs: e.target.value }))} />
+            </div>
+
+            <div className="border-t border-cream-200" />
+
+            <div className="space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Compensation & Status</p>
+              <div className="grid grid-cols-3 gap-4">
+                <Input label="Min Salary ($)" type="number" min="0" value={formData.salaryMin} onChange={(e) => setFormData((p) => ({ ...p, salaryMin: e.target.value }))} />
+                <Input label="Max Salary ($)" type="number" min="0" value={formData.salaryMax} onChange={(e) => setFormData((p) => ({ ...p, salaryMax: e.target.value }))} />
+                <Select value={formData.status} onValueChange={(v) => setFormData((p) => ({ ...p, status: v }))}>
+                  <SelectTrigger label="Status">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Draft">Draft</SelectItem>
+                    <SelectItem value="Active">Active</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <ModalFooter>
               <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={submitting}>{submitting ? "Creating..." : "Post Job"}</Button>
+              <Button type="submit" loading={submitting}>Post Job</Button>
             </ModalFooter>
           </form>
         </ModalContent>

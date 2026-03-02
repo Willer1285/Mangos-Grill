@@ -15,7 +15,13 @@ import {
   ModalContent,
   ModalHeader,
   ModalTitle,
+  ModalDescription,
   ModalFooter,
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
 } from "@/components/ui";
 import { Search, Plus, Edit2, Trash2 } from "lucide-react";
 
@@ -297,64 +303,63 @@ export default function UsersPage() {
         <ModalContent>
           <ModalHeader>
             <ModalTitle>{editingId ? "Edit User" : "Add New User"}</ModalTitle>
+            <ModalDescription>
+              {editingId ? "Update user account details and permissions." : "Create a new user account with role and access settings."}
+            </ModalDescription>
           </ModalHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && <p className="text-sm text-error-500">{error}</p>}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">First Name</label>
-                <Input required value={formData.firstName} onChange={(e) => setFormData((p) => ({ ...p, firstName: e.target.value }))} />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Last Name</label>
-                <Input required value={formData.lastName} onChange={(e) => setFormData((p) => ({ ...p, lastName: e.target.value }))} />
-              </div>
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-brown-700">Email</label>
-              <Input required type="email" value={formData.email} onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))} disabled={!!editingId} />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-brown-700">Phone</label>
-              <Input value={formData.phone} onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))} />
-            </div>
-            {!editingId && (
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Password</label>
-                <Input required type="password" minLength={6} value={formData.password} onChange={(e) => setFormData((p) => ({ ...p, password: e.target.value }))} />
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="rounded-lg border border-error-500/20 bg-error-500/5 px-4 py-3 text-sm text-error-600">
+                {error}
               </div>
             )}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Role</label>
-                <select
-                  value={formData.role}
-                  onChange={(e) => setFormData((p) => ({ ...p, role: e.target.value as "SuperAdmin" | "Staff" | "Client" }))}
-                  className="h-10 w-full rounded-md border border-cream-300 bg-white px-3 text-sm text-brown-900 focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
-                >
-                  <option value="Client">Client</option>
-                  <option value="Staff">Staff</option>
-                  <option value="SuperAdmin">SuperAdmin</option>
-                </select>
+
+            <div className="space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Personal Information</p>
+              <div className="grid grid-cols-2 gap-4">
+                <Input label="First Name" required value={formData.firstName} onChange={(e) => setFormData((p) => ({ ...p, firstName: e.target.value }))} />
+                <Input label="Last Name" required value={formData.lastName} onChange={(e) => setFormData((p) => ({ ...p, lastName: e.target.value }))} />
               </div>
-              {editingId && (
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-brown-700">Status</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData((p) => ({ ...p, status: e.target.value as "Active" | "Disabled" }))}
-                    className="h-10 w-full rounded-md border border-cream-300 bg-white px-3 text-sm text-brown-900 focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Disabled">Disabled</option>
-                  </select>
-                </div>
-              )}
+              <Input label="Email" required type="email" value={formData.email} onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))} disabled={!!editingId} />
+              <Input label="Phone" value={formData.phone} onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))} placeholder="Optional" />
             </div>
+
+            <div className="border-t border-cream-200" />
+
+            <div className="space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Account Settings</p>
+              {!editingId && (
+                <Input label="Password" required type="password" minLength={6} value={formData.password} onChange={(e) => setFormData((p) => ({ ...p, password: e.target.value }))} />
+              )}
+              <div className="grid grid-cols-2 gap-4">
+                <Select value={formData.role} onValueChange={(v) => setFormData((p) => ({ ...p, role: v as "SuperAdmin" | "Staff" | "Client" }))}>
+                  <SelectTrigger label="Role">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Client">Client</SelectItem>
+                    <SelectItem value="Staff">Staff</SelectItem>
+                    <SelectItem value="SuperAdmin">SuperAdmin</SelectItem>
+                  </SelectContent>
+                </Select>
+                {editingId && (
+                  <Select value={formData.status} onValueChange={(v) => setFormData((p) => ({ ...p, status: v as "Active" | "Disabled" }))}>
+                    <SelectTrigger label="Status">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="Disabled">Disabled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            </div>
+
             <ModalFooter>
               <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={submitting}>
-                {submitting ? "Saving..." : editingId ? "Save Changes" : "Create User"}
+              <Button type="submit" loading={submitting}>
+                {editingId ? "Save Changes" : "Create User"}
               </Button>
             </ModalFooter>
           </form>

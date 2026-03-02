@@ -13,6 +13,7 @@ import {
   ModalContent,
   ModalHeader,
   ModalTitle,
+  ModalDescription,
   ModalFooter,
 } from "@/components/ui";
 import { CalendarDays, Users, Plus, Search, XCircle, Trash2 } from "lucide-react";
@@ -299,46 +300,41 @@ export default function ReservationsManagementPage() {
         <ModalContent>
           <ModalHeader>
             <ModalTitle>New Reservation</ModalTitle>
+            <ModalDescription>Book a table for a walk-in or phone guest.</ModalDescription>
           </ModalHeader>
-          <form onSubmit={handleCreate} className="space-y-4">
-            {error && <p className="text-sm text-error-500">{error}</p>}
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-brown-700">Guest Name</label>
-              <Input required value={formData.guestName} onChange={(e) => setFormData((p) => ({ ...p, guestName: e.target.value }))} />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Email</label>
-                <Input type="email" value={formData.guestEmail} onChange={(e) => setFormData((p) => ({ ...p, guestEmail: e.target.value }))} />
+          <form onSubmit={handleCreate} className="space-y-6">
+            {error && (
+              <div className="rounded-lg border border-error-500/20 bg-error-500/5 px-4 py-3 text-sm text-error-600">
+                {error}
               </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Phone</label>
-                <Input value={formData.guestPhone} onChange={(e) => setFormData((p) => ({ ...p, guestPhone: e.target.value }))} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Date</label>
-                <Input required type="date" value={formData.date} onChange={(e) => setFormData((p) => ({ ...p, date: e.target.value }))} />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Time</label>
-                <Input required type="time" value={formData.time} onChange={(e) => setFormData((p) => ({ ...p, time: e.target.value }))} />
+            )}
+
+            <div className="space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Guest Information</p>
+              <Input label="Guest Name" required value={formData.guestName} onChange={(e) => setFormData((p) => ({ ...p, guestName: e.target.value }))} />
+              <div className="grid grid-cols-2 gap-4">
+                <Input label="Email" type="email" value={formData.guestEmail} onChange={(e) => setFormData((p) => ({ ...p, guestEmail: e.target.value }))} placeholder="Optional" />
+                <Input label="Phone" value={formData.guestPhone} onChange={(e) => setFormData((p) => ({ ...p, guestPhone: e.target.value }))} placeholder="Optional" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Party Size</label>
-                <Input required type="number" min="1" max="20" value={formData.partySize} onChange={(e) => setFormData((p) => ({ ...p, partySize: e.target.value }))} />
+
+            <div className="border-t border-cream-200" />
+
+            <div className="space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Reservation Details</p>
+              <div className="grid grid-cols-2 gap-4">
+                <Input label="Date" required type="date" value={formData.date} onChange={(e) => setFormData((p) => ({ ...p, date: e.target.value }))} />
+                <Input label="Time" required type="time" value={formData.time} onChange={(e) => setFormData((p) => ({ ...p, time: e.target.value }))} />
               </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Location</label>
-                <Input required value={formData.location} onChange={(e) => setFormData((p) => ({ ...p, location: e.target.value }))} />
+              <div className="grid grid-cols-2 gap-4">
+                <Input label="Party Size" required type="number" min="1" max="20" value={formData.partySize} onChange={(e) => setFormData((p) => ({ ...p, partySize: e.target.value }))} />
+                <Input label="Location" required value={formData.location} onChange={(e) => setFormData((p) => ({ ...p, location: e.target.value }))} />
               </div>
             </div>
+
             <ModalFooter>
               <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={submitting}>{submitting ? "Creating..." : "Create Reservation"}</Button>
+              <Button type="submit" loading={submitting}>Create Reservation</Button>
             </ModalFooter>
           </form>
         </ModalContent>

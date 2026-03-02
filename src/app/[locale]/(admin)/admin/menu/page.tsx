@@ -13,7 +13,13 @@ import {
   ModalContent,
   ModalHeader,
   ModalTitle,
+  ModalDescription,
   ModalFooter,
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
 } from "@/components/ui";
 import { UtensilsCrossed, Plus, Edit2, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -279,51 +285,56 @@ export default function MenuPage() {
         <ModalContent>
           <ModalHeader>
             <ModalTitle>{editingId ? "Edit Dish" : "Add New Dish"}</ModalTitle>
+            <ModalDescription>
+              {editingId ? "Update the dish details, pricing, and category." : "Add a new dish to your menu with bilingual content."}
+            </ModalDescription>
           </ModalHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && <p className="text-sm text-error-500">{error}</p>}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Name (English)</label>
-                <Input required value={formData.nameEn} onChange={(e) => setFormData((p) => ({ ...p, nameEn: e.target.value }))} />
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="rounded-lg border border-error-500/20 bg-error-500/5 px-4 py-3 text-sm text-error-600">
+                {error}
               </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Name (Spanish)</label>
-                <Input required value={formData.nameEs} onChange={(e) => setFormData((p) => ({ ...p, nameEs: e.target.value }))} />
-              </div>
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-brown-700">Description (English)</label>
-              <Textarea value={formData.descEn} onChange={(e) => setFormData((p) => ({ ...p, descEn: e.target.value }))} />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-brown-700">Description (Spanish)</label>
-              <Textarea value={formData.descEs} onChange={(e) => setFormData((p) => ({ ...p, descEs: e.target.value }))} />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Price ($)</label>
-                <Input required type="number" step="0.01" min="0" value={formData.price} onChange={(e) => setFormData((p) => ({ ...p, price: e.target.value }))} />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Category</label>
-                <select
-                  required
-                  value={formData.category}
-                  onChange={(e) => setFormData((p) => ({ ...p, category: e.target.value }))}
-                  className="h-10 w-full rounded-md border border-cream-300 bg-white px-3 text-sm text-brown-900 focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
-                >
-                  <option value="">Select category</option>
-                  {categories.map((cat) => (
-                    <option key={cat._id} value={cat._id}>{cat.name.en}</option>
-                  ))}
-                </select>
+            )}
+
+            <div className="space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Dish Name</p>
+              <div className="grid grid-cols-2 gap-4">
+                <Input label="English" required value={formData.nameEn} onChange={(e) => setFormData((p) => ({ ...p, nameEn: e.target.value }))} />
+                <Input label="Spanish" required value={formData.nameEs} onChange={(e) => setFormData((p) => ({ ...p, nameEs: e.target.value }))} />
               </div>
             </div>
+
+            <div className="border-t border-cream-200" />
+
+            <div className="space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Description</p>
+              <Textarea label="English" value={formData.descEn} onChange={(e) => setFormData((p) => ({ ...p, descEn: e.target.value }))} />
+              <Textarea label="Spanish" value={formData.descEs} onChange={(e) => setFormData((p) => ({ ...p, descEs: e.target.value }))} />
+            </div>
+
+            <div className="border-t border-cream-200" />
+
+            <div className="space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Pricing & Category</p>
+              <div className="grid grid-cols-2 gap-4">
+                <Input label="Price ($)" required type="number" step="0.01" min="0" value={formData.price} onChange={(e) => setFormData((p) => ({ ...p, price: e.target.value }))} />
+                <Select value={formData.category || undefined} onValueChange={(v) => setFormData((p) => ({ ...p, category: v }))}>
+                  <SelectTrigger label="Category">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat._id} value={cat._id}>{cat.name.en}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <ModalFooter>
               <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={submitting}>
-                {submitting ? "Saving..." : editingId ? "Save Changes" : "Create Dish"}
+              <Button type="submit" loading={submitting}>
+                {editingId ? "Save Changes" : "Create Dish"}
               </Button>
             </ModalFooter>
           </form>

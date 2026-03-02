@@ -11,6 +11,7 @@ import {
   ModalContent,
   ModalHeader,
   ModalTitle,
+  ModalDescription,
   ModalFooter,
 } from "@/components/ui";
 import { Plus, Edit2, Trash2, FolderOpen } from "lucide-react";
@@ -192,29 +193,37 @@ export default function CategoriesPage() {
         <ModalContent>
           <ModalHeader>
             <ModalTitle>{editingId ? "Edit Category" : "Add New Category"}</ModalTitle>
+            <ModalDescription>
+              {editingId ? "Update the category name and description." : "Add a new menu category with bilingual content."}
+            </ModalDescription>
           </ModalHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && <p className="text-sm text-error-500">{error}</p>}
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-brown-700">Name (English)</label>
-              <Input required value={formData.nameEn} onChange={(e) => setFormData((p) => ({ ...p, nameEn: e.target.value }))} />
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="rounded-lg border border-error-500/20 bg-error-500/5 px-4 py-3 text-sm text-error-600">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Category Name</p>
+              <div className="grid grid-cols-2 gap-4">
+                <Input label="English" required value={formData.nameEn} onChange={(e) => setFormData((p) => ({ ...p, nameEn: e.target.value }))} placeholder="e.g. Appetizers" />
+                <Input label="Spanish" required value={formData.nameEs} onChange={(e) => setFormData((p) => ({ ...p, nameEs: e.target.value }))} placeholder="e.g. Aperitivos" />
+              </div>
             </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-brown-700">Name (Spanish)</label>
-              <Input required value={formData.nameEs} onChange={(e) => setFormData((p) => ({ ...p, nameEs: e.target.value }))} />
+
+            <div className="border-t border-cream-200" />
+
+            <div className="space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Description</p>
+              <Input label="English" value={formData.descEn} onChange={(e) => setFormData((p) => ({ ...p, descEn: e.target.value }))} placeholder="Optional description" />
+              <Input label="Spanish" value={formData.descEs} onChange={(e) => setFormData((p) => ({ ...p, descEs: e.target.value }))} placeholder="Descripción opcional" />
             </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-brown-700">Description (English)</label>
-              <Input value={formData.descEn} onChange={(e) => setFormData((p) => ({ ...p, descEn: e.target.value }))} />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-brown-700">Description (Spanish)</label>
-              <Input value={formData.descEs} onChange={(e) => setFormData((p) => ({ ...p, descEs: e.target.value }))} />
-            </div>
+
             <ModalFooter>
               <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={submitting}>
-                {submitting ? "Saving..." : editingId ? "Save Changes" : "Create Category"}
+              <Button type="submit" loading={submitting}>
+                {editingId ? "Save Changes" : "Create Category"}
               </Button>
             </ModalFooter>
           </form>
