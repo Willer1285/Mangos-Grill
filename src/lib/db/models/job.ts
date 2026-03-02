@@ -11,8 +11,8 @@ export interface IJobApplication {
 
 export interface IJob extends Document {
   title: string;
-  department: "Kitchen" | "Front of House" | "Management" | "Operations";
-  employmentType: "Full-time" | "Part-time" | "Contract";
+  department: string;
+  employmentType: string;
   location: string;
   description: { en: string; es: string };
   requirements: { en: string; es: string };
@@ -46,13 +46,13 @@ const jobSchema = new Schema<IJob>(
     title: { type: String, required: true, trim: true },
     department: {
       type: String,
-      enum: ["Kitchen", "Front of House", "Management", "Operations"],
       required: true,
+      trim: true,
     },
     employmentType: {
       type: String,
-      enum: ["Full-time", "Part-time", "Contract"],
       required: true,
+      trim: true,
     },
     location: { type: String, required: true },
     description: {

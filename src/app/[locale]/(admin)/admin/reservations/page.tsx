@@ -15,6 +15,12 @@ import {
   ModalTitle,
   ModalDescription,
   ModalFooter,
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+  Textarea,
 } from "@/components/ui";
 import { CalendarDays, Users, Plus, Search, XCircle, Trash2 } from "lucide-react";
 
@@ -31,6 +37,35 @@ interface Reservation {
   table?: { number: number; name: string };
   location: string;
 }
+
+interface Location {
+  _id: string;
+  name: string;
+  tables: Array<{ _id: string; number: number; capacity: number }>;
+}
+
+const OCCASIONS = [
+  "Romantic",
+  "Family",
+  "Business",
+  "Birthday",
+  "Anniversary",
+  "Wedding Anniversary",
+  "Graduation",
+  "Friends Gathering",
+  "Baby Shower",
+  "Engagement",
+  "Promotion",
+  "Farewell",
+  "Holiday Celebration",
+  "Corporate Event",
+  "Baptism",
+  "Date Night",
+  "Retirement",
+  "Casual Dining",
+  "Reunion",
+  "Other",
+];
 
 type StatusFilter = "All" | "Pending" | "Confirmed" | "Seated" | "Completed" | "Cancelled";
 
@@ -59,7 +94,10 @@ const EMPTY_FORM = {
   date: "",
   time: "",
   partySize: "2",
-  location: "Miami",
+  location: "",
+  table: "",
+  occasion: "",
+  specialRequests: "",
 };
 
 export default function ReservationsManagementPage() {
@@ -72,6 +110,7 @@ export default function ReservationsManagementPage() {
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [locations, setLocations] = useState<Location[]>([]);
 
   const fetchReservations = useCallback(async () => {
     setLoading(true);
@@ -100,23 +139,42 @@ export default function ReservationsManagementPage() {
     fetchReservations();
   }, [fetchReservations]);
 
+  useEffect(() => {
+    async function fetchLocations() {
+      try {
+        const res = await fetch("/api/admin/locations");
+        if (res.ok) {
+          const data = await res.json();
+          setLocations(data);
+        }
+      } catch {
+        /* empty */
+      }
+    }
+    fetchLocations();
+  }, []);
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setError("");
     try {
+      const body: Record<string, unknown> = {
+        guestName: formData.guestName,
+        guestEmail: formData.guestEmail,
+        guestPhone: formData.guestPhone,
+        date: formData.date,
+        time: formData.time,
+        partySize: parseInt(formData.partySize),
+        location: formData.location,
+      };
+      if (formData.table) body.table = formData.table;
+      if (formData.occasion) body.occasion = formData.occasion;
+      if (formData.specialRequests) body.specialRequests = formData.specialRequests;
       const res = await fetch("/api/admin/reservations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          guestName: formData.guestName,
-          guestEmail: formData.guestEmail,
-          guestPhone: formData.guestPhone,
-          date: formData.date,
-          time: formData.time,
-          partySize: parseInt(formData.partySize),
-          location: formData.location,
-        }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -268,18 +326,19 @@ export default function ReservationsManagementPage() {
                         </td>
                         <td className="px-5 py-3 text-right">
                           <div className="flex items-center justify-end gap-1">
-                            <select
-                              value={res.status}
-                              onChange={(e) => handleStatusChange(res._id, e.target.value)}
-                              className="h-8 rounded border border-cream-300 bg-white px-2 text-xs text-brown-900 focus:border-terracotta-500 focus:outline-none"
-                            >
-                              <option value="Pending">Pending</option>
-                              <option value="Confirmed">Confirmed</option>
-                              <option value="Seated">Seated</option>
-                              <option value="Completed">Completed</option>
-                              <option value="Cancelled">Cancelled</option>
-                              <option value="No-show">No-show</option>
-                            </select>
+                            <Select value={res.status} onValueChange={(v) => handleStatusChange(res._id, v)}>
+                              <SelectTrigger className="h-8 w-[120px] text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Pending">Pending</SelectItem>
+                                <SelectItem value="Confirmed">Confirmed</SelectItem>
+                                <SelectItem value="Seated">Seated</SelectItem>
+                                <SelectItem value="Completed">Completed</SelectItem>
+                                <SelectItem value="Cancelled">Cancelled</SelectItem>
+                                <SelectItem value="No-show">No-show</SelectItem>
+                              </SelectContent>
+                            </Select>
                             <Button variant="ghost" size="icon-sm" onClick={() => handleDeleteRes(res._id)}>
                               <Trash2 className="h-4 w-4 text-error-500" />
                             </Button>
@@ -326,9 +385,78 @@ export default function ReservationsManagementPage() {
                 <Input label="Date" required type="date" value={formData.date} onChange={(e) => setFormData((p) => ({ ...p, date: e.target.value }))} />
                 <Input label="Time" required type="time" value={formData.time} onChange={(e) => setFormData((p) => ({ ...p, time: e.target.value }))} />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <Input label="Party Size" required type="number" min="1" max="20" value={formData.partySize} onChange={(e) => setFormData((p) => ({ ...p, partySize: e.target.value }))} />
-                <Input label="Location" required value={formData.location} onChange={(e) => setFormData((p) => ({ ...p, location: e.target.value }))} />
+              <Input label="Party Size" required type="number" min="1" max="20" value={formData.partySize} onChange={(e) => setFormData((p) => ({ ...p, partySize: e.target.value }))} />
+            </div>
+
+            <div className="border-t border-cream-200" />
+
+            <div className="space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Location & Table</p>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-brown-700">Location <span className="text-error-500">*</span></label>
+                <Select value={formData.location} onValueChange={(v) => setFormData((p) => ({ ...p, location: v, table: "" }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map((loc) => (
+                      <SelectItem key={loc._id} value={loc._id}>{loc.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {formData.location && (() => {
+                const selectedLocation = locations.find((l) => l._id === formData.location);
+                if (!selectedLocation || selectedLocation.tables.length === 0) return null;
+                return (
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-brown-700">Assign Table</label>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedLocation.tables.map((t) => (
+                        <button
+                          key={t._id}
+                          type="button"
+                          onClick={() => setFormData((p) => ({ ...p, table: p.table === t._id ? "" : t._id }))}
+                          className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                            formData.table === t._id
+                              ? "border-terracotta-500 bg-terracotta-500 text-white"
+                              : "border-cream-300 bg-white text-brown-700 hover:border-terracotta-300 hover:bg-terracotta-50"
+                          }`}
+                        >
+                          T-{t.number} <span className="text-xs opacity-75">({t.capacity}p)</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            <div className="border-t border-cream-200" />
+
+            <div className="space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Occasion & Notes</p>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-brown-700">Occasion</label>
+                <Select value={formData.occasion} onValueChange={(v) => setFormData((p) => ({ ...p, occasion: v }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select an occasion (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {OCCASIONS.map((occ) => (
+                      <SelectItem key={occ} value={occ}>{occ}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-brown-700">Special Requests</label>
+                <Textarea
+                  placeholder="Any special requests or notes..."
+                  value={formData.specialRequests}
+                  onChange={(e) => setFormData((p) => ({ ...p, specialRequests: e.target.value }))}
+                  rows={3}
+                />
               </div>
             </div>
 

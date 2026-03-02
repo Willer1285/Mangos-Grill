@@ -56,3 +56,5 @@ export {
 } from "./dropdown-menu";
 
 export { EmptyState } from "./empty-state";
+
+export { ImageUpload } from "./image-upload";

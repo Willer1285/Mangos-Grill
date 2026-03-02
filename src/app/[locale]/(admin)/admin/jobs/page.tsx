@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui";
 import { Briefcase, Users, UserCheck, Clock, Plus, Eye, Edit2 } from "lucide-react";
+import { autoTranslate } from "@/lib/utils/translate";
 
 interface JobApplication {
   _id?: string;
@@ -73,13 +74,11 @@ const appStatusVariant: Record<string, string> = {
 
 const EMPTY_FORM = {
   title: "",
-  department: "Kitchen",
-  employmentType: "Full-time",
-  location: "Miami",
-  descEn: "",
-  descEs: "",
-  reqEn: "",
-  reqEs: "",
+  department: "",
+  employmentType: "",
+  location: "",
+  description: "",
+  requirements: "",
   salaryMin: "",
   salaryMax: "",
   status: "Draft",
@@ -93,6 +92,7 @@ export default function JobsManagementPage() {
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [locations, setLocations] = useState<Array<{ _id: string; name: string }>>([]);
 
   const fetchJobs = useCallback(async () => {
     setLoading(true);
@@ -115,11 +115,26 @@ export default function JobsManagementPage() {
     fetchJobs();
   }, [fetchJobs]);
 
+  useEffect(() => {
+    async function fetchLocations() {
+      try {
+        const res = await fetch("/api/admin/locations");
+        if (!res.ok) throw new Error("Failed to fetch locations");
+        const data = await res.json();
+        setLocations(data);
+      } catch {
+        setLocations([]);
+      }
+    }
+    fetchLocations();
+  }, []);
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setError("");
     try {
+      const translations = await autoTranslate([formData.description, formData.requirements]);
       const res = await fetch("/api/admin/jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -128,8 +143,8 @@ export default function JobsManagementPage() {
           department: formData.department,
           employmentType: formData.employmentType,
           location: formData.location,
-          description: { en: formData.descEn, es: formData.descEs },
-          requirements: { en: formData.reqEn, es: formData.reqEs },
+          description: { en: translations[0].en, es: translations[0].es },
+          requirements: { en: translations[1].en, es: translations[1].es },
           salaryMin: formData.salaryMin ? parseInt(formData.salaryMin) : undefined,
           salaryMax: formData.salaryMax ? parseInt(formData.salaryMax) : undefined,
           status: formData.status,
@@ -243,7 +258,7 @@ export default function JobsManagementPage() {
                       </td>
                       <td className="px-5 py-3 text-center font-medium text-brown-700">{job.applications.length}</td>
                       <td className="px-5 py-3 text-brown-600">
-                        {job.postedAt ? new Date(job.postedAt).toLocaleDateString() : "—"}
+                        {job.postedAt ? new Date(job.postedAt).toLocaleDateString() : "\u2014"}
                       </td>
                       <td className="px-5 py-3 text-center">
                         <Badge variant={badgeVariant[job.status] as "active" | "pending" | "disabled"}>
@@ -298,7 +313,7 @@ export default function JobsManagementPage() {
                         </td>
                         <td className="px-5 py-3 text-brown-700">{app.jobTitle}</td>
                         <td className="px-5 py-3 text-brown-600">{new Date(app.appliedAt).toLocaleDateString()}</td>
-                        <td className="px-5 py-3 text-brown-600">{app.experience || "—"}</td>
+                        <td className="px-5 py-3 text-brown-600">{app.experience || "\u2014"}</td>
                         <td className="px-5 py-3 text-center">
                           <Badge variant={appStatusVariant[app.status] as "pending" | "info" | "success" | "error"}>
                             {app.status}
@@ -319,7 +334,7 @@ export default function JobsManagementPage() {
         <ModalContent className="max-w-2xl">
           <ModalHeader>
             <ModalTitle>Post New Job</ModalTitle>
-            <ModalDescription>Create a new job listing with bilingual descriptions.</ModalDescription>
+            <ModalDescription>Create a new job listing. Descriptions will be auto-translated.</ModalDescription>
           </ModalHeader>
           <form onSubmit={handleCreate} className="space-y-6">
             {error && (
@@ -332,30 +347,20 @@ export default function JobsManagementPage() {
               <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Job Details</p>
               <div className="grid grid-cols-2 gap-4">
                 <Input label="Title" required value={formData.title} onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))} placeholder="e.g. Head Chef" />
-                <Select value={formData.department} onValueChange={(v) => setFormData((p) => ({ ...p, department: v }))}>
-                  <SelectTrigger label="Department">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Kitchen">Kitchen</SelectItem>
-                    <SelectItem value="Front of House">Front of House</SelectItem>
-                    <SelectItem value="Management">Management</SelectItem>
-                    <SelectItem value="Operations">Operations</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Input label="Department" required value={formData.department} onChange={(e) => setFormData((p) => ({ ...p, department: e.target.value }))} placeholder="e.g. Kitchen" />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <Select value={formData.employmentType} onValueChange={(v) => setFormData((p) => ({ ...p, employmentType: v }))}>
-                  <SelectTrigger label="Employment Type">
-                    <SelectValue />
+                <Input label="Employment Type" required value={formData.employmentType} onChange={(e) => setFormData((p) => ({ ...p, employmentType: e.target.value }))} placeholder="e.g. Full-time" />
+                <Select value={formData.location} onValueChange={(v) => setFormData((p) => ({ ...p, location: v }))}>
+                  <SelectTrigger label="Location">
+                    <SelectValue placeholder="Select location" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Full-time">Full-time</SelectItem>
-                    <SelectItem value="Part-time">Part-time</SelectItem>
-                    <SelectItem value="Contract">Contract</SelectItem>
+                    {locations.map((loc) => (
+                      <SelectItem key={loc._id} value={loc.name}>{loc.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-                <Input label="Location" required value={formData.location} onChange={(e) => setFormData((p) => ({ ...p, location: e.target.value }))} />
               </div>
             </div>
 
@@ -363,16 +368,14 @@ export default function JobsManagementPage() {
 
             <div className="space-y-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Description</p>
-              <Textarea label="English" required rows={3} value={formData.descEn} onChange={(e) => setFormData((p) => ({ ...p, descEn: e.target.value }))} />
-              <Textarea label="Spanish" required rows={3} value={formData.descEs} onChange={(e) => setFormData((p) => ({ ...p, descEs: e.target.value }))} />
+              <Textarea required rows={3} value={formData.description} onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))} placeholder="Job description (will be auto-translated)" />
             </div>
 
             <div className="border-t border-cream-200" />
 
             <div className="space-y-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Requirements</p>
-              <Textarea label="English" required rows={2} value={formData.reqEn} onChange={(e) => setFormData((p) => ({ ...p, reqEn: e.target.value }))} />
-              <Textarea label="Spanish" required rows={2} value={formData.reqEs} onChange={(e) => setFormData((p) => ({ ...p, reqEs: e.target.value }))} />
+              <Textarea required rows={2} value={formData.requirements} onChange={(e) => setFormData((p) => ({ ...p, requirements: e.target.value }))} placeholder="Job requirements (will be auto-translated)" />
             </div>
 
             <div className="border-t border-cream-200" />

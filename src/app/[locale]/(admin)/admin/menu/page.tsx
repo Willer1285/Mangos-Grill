@@ -20,9 +20,11 @@ import {
   SelectContent,
   SelectItem,
   SelectValue,
+  ImageUpload,
 } from "@/components/ui";
 import { UtensilsCrossed, Plus, Edit2, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { autoTranslate } from "@/lib/utils/translate";
 
 interface Category {
   _id: string;
@@ -36,16 +38,17 @@ interface Product {
   price: number;
   category: Category;
   image?: string;
+  ingredients?: { en: string[]; es: string[] };
   status: "Available" | "Unavailable";
 }
 
 const EMPTY_FORM = {
-  nameEn: "",
-  nameEs: "",
-  descEn: "",
-  descEs: "",
+  name: "",
+  description: "",
   price: "",
   category: "",
+  image: "",
+  ingredients: "",
 };
 
 const containerVariants = {
@@ -128,12 +131,12 @@ export default function MenuPage() {
   function openEdit(item: Product) {
     setEditingId(item._id);
     setFormData({
-      nameEn: item.name.en,
-      nameEs: item.name.es,
-      descEn: item.description.en,
-      descEs: item.description.es,
+      name: item.name.en || item.name.es,
+      description: item.description.en || item.description.es,
       price: String(item.price),
       category: item.category?._id || "",
+      image: item.image || "",
+      ingredients: item.ingredients?.en?.join(", ") || "",
     });
     setError("");
     setModalOpen(true);
@@ -143,13 +146,23 @@ export default function MenuPage() {
     e.preventDefault();
     setSubmitting(true);
     setError("");
-    const payload = {
-      name: { en: formData.nameEn, es: formData.nameEs },
-      description: { en: formData.descEn, es: formData.descEs },
-      price: parseFloat(formData.price),
-      category: formData.category,
-    };
     try {
+      const [translatedName, translatedDesc] = await autoTranslate([
+        formData.name,
+        formData.description,
+      ]);
+      const ingredientArray = formData.ingredients
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const payload = {
+        name: translatedName,
+        description: translatedDesc,
+        price: parseFloat(formData.price),
+        category: formData.category,
+        image: formData.image,
+        ingredients: { en: ingredientArray, es: ingredientArray },
+      };
       const url = editingId
         ? `/api/admin/products/${editingId}`
         : "/api/admin/products";
@@ -244,15 +257,15 @@ export default function MenuPage() {
               <Card className="overflow-hidden border border-cream-200">
                 <div className="flex h-40 items-center justify-center bg-cream-200">
                   {item.image ? (
-                    <img src={item.image} alt={item.name.en} className="h-full w-full object-cover" />
+                    <img src={item.image} alt={item.name.es || item.name.en} className="h-full w-full object-cover" />
                   ) : (
                     <UtensilsCrossed className="h-10 w-10 text-brown-400" />
                   )}
                 </div>
                 <CardContent className="p-4">
                   <div className="mb-2">
-                    <h3 className="font-semibold text-brown-900">{item.name.en}</h3>
-                    <p className="text-xs text-brown-500">{item.name.es}</p>
+                    <h3 className="font-semibold text-brown-900">{item.name.es || item.name.en}</h3>
+                    <p className="text-xs text-brown-500">{item.name.en}</p>
                     <p className="mt-1 text-sm text-brown-600">{item.description.en}</p>
                   </div>
                   <p className="mb-4 text-lg font-bold text-terracotta-500">
@@ -286,7 +299,7 @@ export default function MenuPage() {
           <ModalHeader>
             <ModalTitle>{editingId ? "Edit Dish" : "Add New Dish"}</ModalTitle>
             <ModalDescription>
-              {editingId ? "Update the dish details, pricing, and category." : "Add a new dish to your menu with bilingual content."}
+              {editingId ? "Update the dish details, pricing, and category." : "Add a new dish to your menu."}
             </ModalDescription>
           </ModalHeader>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -296,20 +309,43 @@ export default function MenuPage() {
               </div>
             )}
 
+            <ImageUpload
+              label="Dish Photo"
+              value={formData.image}
+              onChange={(url) => setFormData((p) => ({ ...p, image: url }))}
+            />
+
             <div className="space-y-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Dish Name</p>
-              <div className="grid grid-cols-2 gap-4">
-                <Input label="English" required value={formData.nameEn} onChange={(e) => setFormData((p) => ({ ...p, nameEn: e.target.value }))} />
-                <Input label="Spanish" required value={formData.nameEs} onChange={(e) => setFormData((p) => ({ ...p, nameEs: e.target.value }))} />
-              </div>
+              <Input
+                label="Name"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
+              />
             </div>
 
             <div className="border-t border-cream-200" />
 
             <div className="space-y-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Description</p>
-              <Textarea label="English" value={formData.descEn} onChange={(e) => setFormData((p) => ({ ...p, descEn: e.target.value }))} />
-              <Textarea label="Spanish" value={formData.descEs} onChange={(e) => setFormData((p) => ({ ...p, descEs: e.target.value }))} />
+              <Textarea
+                label="Description"
+                value={formData.description}
+                onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
+              />
+            </div>
+
+            <div className="border-t border-cream-200" />
+
+            <div className="space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Ingredients</p>
+              <Input
+                label="Ingredients"
+                value={formData.ingredients}
+                onChange={(e) => setFormData((p) => ({ ...p, ingredients: e.target.value }))}
+              />
+              <p className="text-xs text-brown-400">Separate with commas</p>
             </div>
 
             <div className="border-t border-cream-200" />

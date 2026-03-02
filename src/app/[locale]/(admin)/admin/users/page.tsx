@@ -22,6 +22,7 @@ import {
   SelectContent,
   SelectItem,
   SelectValue,
+  ImageUpload,
 } from "@/components/ui";
 import { Search, Plus, Edit2, Trash2 } from "lucide-react";
 
@@ -34,6 +35,7 @@ interface User {
   lastName: string;
   email: string;
   phone?: string;
+  avatar?: string;
   role: "SuperAdmin" | "Staff" | "Client";
   status: "Active" | "Disabled";
   createdAt: string;
@@ -44,6 +46,7 @@ interface FormData {
   lastName: string;
   email: string;
   phone: string;
+  avatar: string;
   password: string;
   role: "SuperAdmin" | "Staff" | "Client";
   status: "Active" | "Disabled";
@@ -54,6 +57,7 @@ const EMPTY_FORM: FormData = {
   lastName: "",
   email: "",
   phone: "",
+  avatar: "",
   password: "",
   role: "Client",
   status: "Active",
@@ -119,6 +123,7 @@ export default function UsersPage() {
       lastName: user.lastName,
       email: user.email,
       phone: user.phone || "",
+      avatar: user.avatar || "",
       password: "",
       role: user.role,
       status: user.status,
@@ -257,7 +262,7 @@ export default function UsersPage() {
                     <tr key={user._id} className="transition-colors hover:bg-cream-50">
                       <td className="whitespace-nowrap px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <Avatar initials={getInitials(user.firstName, user.lastName)} size="sm" />
+                          <Avatar initials={getInitials(user.firstName, user.lastName)} src={user.avatar} size="sm" />
                           <span className="font-medium text-brown-900">
                             {user.firstName} {user.lastName}
                           </span>
@@ -316,6 +321,7 @@ export default function UsersPage() {
 
             <div className="space-y-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Personal Information</p>
+              <ImageUpload label="Profile Photo" value={formData.avatar} onChange={(url) => setFormData((p) => ({ ...p, avatar: url }))} />
               <div className="grid grid-cols-2 gap-4">
                 <Input label="First Name" required value={formData.firstName} onChange={(e) => setFormData((p) => ({ ...p, firstName: e.target.value }))} />
                 <Input label="Last Name" required value={formData.lastName} onChange={(e) => setFormData((p) => ({ ...p, lastName: e.target.value }))} />

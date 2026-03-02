@@ -13,9 +13,11 @@ import {
   ModalTitle,
   ModalDescription,
   ModalFooter,
+  ImageUpload,
 } from "@/components/ui";
 import { Plus, Edit2, Trash2, FolderOpen } from "lucide-react";
 import { motion } from "framer-motion";
+import { autoTranslate } from "@/lib/utils/translate";
 
 interface Category {
   _id: string;
@@ -26,7 +28,7 @@ interface Category {
   sortOrder: number;
 }
 
-const EMPTY_FORM = { nameEn: "", nameEs: "", descEn: "", descEs: "" };
+const EMPTY_FORM = { name: "", description: "", image: "" };
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -75,10 +77,9 @@ export default function CategoriesPage() {
   function openEdit(cat: Category) {
     setEditingId(cat._id);
     setFormData({
-      nameEn: cat.name.en,
-      nameEs: cat.name.es,
-      descEn: cat.description.en,
-      descEs: cat.description.es,
+      name: cat.name.en || cat.name.es,
+      description: cat.description.en || cat.description.es,
+      image: cat.image || "",
     });
     setError("");
     setModalOpen(true);
@@ -88,11 +89,16 @@ export default function CategoriesPage() {
     e.preventDefault();
     setSubmitting(true);
     setError("");
-    const payload = {
-      name: { en: formData.nameEn, es: formData.nameEs },
-      description: { en: formData.descEn, es: formData.descEs },
-    };
     try {
+      const [name, description] = await autoTranslate([
+        formData.name,
+        formData.description,
+      ]);
+      const payload = {
+        name,
+        description,
+        image: formData.image,
+      };
       const url = editingId
         ? `/api/admin/categories/${editingId}`
         : "/api/admin/categories";
@@ -159,7 +165,7 @@ export default function CategoriesPage() {
               <Card className="overflow-hidden border border-cream-200">
                 <div className="flex h-32 items-center justify-center bg-cream-200">
                   {category.image ? (
-                    <img src={category.image} alt={category.name.en} className="h-full w-full object-cover" />
+                    <img src={category.image} alt={category.name.es || category.name.en} className="h-full w-full object-cover" />
                   ) : (
                     <FolderOpen className="h-10 w-10 text-brown-400" />
                   )}
@@ -167,10 +173,10 @@ export default function CategoriesPage() {
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="text-lg font-bold text-brown-900">{category.name.en}</h3>
-                      <p className="text-sm text-brown-500">{category.name.es}</p>
-                      {category.description.en && (
-                        <p className="mt-1 text-sm text-brown-600">{category.description.en}</p>
+                      <h3 className="text-lg font-bold text-brown-900">{category.name.es || category.name.en}</h3>
+                      <p className="text-sm text-brown-500">{category.name.en}</p>
+                      {(category.description.es || category.description.en) && (
+                        <p className="mt-1 text-sm text-brown-600">{category.description.es || category.description.en}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-1">
@@ -194,7 +200,9 @@ export default function CategoriesPage() {
           <ModalHeader>
             <ModalTitle>{editingId ? "Edit Category" : "Add New Category"}</ModalTitle>
             <ModalDescription>
-              {editingId ? "Update the category name and description." : "Add a new menu category with bilingual content."}
+              {editingId
+                ? "Update the category details below."
+                : "Add a new menu category. Translations are generated automatically."}
             </ModalDescription>
           </ModalHeader>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -204,20 +212,35 @@ export default function CategoriesPage() {
               </div>
             )}
 
+            <ImageUpload
+              label="Category Image"
+              value={formData.image}
+              onChange={(url) => setFormData((p) => ({ ...p, image: url }))}
+            />
+
+            <div className="border-t border-cream-200" />
+
             <div className="space-y-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Category Name</p>
-              <div className="grid grid-cols-2 gap-4">
-                <Input label="English" required value={formData.nameEn} onChange={(e) => setFormData((p) => ({ ...p, nameEn: e.target.value }))} placeholder="e.g. Appetizers" />
-                <Input label="Spanish" required value={formData.nameEs} onChange={(e) => setFormData((p) => ({ ...p, nameEs: e.target.value }))} placeholder="e.g. Aperitivos" />
-              </div>
+              <Input
+                label="Name"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
+                placeholder="e.g. Appetizers"
+              />
             </div>
 
             <div className="border-t border-cream-200" />
 
             <div className="space-y-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Description</p>
-              <Input label="English" value={formData.descEn} onChange={(e) => setFormData((p) => ({ ...p, descEn: e.target.value }))} placeholder="Optional description" />
-              <Input label="Spanish" value={formData.descEs} onChange={(e) => setFormData((p) => ({ ...p, descEs: e.target.value }))} placeholder="Descripción opcional" />
+              <Input
+                label="Description"
+                value={formData.description}
+                onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
+                placeholder="Optional description"
+              />
             </div>
 
             <ModalFooter>

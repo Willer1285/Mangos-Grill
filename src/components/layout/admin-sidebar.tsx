@@ -12,6 +12,7 @@ import {
   ClipboardList,
   CalendarDays,
   Briefcase,
+  MapPin,
   Settings,
   LogOut,
   Menu,
@@ -37,6 +38,7 @@ const navItems = [
   { href: "/admin/payments", label: "Payments", icon: CreditCard },
   { href: "/admin/orders", label: "Orders", icon: ClipboardList },
   { href: "/admin/reservations", label: "Reservations", icon: CalendarDays },
+  { href: "/admin/locations", label: "Locations", icon: MapPin },
   { href: "/admin/jobs", label: "Jobs", icon: Briefcase },
 ];
 

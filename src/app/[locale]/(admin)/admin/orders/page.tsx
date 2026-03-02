@@ -8,8 +8,21 @@ import {
   Button,
   Spinner,
   Pagination,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  ModalDescription,
+  ModalFooter,
+  Input,
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+  Textarea,
 } from "@/components/ui";
-import { ChevronDown, ChevronUp, Eye, Package } from "lucide-react";
+import { ChevronDown, ChevronUp, Eye, Package, Plus, X } from "lucide-react";
 
 interface OrderItem {
   name: string;
@@ -31,6 +44,12 @@ interface Order {
   paymentMethod: string;
   paymentStatus: string;
   createdAt: string;
+}
+
+interface Product {
+  _id: string;
+  name: { en: string; es: string };
+  price: number;
 }
 
 type StatusFilter = "All" | "New" | "Preparing" | "Ready" | "InTransit" | "Delivered" | "Cancelled";
@@ -61,6 +80,21 @@ export default function OrdersManagementPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [createError, setCreateError] = useState("");
+  const [orderItems, setOrderItems] = useState<
+    Array<{ productId: string; name: string; price: number; quantity: number }>
+  >([]);
+  const [orderForm, setOrderForm] = useState({
+    deliveryType: "Dine-in",
+    tableNumber: "",
+    paymentMethod: "Cash",
+    paymentStatus: "Pending",
+    notes: "",
+    customerName: "",
+  });
   const limit = 20;
 
   const fetchOrders = useCallback(async () => {
@@ -115,6 +149,116 @@ export default function OrdersManagementPage() {
     }
   }
 
+  // Fetch products when the create modal opens
+  useEffect(() => {
+    if (!createOpen) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/admin/products");
+        if (!res.ok) throw new Error("Failed to fetch products");
+        const data = await res.json();
+        if (!cancelled) setProducts(data.products ?? data);
+      } catch {
+        if (!cancelled) setProducts([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [createOpen]);
+
+  function openCreateModal() {
+    setOrderItems([]);
+    setOrderForm({
+      deliveryType: "Dine-in",
+      tableNumber: "",
+      paymentMethod: "Cash",
+      paymentStatus: "Pending",
+      notes: "",
+      customerName: "",
+    });
+    setCreateError("");
+    setCreateOpen(true);
+  }
+
+  function addProduct(productId: string) {
+    const product = products.find((p) => p._id === productId);
+    if (!product) return;
+    // If already in list, increment quantity
+    setOrderItems((prev) => {
+      const existing = prev.find((i) => i.productId === productId);
+      if (existing) {
+        return prev.map((i) =>
+          i.productId === productId ? { ...i, quantity: i.quantity + 1 } : i
+        );
+      }
+      return [...prev, { productId, name: product.name.en, price: product.price, quantity: 1 }];
+    });
+  }
+
+  function removeItem(productId: string) {
+    setOrderItems((prev) => prev.filter((i) => i.productId !== productId));
+  }
+
+  function updateItemQuantity(productId: string, quantity: number) {
+    if (quantity < 1) return;
+    setOrderItems((prev) =>
+      prev.map((i) => (i.productId === productId ? { ...i, quantity } : i))
+    );
+  }
+
+  const createSubtotal = orderItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const createTax = createSubtotal * 0.1;
+  const createTotal = createSubtotal + createTax;
+
+  async function handleCreateOrder() {
+    if (orderItems.length === 0) {
+      setCreateError("Please add at least one product.");
+      return;
+    }
+    setSubmitting(true);
+    setCreateError("");
+    try {
+      const body = {
+        customerName: orderForm.customerName || "Guest",
+        items: orderItems.map((i) => ({
+          product: i.productId,
+          name: i.name,
+          quantity: i.quantity,
+          price: i.price,
+          subtotal: i.price * i.quantity,
+        })),
+        deliveryType: orderForm.deliveryType,
+        ...(orderForm.deliveryType === "Dine-in" && orderForm.tableNumber
+          ? { tableNumber: orderForm.tableNumber }
+          : {}),
+        paymentMethod: orderForm.paymentMethod,
+        paymentStatus: orderForm.paymentStatus,
+        subtotal: createSubtotal,
+        taxAmount: createTax,
+        taxRate: 0.1,
+        total: createTotal,
+        notes: orderForm.notes,
+      };
+      const res = await fetch("/api/admin/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to create order");
+      }
+      setCreateOpen(false);
+      fetchOrders();
+    } catch (e: unknown) {
+      setCreateError(e instanceof Error ? e.message : "Failed to create order");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   const nextStatus: Record<string, string> = {
@@ -126,8 +270,14 @@ export default function OrdersManagementPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-semibold text-brown-900">Orders Management</h1>
-        <span className="text-sm text-brown-500">{total} total orders</span>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-semibold text-brown-900">Orders Management</h1>
+          <span className="text-sm text-brown-500">{total} total orders</span>
+        </div>
+        <Button onClick={openCreateModal}>
+          <Plus className="h-4 w-4" />
+          Create Order
+        </Button>
       </div>
 
       {/* Filter Tabs */}
@@ -263,6 +413,190 @@ export default function OrdersManagementPage() {
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
       )}
+
+      {/* Create Order Modal */}
+      <Modal open={createOpen} onOpenChange={setCreateOpen}>
+        <ModalContent className="max-w-2xl">
+          <ModalHeader>
+            <ModalTitle>Create Order</ModalTitle>
+            <ModalDescription>
+              Create a manual order with product selection and payment details.
+            </ModalDescription>
+          </ModalHeader>
+
+          {/* Products Section */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-brown-500">Products</h3>
+            <Select onValueChange={addProduct} value="">
+              <SelectTrigger label="Add a product">
+                <SelectValue placeholder="Select a product..." />
+              </SelectTrigger>
+              <SelectContent>
+                {products.map((p) => (
+                  <SelectItem key={p._id} value={p._id}>
+                    {p.name.en} &mdash; ${p.price.toFixed(2)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {orderItems.length > 0 && (
+              <div className="rounded-lg border border-cream-200 bg-cream-50/50">
+                <div className="divide-y divide-cream-200">
+                  {orderItems.map((item) => (
+                    <div key={item.productId} className="flex items-center gap-3 px-4 py-3">
+                      <div className="flex-1">
+                        <span className="text-sm font-medium text-brown-900">{item.name}</span>
+                        <span className="ml-2 text-xs text-brown-500">${item.price.toFixed(2)} each</span>
+                      </div>
+                      <input
+                        type="number"
+                        min={1}
+                        value={item.quantity}
+                        onChange={(e) =>
+                          updateItemQuantity(item.productId, parseInt(e.target.value, 10) || 1)
+                        }
+                        className="h-8 w-16 rounded-md border border-cream-300 bg-white px-2 text-center text-sm text-brown-900 focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
+                      />
+                      <span className="w-20 text-right text-sm font-medium text-brown-900">
+                        ${(item.price * item.quantity).toFixed(2)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeItem(item.productId)}
+                        className="rounded-md p-1 text-brown-400 transition-colors hover:bg-cream-200 hover:text-brown-700"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="border-t border-cream-200 px-4 py-2 text-right text-sm font-semibold text-brown-900">
+                  Subtotal: ${createSubtotal.toFixed(2)}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <hr className="my-4 border-cream-200" />
+
+          {/* Order Details Section */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-brown-500">Order Details</h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Input
+                label="Customer Name"
+                placeholder="Guest"
+                value={orderForm.customerName}
+                onChange={(e) =>
+                  setOrderForm((f) => ({ ...f, customerName: e.target.value }))
+                }
+              />
+              <Select
+                value={orderForm.deliveryType}
+                onValueChange={(v) => setOrderForm((f) => ({ ...f, deliveryType: v }))}
+              >
+                <SelectTrigger label="Delivery Type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Dine-in">Dine-in</SelectItem>
+                  <SelectItem value="Delivery">Delivery</SelectItem>
+                  <SelectItem value="Pickup">Pickup</SelectItem>
+                </SelectContent>
+              </Select>
+              {orderForm.deliveryType === "Dine-in" && (
+                <Input
+                  label="Table Number"
+                  placeholder="e.g. 5"
+                  value={orderForm.tableNumber}
+                  onChange={(e) =>
+                    setOrderForm((f) => ({ ...f, tableNumber: e.target.value }))
+                  }
+                />
+              )}
+            </div>
+            <Textarea
+              label="Notes"
+              placeholder="Special instructions..."
+              value={orderForm.notes}
+              onChange={(e) =>
+                setOrderForm((f) => ({ ...f, notes: e.target.value }))
+              }
+              rows={2}
+            />
+          </div>
+
+          <hr className="my-4 border-cream-200" />
+
+          {/* Payment Section */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-brown-500">Payment</h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Select
+                value={orderForm.paymentMethod}
+                onValueChange={(v) => setOrderForm((f) => ({ ...f, paymentMethod: v }))}
+              >
+                <SelectTrigger label="Payment Method">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Cash">Cash</SelectItem>
+                  <SelectItem value="Visa">Visa</SelectItem>
+                  <SelectItem value="Mastercard">Mastercard</SelectItem>
+                  <SelectItem value="Amex">Amex</SelectItem>
+                  <SelectItem value="Zelle">Zelle</SelectItem>
+                  <SelectItem value="Binance">Binance</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={orderForm.paymentStatus}
+                onValueChange={(v) => setOrderForm((f) => ({ ...f, paymentStatus: v }))}
+              >
+                <SelectTrigger label="Payment Status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
+                  <SelectItem value="Failed">Failed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <hr className="my-4 border-cream-200" />
+
+          {/* Order Summary */}
+          <div className="rounded-lg bg-cream-50 px-4 py-3 text-sm">
+            <div className="flex justify-between text-brown-700">
+              <span>Subtotal</span>
+              <span>${createSubtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-brown-700">
+              <span>Tax (10%)</span>
+              <span>${createTax.toFixed(2)}</span>
+            </div>
+            <div className="mt-1 flex justify-between border-t border-cream-200 pt-1 font-semibold text-brown-900">
+              <span>Total</span>
+              <span>${createTotal.toFixed(2)}</span>
+            </div>
+          </div>
+
+          {createError && (
+            <p className="mt-2 text-sm text-red-600">{createError}</p>
+          )}
+
+          <ModalFooter>
+            <Button variant="secondary" onClick={() => setCreateOpen(false)} disabled={submitting}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateOrder} loading={submitting} disabled={orderItems.length === 0}>
+              Create Order
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 }

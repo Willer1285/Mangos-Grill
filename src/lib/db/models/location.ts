@@ -13,6 +13,7 @@ export interface ILocation extends Document {
   address: string;
   phone: string;
   email: string;
+  image?: string;
   hours: IBusinessHours[];
   isFlagship: boolean;
   mapCoordinates?: { lat: number; lng: number };
@@ -36,6 +37,7 @@ const locationSchema = new Schema<ILocation>(
     city: { type: String, required: true, trim: true },
     address: { type: String, required: true },
     phone: { type: String, required: true },
+    image: { type: String },
     email: { type: String, lowercase: true, trim: true },
     hours: [businessHoursSchema],
     isFlagship: { type: Boolean, default: false },
