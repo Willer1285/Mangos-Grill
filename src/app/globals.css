@@ -109,6 +109,7 @@ body {
 
 ::-webkit-scrollbar-track {
   background: var(--color-cream-200);
+  border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb {
@@ -121,15 +122,25 @@ body {
 }
 
 /* Dark scrollbar for sidebar and dark containers */
+.scrollbar-dark {
+  scrollbar-width: thin;
+  scrollbar-color: #3B2314 #2C1810;
+}
+
+.scrollbar-dark::-webkit-scrollbar {
+  width: 5px;
+}
+
 .scrollbar-dark::-webkit-scrollbar-track {
-  background: transparent;
+  background: #2C1810;
+  border-radius: var(--radius-full);
 }
 
 .scrollbar-dark::-webkit-scrollbar-thumb {
-  background: var(--color-brown-700);
+  background: #4A2E1C;
   border-radius: var(--radius-full);
 }
 
 .scrollbar-dark::-webkit-scrollbar-thumb:hover {
-  background: var(--color-brown-600);
+  background: var(--color-brown-700);
 }
