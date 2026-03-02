@@ -57,8 +57,8 @@
 ## FASE 0: Inicializacion del Proyecto y Configuracion Base
 > Scaffold del proyecto, dependencias, configuracion de Tailwind con tokens del Kit, estructura de carpetas.
 
-- [ ] **0.1** Inicializar proyecto Next.js 14+ con App Router, TypeScript estricto (`strict: true`)
-- [ ] **0.2** Instalar y configurar dependencias core:
+- [x] **0.1** Inicializar proyecto Next.js 14+ con App Router, TypeScript estricto (`strict: true`)
+- [x] **0.2** Instalar y configurar dependencias core:
   - Tailwind CSS + PostCSS + archivo `tailwind.config.ts` con todos los tokens de color, tipografia, sombras y border-radius del Kit
   - Framer Motion
   - Radix UI (Dialog, Dropdown Menu, Popover, Toggle, Toast provider)
@@ -66,7 +66,7 @@
   - Lucide React (iconos)
   - React Hook Form + Zod
   - next-intl (internacionalizacion ES/EN)
-- [ ] **0.3** Configurar estructura de carpetas:
+- [x] **0.3** Configurar estructura de carpetas:
   ```
   src/
     app/
@@ -91,7 +91,7 @@
     types/                 # Tipos TypeScript globales
     i18n/                  # Archivos de traduccion ES/EN
   ```
-- [ ] **0.4** Crear archivo `.env.example` documentado con todas las variables:
+- [x] **0.4** Crear archivo `.env.example` documentado con todas las variables:
   ```
   # Base de Datos
   MONGODB_URI=
@@ -113,37 +113,37 @@
   NEXT_PUBLIC_APP_URL=
   NEXT_PUBLIC_TX_TAX_RATE=0.0825
   ```
-- [ ] **0.5** Configurar ESLint + Prettier con reglas estrictas de TypeScript
-- [ ] **0.6** Configurar PWA: `next-pwa` o `@ducanh2912/next-pwa`, crear `manifest.json` (nombre, iconos, colores del tema, display standalone), meta tags para PWA en layout raiz
+- [x] **0.5** Configurar ESLint + Prettier con reglas estrictas de TypeScript
+- [x] **0.6** Configurar PWA: `next-pwa` o `@ducanh2912/next-pwa`, crear `manifest.json` (nombre, iconos, colores del tema, display standalone), meta tags para PWA en layout raiz
 
 ---
 
 ## FASE 1: Sistema de Diseno - Componentes UI Base
 > Transcribir el Kit Interface a componentes React reutilizables con Tailwind. Es el cimiento visual de toda la app.
 
-- [ ] **1.1** Componente `Button` con variantes: `primary` (terracotta), `secondary` (outline), `cta` (gold), `ghost`, `destructive` (error), `icon`. Tamanos: `sm`, `md`, `lg`. Estados: hover, active, disabled, loading (spinner)
-- [ ] **1.2** Componente `Input` con variantes: text, email, password (toggle visibility), phone, number, textarea. Integracion con React Hook Form + mensajes de error Zod
-- [ ] **1.3** Componente `Select` (Radix UI Select) estilizado segun el Kit
-- [ ] **1.4** Componente `Card` con variantes: default, elevated, interactive (hover). Soporte para Glassmorphism via prop
-- [ ] **1.5** Componente `Modal` (Radix UI Dialog) con variantes: default, confirmation (Cancel reservation), destructive (Delete item), success (Reservation confirmed)
-- [ ] **1.6** Componente `Badge` / `Tag` / `Chip`: variantes para estados (New, Preparing, Ready, Delivered, Cancelled, Active, Disabled, Pending, Completed, Confirmed, Seated, Refunded, Failed), seleccionables (occasion tags)
-- [ ] **1.7** Componente `Toggle` / Switch estilizado (on=terracotta, off=gris)
-- [ ] **1.8** Configurar Sonner con estilos del Kit: 4 variantes de toast (success con icono check verde, error con icono X rojo, warning con icono alerta naranja, info con icono calendario/campana azul)
-- [ ] **1.9** Componente `Avatar` con iniciales (fondo terracotta, texto blanco) como se ve en el navbar logged in y sidebar admin
-- [ ] **1.10** Componentes auxiliares: `Skeleton` (loading), `Spinner`, `EmptyState`, `Pagination` (segun las tablas del admin), `Breadcrumb`
-- [ ] **1.11** Componente `Stepper` para el flujo de checkout (3 pasos: Shipping, Payment, Review - circulos numerados con lineas conectoras)
+- [x] **1.1** Componente `Button` con variantes: `primary` (terracotta), `secondary` (outline), `cta` (gold), `ghost`, `destructive` (error), `icon`. Tamanos: `sm`, `md`, `lg`. Estados: hover, active, disabled, loading (spinner)
+- [x] **1.2** Componente `Input` con variantes: text, email, password (toggle visibility), phone, number, textarea. Integracion con React Hook Form + mensajes de error Zod
+- [x] **1.3** Componente `Select` (Radix UI Select) estilizado segun el Kit
+- [x] **1.4** Componente `Card` con variantes: default, elevated, interactive (hover). Soporte para Glassmorphism via prop
+- [x] **1.5** Componente `Modal` (Radix UI Dialog) con variantes: default, confirmation (Cancel reservation), destructive (Delete item), success (Reservation confirmed)
+- [x] **1.6** Componente `Badge` / `Tag` / `Chip`: variantes para estados (New, Preparing, Ready, Delivered, Cancelled, Active, Disabled, Pending, Completed, Confirmed, Seated, Refunded, Failed), seleccionables (occasion tags)
+- [x] **1.7** Componente `Toggle` / Switch estilizado (on=terracotta, off=gris)
+- [x] **1.8** Configurar Sonner con estilos del Kit: 4 variantes de toast (success con icono check verde, error con icono X rojo, warning con icono alerta naranja, info con icono calendario/campana azul)
+- [x] **1.9** Componente `Avatar` con iniciales (fondo terracotta, texto blanco) como se ve en el navbar logged in y sidebar admin
+- [x] **1.10** Componentes auxiliares: `Skeleton` (loading), `Spinner`, `EmptyState`, `Pagination` (segun las tablas del admin), `Breadcrumb`
+- [x] **1.11** Componente `Stepper` para el flujo de checkout (3 pasos: Shipping, Payment, Review - circulos numerados con lineas conectoras)
 
 ---
 
 ## FASE 2: Layout Global - Navbar, Footer, Sidebar Admin
 > Estructuras de navegacion que envuelven todas las paginas.
 
-- [ ] **2.1** Componente `Navbar` publico (no logueado): Logo Mango's Grill + llama, enlaces (Home, Menu, Locations, Reservations, Jobs, Contact), boton Cart con contador. Fondo `brown-900`, links en terracotta. Responsive con hamburger menu mobile
-- [ ] **2.2** Componente `Navbar` logueado: Anadir icono campana (notificaciones) con badge contador, boton Cart, avatar con nombre + dropdown menu (Dashboard, My Profile, My Orders, Favorites, Reservations, Addresses, Settings, Log Out)
-- [ ] **2.3** Dropdown de notificaciones: Lista de notificaciones con icono, titulo, descripcion, timestamp, indicador de no leida (punto), enlace "View All Notifications". Overlay tipo popover
-- [ ] **2.4** Componente `Footer`: Logo + descripcion, columnas Explore y Company con links, seccion "Stay Connected" con input email + boton Subscribe (terracotta), iconos sociales (Instagram, Facebook, Twitter, YouTube), linea divisora, copyright + links Privacy/Terms
-- [ ] **2.5** Componente `AdminSidebar`: Fondo `brown-900`, logo + "Admin Panel", items de navegacion (Dashboard, Users, Menu, Categories, Payments, Orders, Reservations, Jobs) con iconos Lucide, separador, Settings + Log out, avatar del admin con rol en la parte inferior. Item activo con fondo semi-transparente terracotta
-- [ ] **2.6** Layout responsivo admin: Sidebar fija en desktop, colapsable en mobile con hamburger
+- [x] **2.1** Componente `Navbar` publico (no logueado): Logo Mango's Grill + llama, enlaces (Home, Menu, Locations, Reservations, Jobs, Contact), boton Cart con contador. Fondo `brown-900`, links en terracotta. Responsive con hamburger menu mobile
+- [x] **2.2** Componente `Navbar` logueado: Anadir icono campana (notificaciones) con badge contador, boton Cart, avatar con nombre + dropdown menu (Dashboard, My Profile, My Orders, Favorites, Reservations, Addresses, Settings, Log Out)
+- [x] **2.3** Dropdown de notificaciones: Lista de notificaciones con icono, titulo, descripcion, timestamp, indicador de no leida (punto), enlace "View All Notifications". Overlay tipo popover
+- [x] **2.4** Componente `Footer`: Logo + descripcion, columnas Explore y Company con links, seccion "Stay Connected" con input email + boton Subscribe (terracotta), iconos sociales (Instagram, Facebook, Twitter, YouTube), linea divisora, copyright + links Privacy/Terms
+- [x] **2.5** Componente `AdminSidebar`: Fondo `brown-900`, logo + "Admin Panel", items de navegacion (Dashboard, Users, Menu, Categories, Payments, Orders, Reservations, Jobs) con iconos Lucide, separador, Settings + Log out, avatar del admin con rol en la parte inferior. Item activo con fondo semi-transparente terracotta
+- [x] **2.6** Layout responsivo admin: Sidebar fija en desktop, colapsable en mobile con hamburger
 
 ---
 
