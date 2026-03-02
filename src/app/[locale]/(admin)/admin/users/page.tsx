@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -10,105 +10,120 @@ import {
   Avatar,
   getInitials,
   Pagination,
+  Spinner,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  ModalFooter,
 } from "@/components/ui";
-import { Search, Plus, Edit2, Trash2, UserPlus } from "lucide-react";
+import { Search, Plus, Edit2, Trash2 } from "lucide-react";
 
 type Role = "All" | "SuperAdmin" | "Staff" | "Client";
 type Status = "All" | "Active" | "Disabled";
 
-interface MockUser {
-  id: number;
+interface User {
+  _id: string;
   firstName: string;
   lastName: string;
   email: string;
+  phone?: string;
   role: "SuperAdmin" | "Staff" | "Client";
-  status: "active" | "disabled";
-  lastLogin: string;
+  status: "Active" | "Disabled";
+  createdAt: string;
 }
 
-const mockUsers: MockUser[] = [
-  {
-    id: 1,
-    firstName: "Carlos",
-    lastName: "Martinez",
-    email: "carlos@mangosgrill.com",
-    role: "SuperAdmin",
-    status: "active",
-    lastLogin: "2026-03-01",
-  },
-  {
-    id: 2,
-    firstName: "Maria",
-    lastName: "Rodriguez",
-    email: "maria@mangosgrill.com",
-    role: "Staff",
-    status: "active",
-    lastLogin: "2026-02-28",
-  },
-  {
-    id: 3,
-    firstName: "Juan",
-    lastName: "Perez",
-    email: "juan@mangosgrill.com",
-    role: "Staff",
-    status: "active",
-    lastLogin: "2026-02-27",
-  },
-  {
-    id: 4,
-    firstName: "Ana",
-    lastName: "Garcia",
-    email: "ana.garcia@email.com",
-    role: "Client",
-    status: "active",
-    lastLogin: "2026-02-25",
-  },
-  {
-    id: 5,
-    firstName: "Luis",
-    lastName: "Fernandez",
-    email: "luis.fernandez@email.com",
-    role: "Client",
-    status: "disabled",
-    lastLogin: "2026-01-15",
-  },
-  {
-    id: 6,
-    firstName: "Sofia",
-    lastName: "Lopez",
-    email: "sofia.lopez@email.com",
-    role: "Client",
-    status: "disabled",
-    lastLogin: "2026-01-10",
-  },
-];
+const EMPTY_FORM: {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  password: string;
+  role: "SuperAdmin" | "Staff" | "Client";
+} = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  password: "",
+  role: "Client",
+};
 
 export default function UsersPage() {
+  const [users, setUsers] = useState<User[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<Role>("All");
   const [statusFilter, setStatusFilter] = useState<Status>("All");
   const [currentPage, setCurrentPage] = useState(1);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [formData, setFormData] = useState(EMPTY_FORM);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const limit = 10;
 
-  const filteredUsers = mockUsers.filter((user) => {
-    const matchesSearch =
-      `${user.firstName} ${user.lastName} ${user.email}`
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-    const matchesRole = roleFilter === "All" || user.role === roleFilter;
-    const matchesStatus =
-      statusFilter === "All" ||
-      user.status === statusFilter.toLowerCase();
-    return matchesSearch && matchesRole && matchesStatus;
-  });
+  const fetchUsers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ page: String(currentPage), limit: String(limit) });
+      if (roleFilter !== "All") params.set("role", roleFilter);
+      if (statusFilter !== "All") params.set("status", statusFilter);
+      if (searchQuery) params.set("search", searchQuery);
 
-  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / 5));
+      const res = await fetch(`/api/admin/users?${params}`);
+      if (!res.ok) throw new Error("Failed to fetch");
+      const data = await res.json();
+      setUsers(data.users);
+      setTotal(data.total);
+    } catch {
+      setUsers([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, roleFilter, statusFilter, searchQuery, limit]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [roleFilter, statusFilter, searchQuery]);
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to create user");
+      }
+      setModalOpen(false);
+      setFormData(EMPTY_FORM);
+      fetchUsers();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-cream-50 p-6 lg:p-8">
       {/* Header */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-3xl font-bold text-brown-900">User Management</h1>
-        <Button>
+        <Button onClick={() => setModalOpen(true)}>
           <Plus className="h-4 w-4" />
           Add User
         </Button>
@@ -155,87 +170,119 @@ export default function UsersPage() {
       {/* Table */}
       <Card className="border border-cream-200">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-cream-200 bg-cream-50">
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brown-900">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brown-900">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brown-900">
-                    Role
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brown-900">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brown-900">
-                    Last Login
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-brown-900">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-cream-200">
-                {filteredUsers.map((user) => (
-                  <tr
-                    key={user.id}
-                    className="transition-colors hover:bg-cream-50"
-                  >
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <Avatar
-                          initials={getInitials(user.firstName, user.lastName)}
-                          size="sm"
-                        />
-                        <span className="font-medium text-brown-900">
-                          {user.firstName} {user.lastName}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-brown-700">
-                      {user.email}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <Badge variant="default">{user.role}</Badge>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <Badge variant={user.status === "active" ? "active" : "disabled"}>
-                        {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
-                      </Badge>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-brown-700">
-                      {user.lastLogin}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button variant="icon" size="icon-sm" aria-label="Edit user">
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button variant="icon" size="icon-sm" aria-label="Delete user">
-                          <Trash2 className="h-4 w-4 text-error-500" />
-                        </Button>
-                      </div>
-                    </td>
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Spinner />
+            </div>
+          ) : users.length === 0 ? (
+            <div className="py-20 text-center text-brown-500">No users found</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-cream-200 bg-cream-50">
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brown-900">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brown-900">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brown-900">Role</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brown-900">Status</th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-brown-900">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-cream-200">
+                  {users.map((user) => (
+                    <tr key={user._id} className="transition-colors hover:bg-cream-50">
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <Avatar initials={getInitials(user.firstName, user.lastName)} size="sm" />
+                          <span className="font-medium text-brown-900">
+                            {user.firstName} {user.lastName}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-brown-700">{user.email}</td>
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <Badge variant="default">{user.role}</Badge>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <Badge variant={user.status === "Active" ? "active" : "disabled"}>
+                          {user.status}
+                        </Badge>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button variant="icon" size="icon-sm" aria-label="Edit user">
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button variant="icon" size="icon-sm" aria-label="Delete user">
+                            <Trash2 className="h-4 w-4 text-error-500" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Pagination */}
-      <div className="mt-6 flex justify-center">
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
-      </div>
+      {totalPages > 1 && (
+        <div className="mt-6 flex justify-center">
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+        </div>
+      )}
+
+      {/* Create User Modal */}
+      <Modal open={modalOpen} onOpenChange={setModalOpen}>
+        <ModalContent>
+          <ModalHeader>
+            <ModalTitle>Add New User</ModalTitle>
+          </ModalHeader>
+          <form onSubmit={handleCreate} className="space-y-4">
+            {error && <p className="text-sm text-error-500">{error}</p>}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-brown-700">First Name</label>
+                <Input required value={formData.firstName} onChange={(e) => setFormData((p) => ({ ...p, firstName: e.target.value }))} />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-brown-700">Last Name</label>
+                <Input required value={formData.lastName} onChange={(e) => setFormData((p) => ({ ...p, lastName: e.target.value }))} />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-brown-700">Email</label>
+              <Input required type="email" value={formData.email} onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))} />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-brown-700">Phone</label>
+              <Input value={formData.phone} onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))} />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-brown-700">Password</label>
+              <Input required type="password" minLength={6} value={formData.password} onChange={(e) => setFormData((p) => ({ ...p, password: e.target.value }))} />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-brown-700">Role</label>
+              <select
+                value={formData.role}
+                onChange={(e) => setFormData((p) => ({ ...p, role: e.target.value as "SuperAdmin" | "Staff" | "Client" }))}
+                className="h-10 w-full rounded-md border border-cream-300 bg-white px-3 text-sm text-brown-900 focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
+              >
+                <option value="Client">Client</option>
+                <option value="Staff">Staff</option>
+                <option value="SuperAdmin">SuperAdmin</option>
+              </select>
+            </div>
+            <ModalFooter>
+              <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={submitting}>{submitting ? "Creating..." : "Create User"}</Button>
+            </ModalFooter>
+          </form>
+        </ModalContent>
+      </Modal>
     </div>
   );
 }

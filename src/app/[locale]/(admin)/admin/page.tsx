@@ -1,45 +1,96 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Card, CardContent, Badge, Button } from "@/components/ui";
+import { Card, CardContent, Badge, Button, Spinner } from "@/components/ui";
 import {
   ClipboardList,
   DollarSign,
   Users,
   CalendarDays,
-  TrendingUp,
-  TrendingDown,
   Plus,
-  ShoppingBag,
   UtensilsCrossed,
   FileDown,
 } from "lucide-react";
+import { Link } from "@/i18n/navigation";
 
-/* ── Mock data ── */
-const kpis = [
-  { label: "Total Orders", value: "1,245", change: "+12.5%", up: true, icon: ClipboardList, color: "bg-terracotta-500/10 text-terracotta-500" },
-  { label: "Revenue", value: "$32,580", change: "+8.2%", up: true, icon: DollarSign, color: "bg-success-500/10 text-success-500" },
-  { label: "Active Users", value: "584", change: "+3.1%", up: true, icon: Users, color: "bg-info-500/10 text-info-500" },
-  { label: "Pending Reservations", value: "18", change: "-2.4%", up: false, icon: CalendarDays, color: "bg-warning-500/10 text-warning-500" },
-] as const;
+interface Order {
+  _id: string;
+  orderNumber: string;
+  customer?: { firstName: string; lastName: string };
+  items: { name: string }[];
+  total: number;
+  status: string;
+  createdAt: string;
+}
 
-const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const revenueThisMonth = [4200, 3800, 4600, 5100, 6200, 7800, 5400];
-const revenueLastMonth = [3800, 3500, 4200, 4800, 5800, 7200, 5000];
+interface DashboardData {
+  totalOrders: number;
+  totalUsers: number;
+  pendingReservations: number;
+  recentOrders: Order[];
+}
 
-const recentOrders = [
-  { id: "MG-A1B2C3", customer: "John Doe", items: "Arepa Reina, Pabellon", total: 28.5, status: "New", date: "5 min ago" },
-  { id: "MG-D4E5F6", customer: "Ana Lopez", items: "Tequeños, Cachapa", total: 22.0, status: "Preparing", date: "15 min ago" },
-  { id: "MG-G7H8I9", customer: "Carlos R.", items: "Asado Negro, Tres Leches", total: 34.75, status: "Ready", date: "28 min ago" },
-  { id: "MG-J1K2L3", customer: "Maria G.", items: "Empanadas (4), Jugo", total: 18.5, status: "Delivered", date: "1 hr ago" },
-  { id: "MG-M4N5O6", customer: "Luis P.", items: "Pabellon Bowl", total: 16.99, status: "Cancelled", date: "2 hrs ago" },
-] as const;
+const badgeVariant: Record<string, string> = {
+  New: "new",
+  Preparing: "preparing",
+  Ready: "ready",
+  InTransit: "info",
+  Delivered: "delivered",
+  Cancelled: "cancelled",
+};
 
 export default function AdminDashboardPage() {
-  const [chartPeriod, setChartPeriod] = useState<"this" | "last">("this");
-  const chartData = chartPeriod === "this" ? revenueThisMonth : revenueLastMonth;
-  const maxRevenue = Math.max(...chartData);
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchDashboard() {
+      setLoading(true);
+      try {
+        const [ordersRes, usersRes, reservationsRes] = await Promise.all([
+          fetch("/api/admin/orders?limit=5"),
+          fetch("/api/admin/users?limit=1"),
+          fetch("/api/admin/reservations?status=Pending"),
+        ]);
+
+        const ordersData = ordersRes.ok ? await ordersRes.json() : { orders: [], total: 0 };
+        const usersData = usersRes.ok ? await usersRes.json() : { total: 0 };
+        const reservationsData = reservationsRes.ok ? await reservationsRes.json() : [];
+
+        setData({
+          totalOrders: ordersData.total,
+          totalUsers: usersData.total,
+          pendingReservations: Array.isArray(reservationsData) ? reservationsData.length : 0,
+          recentOrders: ordersData.orders || [],
+        });
+      } catch {
+        setData({
+          totalOrders: 0,
+          totalUsers: 0,
+          pendingReservations: 0,
+          recentOrders: [],
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchDashboard();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-40">
+        <Spinner />
+      </div>
+    );
+  }
+
+  const kpis = [
+    { label: "Total Orders", value: data?.totalOrders ?? 0, icon: ClipboardList, color: "bg-terracotta-500/10 text-terracotta-500" },
+    { label: "Active Users", value: data?.totalUsers ?? 0, icon: Users, color: "bg-info-500/10 text-info-500" },
+    { label: "Pending Reservations", value: data?.pendingReservations ?? 0, icon: CalendarDays, color: "bg-warning-500/10 text-warning-500" },
+  ];
 
   return (
     <div className="space-y-6">
@@ -52,7 +103,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {kpis.map((kpi, i) => (
           <motion.div
             key={kpi.label}
@@ -66,10 +117,6 @@ export default function AdminDashboardPage() {
                   <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${kpi.color}`}>
                     <kpi.icon className="h-5 w-5" />
                   </div>
-                  <span className={`flex items-center gap-1 text-xs font-medium ${kpi.up ? "text-success-500" : "text-error-500"}`}>
-                    {kpi.up ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
-                    {kpi.change}
-                  </span>
                 </div>
                 <p className="mt-3 text-2xl font-bold text-brown-900">{kpi.value}</p>
                 <p className="text-xs text-brown-500">{kpi.label}</p>
@@ -80,45 +127,53 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Revenue Chart */}
+        {/* Recent Orders */}
         <Card className="lg:col-span-2">
           <CardContent className="p-5">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-brown-900">Revenue Overview</h2>
-              <div className="flex gap-1 rounded-lg bg-cream-200 p-1">
-                <button
-                  onClick={() => setChartPeriod("this")}
-                  className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                    chartPeriod === "this" ? "bg-white text-brown-900 shadow-sm" : "text-brown-500"
-                  }`}
-                >
-                  This Month
-                </button>
-                <button
-                  onClick={() => setChartPeriod("last")}
-                  className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                    chartPeriod === "last" ? "bg-white text-brown-900 shadow-sm" : "text-brown-500"
-                  }`}
-                >
-                  Last Month
-                </button>
+              <h2 className="text-lg font-semibold text-brown-900">Recent Orders</h2>
+              <Link href="/admin/orders">
+                <Button variant="secondary" size="sm">View All</Button>
+              </Link>
+            </div>
+            {data?.recentOrders.length === 0 ? (
+              <div className="py-10 text-center text-brown-500">No orders yet</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-cream-200">
+                      <th className="py-2 text-left text-xs font-medium text-brown-500">Order #</th>
+                      <th className="py-2 text-left text-xs font-medium text-brown-500">Customer</th>
+                      <th className="py-2 text-left text-xs font-medium text-brown-500">Items</th>
+                      <th className="py-2 text-right text-xs font-medium text-brown-500">Total</th>
+                      <th className="py-2 text-right text-xs font-medium text-brown-500">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data?.recentOrders.map((order) => {
+                      const customerName = order.customer
+                        ? `${order.customer.firstName} ${order.customer.lastName}`
+                        : "Guest";
+                      const itemsSummary = order.items.map((i) => i.name).join(", ");
+                      return (
+                        <tr key={order._id} className="border-b border-cream-100 last:border-0">
+                          <td className="py-3 font-medium text-brown-900">{order.orderNumber}</td>
+                          <td className="py-3 text-brown-600">{customerName}</td>
+                          <td className="max-w-[200px] truncate py-3 text-brown-600">{itemsSummary}</td>
+                          <td className="py-3 text-right font-medium text-brown-900">${order.total.toFixed(2)}</td>
+                          <td className="py-3 text-right">
+                            <Badge variant={badgeVariant[order.status] as "new" | "preparing" | "ready" | "delivered" | "cancelled"}>
+                              {order.status}
+                            </Badge>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-            </div>
-            {/* Bar chart */}
-            <div className="flex items-end justify-between gap-3" style={{ height: 200 }}>
-              {chartData.map((value, i) => (
-                <div key={weekDays[i]} className="flex flex-1 flex-col items-center gap-2">
-                  <motion.div
-                    initial={{ height: 0 }}
-                    animate={{ height: `${(value / maxRevenue) * 100}%` }}
-                    transition={{ delay: i * 0.05, type: "spring" }}
-                    className="w-full rounded-t-md bg-terracotta-500"
-                    style={{ minHeight: 4 }}
-                  />
-                  <span className="text-xs text-brown-500">{weekDays[i]}</span>
-                </div>
-              ))}
-            </div>
+            )}
           </CardContent>
         </Card>
 
@@ -127,74 +182,34 @@ export default function AdminDashboardPage() {
           <CardContent className="p-5">
             <h2 className="mb-4 text-lg font-semibold text-brown-900">Quick Actions</h2>
             <div className="grid grid-cols-2 gap-3">
-              <button className="flex flex-col items-center gap-2 rounded-lg border border-cream-200 p-4 transition-colors hover:bg-cream-100">
+              <Link href="/admin/orders" className="flex flex-col items-center gap-2 rounded-lg border border-cream-200 p-4 transition-colors hover:bg-cream-100">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-terracotta-500/10">
                   <Plus className="h-5 w-5 text-terracotta-500" />
                 </div>
-                <span className="text-xs font-medium text-brown-700">New Order</span>
-              </button>
-              <button className="flex flex-col items-center gap-2 rounded-lg border border-cream-200 p-4 transition-colors hover:bg-cream-100">
+                <span className="text-xs font-medium text-brown-700">Orders</span>
+              </Link>
+              <Link href="/admin/menu" className="flex flex-col items-center gap-2 rounded-lg border border-cream-200 p-4 transition-colors hover:bg-cream-100">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success-500/10">
                   <UtensilsCrossed className="h-5 w-5 text-success-500" />
                 </div>
-                <span className="text-xs font-medium text-brown-700">Add Menu Item</span>
-              </button>
-              <button className="flex flex-col items-center gap-2 rounded-lg border border-cream-200 p-4 transition-colors hover:bg-cream-100">
+                <span className="text-xs font-medium text-brown-700">Menu</span>
+              </Link>
+              <Link href="/admin/reservations" className="flex flex-col items-center gap-2 rounded-lg border border-cream-200 p-4 transition-colors hover:bg-cream-100">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info-500/10">
                   <CalendarDays className="h-5 w-5 text-info-500" />
                 </div>
-                <span className="text-xs font-medium text-brown-700">New Reservation</span>
-              </button>
-              <button className="flex flex-col items-center gap-2 rounded-lg border border-cream-200 p-4 transition-colors hover:bg-cream-100">
+                <span className="text-xs font-medium text-brown-700">Reservations</span>
+              </Link>
+              <Link href="/admin/payments" className="flex flex-col items-center gap-2 rounded-lg border border-cream-200 p-4 transition-colors hover:bg-cream-100">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning-500/10">
-                  <FileDown className="h-5 w-5 text-warning-500" />
+                  <DollarSign className="h-5 w-5 text-warning-500" />
                 </div>
-                <span className="text-xs font-medium text-brown-700">Export Report</span>
-              </button>
+                <span className="text-xs font-medium text-brown-700">Payments</span>
+              </Link>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Recent Orders */}
-      <Card>
-        <CardContent className="p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-brown-900">Recent Orders</h2>
-            <Button variant="secondary" size="sm">View All</Button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-cream-200">
-                  <th className="py-2 text-left text-xs font-medium text-brown-500">Order #</th>
-                  <th className="py-2 text-left text-xs font-medium text-brown-500">Customer</th>
-                  <th className="py-2 text-left text-xs font-medium text-brown-500">Items</th>
-                  <th className="py-2 text-right text-xs font-medium text-brown-500">Total</th>
-                  <th className="py-2 text-right text-xs font-medium text-brown-500">Status</th>
-                  <th className="py-2 text-right text-xs font-medium text-brown-500">Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentOrders.map((order) => (
-                  <tr key={order.id} className="border-b border-cream-100 last:border-0">
-                    <td className="py-3 font-medium text-brown-900">{order.id}</td>
-                    <td className="py-3 text-brown-600">{order.customer}</td>
-                    <td className="max-w-[200px] truncate py-3 text-brown-600">{order.items}</td>
-                    <td className="py-3 text-right font-medium text-brown-900">${order.total.toFixed(2)}</td>
-                    <td className="py-3 text-right">
-                      <Badge variant={order.status.toLowerCase() as "new" | "preparing" | "ready" | "delivered" | "cancelled"}>
-                        {order.status}
-                      </Badge>
-                    </td>
-                    <td className="py-3 text-right text-xs text-brown-500">{order.date}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
