@@ -22,7 +22,7 @@ import {
   SelectValue,
   Textarea,
 } from "@/components/ui";
-import { CalendarDays, Users, Plus, Search, XCircle, Trash2 } from "lucide-react";
+import { CalendarDays, Users, Plus, Search, XCircle, Trash2, MapPin, Pencil } from "lucide-react";
 
 interface Reservation {
   _id: string;
@@ -34,14 +34,25 @@ interface Reservation {
   time: string;
   partySize: number;
   status: "Pending" | "Confirmed" | "Seated" | "Completed" | "Cancelled" | "No-show";
-  table?: { number: number; name: string };
+  table?: { _id: string; number: number; name: string; capacity: number };
   location: string;
+  occasion?: string;
+  specialRequests?: string;
+}
+
+interface TableInfo {
+  _id: string;
+  number: number;
+  capacity: number;
+  name: string;
+  status: string;
+  shape: string;
 }
 
 interface Location {
   _id: string;
   name: string;
-  tables: Array<{ _id: string; number: number; capacity: number }>;
+  tables: TableInfo[];
 }
 
 const OCCASIONS = [
@@ -111,6 +122,16 @@ export default function ReservationsManagementPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [locations, setLocations] = useState<Location[]>([]);
+
+  // Table map modal
+  const [tableMapLocation, setTableMapLocation] = useState<Location | null>(null);
+
+  // Edit modal
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editData, setEditData] = useState(EMPTY_FORM);
+  const [editId, setEditId] = useState("");
+  const [editError, setEditError] = useState("");
+  const [editSubmitting, setEditSubmitting] = useState(false);
 
   const fetchReservations = useCallback(async () => {
     setLoading(true);
@@ -190,6 +211,65 @@ export default function ReservationsManagementPage() {
     }
   }
 
+  async function handleEdit(e: React.FormEvent) {
+    e.preventDefault();
+    setEditSubmitting(true);
+    setEditError("");
+    try {
+      const body: Record<string, unknown> = {
+        guestName: editData.guestName,
+        guestEmail: editData.guestEmail,
+        guestPhone: editData.guestPhone,
+        date: editData.date,
+        time: editData.time,
+        partySize: parseInt(editData.partySize),
+        location: editData.location,
+      };
+      if (editData.table) body.table = editData.table;
+      else body.$unset = { table: "" };
+      if (editData.occasion) body.occasion = editData.occasion;
+      if (editData.specialRequests) body.specialRequests = editData.specialRequests;
+      const res = await fetch(`/api/admin/reservations/${editId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to update reservation");
+      }
+      setEditModalOpen(false);
+      setEditData(EMPTY_FORM);
+      setEditId("");
+      fetchReservations();
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : "Error");
+    } finally {
+      setEditSubmitting(false);
+    }
+  }
+
+  function openEditModal(reservation: Reservation) {
+    const dateStr = reservation.date
+      ? new Date(reservation.date).toISOString().split("T")[0]
+      : "";
+    setEditData({
+      guestName: reservation.guestName || (reservation.customer ? `${reservation.customer.firstName} ${reservation.customer.lastName}` : ""),
+      guestEmail: reservation.guestEmail || "",
+      guestPhone: reservation.guestPhone || "",
+      date: dateStr,
+      time: reservation.time || "",
+      partySize: String(reservation.partySize),
+      location: reservation.location || "",
+      table: reservation.table?._id || "",
+      occasion: reservation.occasion || "",
+      specialRequests: reservation.specialRequests || "",
+    });
+    setEditId(reservation._id);
+    setEditError("");
+    setEditModalOpen(true);
+  }
+
   async function handleStatusChange(id: string, newStatus: string) {
     try {
       const res = await fetch(`/api/admin/reservations/${id}`, {
@@ -214,8 +294,130 @@ export default function ReservationsManagementPage() {
     }
   }
 
+  // Determine which tables at a location are reserved (active reservations today)
+  function getReservedTableIds(locationName: string): Set<string> {
+    const activeStatuses = new Set(["Pending", "Confirmed", "Seated"]);
+    const reserved = new Set<string>();
+    for (const r of reservations) {
+      if (r.location === locationName && activeStatuses.has(r.status) && r.table?._id) {
+        reserved.add(r.table._id);
+      }
+    }
+    return reserved;
+  }
+
+  // Get the reservation info for a reserved table
+  function getTableReservation(tableId: string, locationName: string): Reservation | undefined {
+    const activeStatuses = new Set(["Pending", "Confirmed", "Seated"]);
+    return reservations.find(
+      (r) => r.location === locationName && activeStatuses.has(r.status) && r.table?._id === tableId
+    );
+  }
+
   const todayCount = reservations.length;
   const guestsExpected = reservations.reduce((sum, r) => sum + r.partySize, 0);
+
+  // Shared form fields renderer
+  function renderFormFields(
+    data: typeof EMPTY_FORM,
+    setData: React.Dispatch<React.SetStateAction<typeof EMPTY_FORM>>
+  ) {
+    return (
+      <>
+        <div className="space-y-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Guest Information</p>
+          <Input label="Guest Name" required value={data.guestName} onChange={(e) => setData((p) => ({ ...p, guestName: e.target.value }))} />
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="Email" type="email" value={data.guestEmail} onChange={(e) => setData((p) => ({ ...p, guestEmail: e.target.value }))} placeholder="Optional" />
+            <Input label="Phone" value={data.guestPhone} onChange={(e) => setData((p) => ({ ...p, guestPhone: e.target.value }))} placeholder="Optional" />
+          </div>
+        </div>
+
+        <div className="border-t border-cream-200" />
+
+        <div className="space-y-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Reservation Details</p>
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="Date" required type="date" value={data.date} onChange={(e) => setData((p) => ({ ...p, date: e.target.value }))} />
+            <Input label="Time" required type="time" value={data.time} onChange={(e) => setData((p) => ({ ...p, time: e.target.value }))} />
+          </div>
+          <Input label="Party Size" required type="number" min="1" max="20" value={data.partySize} onChange={(e) => setData((p) => ({ ...p, partySize: e.target.value }))} />
+        </div>
+
+        <div className="border-t border-cream-200" />
+
+        <div className="space-y-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Location & Table</p>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-brown-700">Location <span className="text-error-500">*</span></label>
+            <Select value={data.location} onValueChange={(v) => setData((p) => ({ ...p, location: v, table: "" }))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a location" />
+              </SelectTrigger>
+              <SelectContent>
+                {locations.map((loc) => (
+                  <SelectItem key={loc._id} value={loc.name}>{loc.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {data.location && (() => {
+            const selectedLocation = locations.find((l) => l.name === data.location);
+            if (!selectedLocation || selectedLocation.tables.length === 0) return null;
+            return (
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-brown-700">Assign Table</label>
+                <div className="flex flex-wrap gap-2">
+                  {selectedLocation.tables.map((t) => (
+                    <button
+                      key={t._id}
+                      type="button"
+                      onClick={() => setData((p) => ({ ...p, table: p.table === t._id ? "" : t._id }))}
+                      className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                        data.table === t._id
+                          ? "border-terracotta-500 bg-terracotta-500 text-white"
+                          : "border-cream-300 bg-white text-brown-700 hover:border-terracotta-300 hover:bg-terracotta-50"
+                      }`}
+                    >
+                      T-{t.number} <span className="text-xs opacity-75">({t.capacity}p)</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+
+        <div className="border-t border-cream-200" />
+
+        <div className="space-y-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Occasion & Notes</p>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-brown-700">Occasion</label>
+            <Select value={data.occasion} onValueChange={(v) => setData((p) => ({ ...p, occasion: v }))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select an occasion (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                {OCCASIONS.map((occ) => (
+                  <SelectItem key={occ} value={occ}>{occ}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-brown-700">Special Requests</label>
+            <Textarea
+              placeholder="Any special requests or notes..."
+              value={data.specialRequests}
+              onChange={(e) => setData((p) => ({ ...p, specialRequests: e.target.value }))}
+              rows={3}
+            />
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -290,7 +492,34 @@ export default function ReservationsManagementPage() {
         </CardContent>
       </Card>
 
-      {/* Table */}
+      {/* Location Buttons */}
+      {locations.length > 0 && (
+        <div className="flex flex-wrap gap-3">
+          {locations.map((loc) => {
+            const reservedCount = getReservedTableIds(loc.name).size;
+            const totalTables = loc.tables.length;
+            return (
+              <button
+                key={loc._id}
+                onClick={() => setTableMapLocation(loc)}
+                className="group flex items-center gap-2.5 rounded-xl border border-cream-200 bg-white px-4 py-3 text-left transition-all hover:border-terracotta-300 hover:shadow-md"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-terracotta-500/10 text-terracotta-500 transition-colors group-hover:bg-terracotta-500 group-hover:text-white">
+                  <MapPin className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-brown-900">{loc.name}</p>
+                  <p className="text-xs text-brown-500">
+                    {reservedCount}/{totalTables} tables reserved
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Reservations Table */}
       <Card>
         <CardContent className="p-0">
           {loading ? (
@@ -347,6 +576,9 @@ export default function ReservationsManagementPage() {
                                 <SelectItem value="No-show">No-show</SelectItem>
                               </SelectContent>
                             </Select>
+                            <Button variant="ghost" size="icon-sm" onClick={() => openEditModal(res)}>
+                              <Pencil className="h-4 w-4 text-brown-500" />
+                            </Button>
                             <Button variant="ghost" size="icon-sm" onClick={() => handleDeleteRes(res._id)}>
                               <Trash2 className="h-4 w-4 text-error-500" />
                             </Button>
@@ -375,104 +607,137 @@ export default function ReservationsManagementPage() {
                 {error}
               </div>
             )}
-
-            <div className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Guest Information</p>
-              <Input label="Guest Name" required value={formData.guestName} onChange={(e) => setFormData((p) => ({ ...p, guestName: e.target.value }))} />
-              <div className="grid grid-cols-2 gap-4">
-                <Input label="Email" type="email" value={formData.guestEmail} onChange={(e) => setFormData((p) => ({ ...p, guestEmail: e.target.value }))} placeholder="Optional" />
-                <Input label="Phone" value={formData.guestPhone} onChange={(e) => setFormData((p) => ({ ...p, guestPhone: e.target.value }))} placeholder="Optional" />
-              </div>
-            </div>
-
-            <div className="border-t border-cream-200" />
-
-            <div className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Reservation Details</p>
-              <div className="grid grid-cols-2 gap-4">
-                <Input label="Date" required type="date" value={formData.date} onChange={(e) => setFormData((p) => ({ ...p, date: e.target.value }))} />
-                <Input label="Time" required type="time" value={formData.time} onChange={(e) => setFormData((p) => ({ ...p, time: e.target.value }))} />
-              </div>
-              <Input label="Party Size" required type="number" min="1" max="20" value={formData.partySize} onChange={(e) => setFormData((p) => ({ ...p, partySize: e.target.value }))} />
-            </div>
-
-            <div className="border-t border-cream-200" />
-
-            <div className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Location & Table</p>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Location <span className="text-error-500">*</span></label>
-                <Select value={formData.location} onValueChange={(v) => setFormData((p) => ({ ...p, location: v, table: "" }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {locations.map((loc) => (
-                      <SelectItem key={loc._id} value={loc._id}>{loc.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {formData.location && (() => {
-                const selectedLocation = locations.find((l) => l._id === formData.location);
-                if (!selectedLocation || selectedLocation.tables.length === 0) return null;
-                return (
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-brown-700">Assign Table</label>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedLocation.tables.map((t) => (
-                        <button
-                          key={t._id}
-                          type="button"
-                          onClick={() => setFormData((p) => ({ ...p, table: p.table === t._id ? "" : t._id }))}
-                          className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                            formData.table === t._id
-                              ? "border-terracotta-500 bg-terracotta-500 text-white"
-                              : "border-cream-300 bg-white text-brown-700 hover:border-terracotta-300 hover:bg-terracotta-50"
-                          }`}
-                        >
-                          T-{t.number} <span className="text-xs opacity-75">({t.capacity}p)</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-
-            <div className="border-t border-cream-200" />
-
-            <div className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Occasion & Notes</p>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Occasion</label>
-                <Select value={formData.occasion} onValueChange={(v) => setFormData((p) => ({ ...p, occasion: v }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select an occasion (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {OCCASIONS.map((occ) => (
-                      <SelectItem key={occ} value={occ}>{occ}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Special Requests</label>
-                <Textarea
-                  placeholder="Any special requests or notes..."
-                  value={formData.specialRequests}
-                  onChange={(e) => setFormData((p) => ({ ...p, specialRequests: e.target.value }))}
-                  rows={3}
-                />
-              </div>
-            </div>
-
+            {renderFormFields(formData, setFormData)}
             <ModalFooter>
               <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>
               <Button type="submit" loading={submitting}>Create Reservation</Button>
             </ModalFooter>
           </form>
+        </ModalContent>
+      </Modal>
+
+      {/* Edit Reservation Modal */}
+      <Modal open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <ModalContent>
+          <ModalHeader>
+            <ModalTitle>Edit Reservation</ModalTitle>
+            <ModalDescription>Update reservation details.</ModalDescription>
+          </ModalHeader>
+          <form onSubmit={handleEdit} className="space-y-6">
+            {editError && (
+              <div className="rounded-lg border border-error-500/20 bg-error-500/5 px-4 py-3 text-sm text-error-600">
+                {editError}
+              </div>
+            )}
+            {renderFormFields(editData, setEditData)}
+            <ModalFooter>
+              <Button type="button" variant="secondary" onClick={() => setEditModalOpen(false)}>Cancel</Button>
+              <Button type="submit" loading={editSubmitting}>Save Changes</Button>
+            </ModalFooter>
+          </form>
+        </ModalContent>
+      </Modal>
+
+      {/* Table Map Modal */}
+      <Modal open={!!tableMapLocation} onOpenChange={(open) => { if (!open) setTableMapLocation(null); }}>
+        <ModalContent className="sm:max-w-2xl">
+          <ModalHeader>
+            <ModalTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-terracotta-500" />
+              {tableMapLocation?.name} — Table Map
+            </ModalTitle>
+            <ModalDescription>
+              View table availability at this location. Green = available, Red = reserved.
+            </ModalDescription>
+          </ModalHeader>
+
+          {tableMapLocation && (() => {
+            const reservedIds = getReservedTableIds(tableMapLocation.name);
+            const tables = tableMapLocation.tables;
+
+            if (tables.length === 0) {
+              return (
+                <div className="py-10 text-center text-brown-500">
+                  No tables configured for this location.
+                </div>
+              );
+            }
+
+            return (
+              <div className="space-y-4">
+                {/* Legend */}
+                <div className="flex items-center gap-4 text-xs text-brown-500">
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block h-3 w-3 rounded-full bg-emerald-500" />
+                    Available
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block h-3 w-3 rounded-full bg-red-500" />
+                    Reserved
+                  </span>
+                </div>
+
+                {/* Table grid */}
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                  {tables.map((table) => {
+                    const isReserved = reservedIds.has(table._id);
+                    const reservation = isReserved
+                      ? getTableReservation(table._id, tableMapLocation.name)
+                      : undefined;
+                    const guestName = reservation
+                      ? reservation.customer
+                        ? `${reservation.customer.firstName} ${reservation.customer.lastName}`
+                        : reservation.guestName || "Guest"
+                      : null;
+
+                    return (
+                      <div
+                        key={table._id}
+                        className={`relative rounded-xl border-2 p-4 text-center transition-all ${
+                          isReserved
+                            ? "border-red-300 bg-red-50"
+                            : "border-emerald-300 bg-emerald-50"
+                        }`}
+                      >
+                        <div className={`absolute right-2 top-2 h-2.5 w-2.5 rounded-full ${isReserved ? "bg-red-500" : "bg-emerald-500"}`} />
+                        <p className={`text-lg font-bold ${isReserved ? "text-red-700" : "text-emerald-700"}`}>
+                          T-{table.number}
+                        </p>
+                        <p className="text-xs text-brown-500">
+                          {table.capacity} {table.capacity === 1 ? "person" : "people"}
+                        </p>
+                        <p className="mt-0.5 text-[10px] capitalize text-brown-400">{table.shape}</p>
+                        {isReserved && guestName && (
+                          <div className="mt-2 rounded-md bg-red-100 px-2 py-1">
+                            <p className="truncate text-[11px] font-medium text-red-700">{guestName}</p>
+                            {reservation && (
+                              <p className="text-[10px] text-red-500">{reservation.time} · {reservation.partySize}p</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Summary */}
+                <div className="flex items-center justify-between rounded-lg bg-cream-100 px-4 py-3 text-sm">
+                  <span className="text-brown-600">
+                    <span className="font-semibold text-emerald-600">{tables.length - reservedIds.size}</span> available
+                    {" · "}
+                    <span className="font-semibold text-red-600">{reservedIds.size}</span> reserved
+                  </span>
+                  <span className="text-brown-500">
+                    {tables.length} total tables
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
+
+          <ModalFooter>
+            <Button variant="secondary" onClick={() => setTableMapLocation(null)}>Close</Button>
+          </ModalFooter>
         </ModalContent>
       </Modal>
     </div>
