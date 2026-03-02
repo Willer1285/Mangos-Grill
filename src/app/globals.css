@@ -119,3 +119,17 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-brown-700);
 }
+
+/* Dark scrollbar for sidebar and dark containers */
+.scrollbar-dark::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-dark::-webkit-scrollbar-thumb {
+  background: var(--color-brown-700);
+  border-radius: var(--radius-full);
+}
+
+.scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brown-600);
+}
