@@ -39,6 +39,7 @@ interface NavbarProps {
   } | null;
   cartCount?: number;
   notificationCount?: number;
+  onCartClick?: () => void;
 }
 
 const navLinks = [
@@ -50,7 +51,7 @@ const navLinks = [
   { href: "/contact", labelKey: "contact" },
 ] as const;
 
-export function Navbar({ user, cartCount = 0, notificationCount = 0 }: NavbarProps) {
+export function Navbar({ user, cartCount = 0, notificationCount = 0, onCartClick }: NavbarProps) {
   const t = useTranslations("nav");
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -90,15 +91,13 @@ export function Navbar({ user, cartCount = 0, notificationCount = 0 }: NavbarPro
           )}
 
           {/* Cart */}
-          <Link href="/cart">
-            <Button variant="cta" size="sm" className="relative gap-1.5">
-              <ShoppingBag className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("cart")}</span>
-              {cartCount > 0 && (
-                <span className="ml-0.5">({cartCount})</span>
-              )}
-            </Button>
-          </Link>
+          <Button variant="cta" size="sm" className="relative gap-1.5" onClick={onCartClick}>
+            <ShoppingBag className="h-4 w-4" />
+            <span className="hidden sm:inline">{t("cart")}</span>
+            {cartCount > 0 && (
+              <span className="ml-0.5">({cartCount})</span>
+            )}
+          </Button>
 
           {/* User menu or Login */}
           {user ? (

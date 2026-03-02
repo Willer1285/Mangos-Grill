@@ -3,6 +3,7 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { Toaster } from "sonner";
+import { CartProvider } from "@/lib/cart/cart-context";
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
@@ -65,7 +66,9 @@ export default async function LocaleLayout({
       </head>
       <body className="min-h-screen bg-cream-100 font-sans text-brown-900 antialiased">
         <NextIntlClientProvider locale={locale} messages={messages}>
+          <CartProvider>
           {children}
+          </CartProvider>
           <Toaster
             position="top-right"
             toastOptions={{

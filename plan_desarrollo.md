@@ -246,13 +246,13 @@
 ## FASE 6: Carrito de Compras y Flujo de Checkout
 > Cart sidebar, flujo de 3 pasos (Shipping, Payment, Review), pagina de exito.
 
-- [ ] **6.1** **Estado global del carrito:** Context o Zustand, persistencia en localStorage. Acciones: addItem (con modifiers/extras), removeItem, updateQuantity, clearCart, applyPromoCode
-- [ ] **6.2** **Cart Sidebar (Sheet/Drawer):** Slide-in desde la derecha, lista de items (imagen, nombre, precio, controles +/-, icono eliminar), Subtotal, Tax (8.25%), Total, input promo code + Apply, boton "Proceed to checkout", link "Continue shopping"
-- [ ] **6.3** **Checkout Step 1 - Shipping:** Stepper visual (3 circulos), formulario direccion (Full Name, Street Address, City, State, ZIP, Country), seleccion Delivery Option (Standard Free / Express $12.99), boton "Continue to Payment". Auto-rellenar si el usuario tiene direcciones guardadas
-- [ ] **6.4** **Checkout Step 2 - Payment:** Seleccion metodo (Credit Card, Digital Wallet/Zelle/Binance), formulario tarjeta (Cardholder, Number, Expiry, CVC, checkbox Billing = Shipping), **Para Zelle/Binance:** mostrar datos de pago + upload de comprobante, Order Summary lateral (items, subtotal, tax 8.25%, shipping, total), boton "Continue to Review"
-- [ ] **6.5** **Checkout Step 3 - Review:** Resumen de items (con Edit), Shipping Address (con Edit), Payment Method (con Edit), desglose total (Subtotal, Tax 8.25%, Shipping, Total destacado en terracotta), boton "Place Order" (gold CTA con icono candado)
-- [ ] **6.6** **Order Success Page:** Banner oscuro con icono check verde, "Gracias! Your order is confirmed", numero de orden, Order Summary, seccion "What's next?" (3 pasos: Confirmation sent, Order preparation, Ready for pickup), botones "Track your order" y "Continue shopping"
-- [ ] **6.7** Integracion con Stripe (Payment Intent) para tarjetas. Flujo manual para Zelle/Binance (estado Pending hasta aprobacion admin)
+- [x] **6.1** **Estado global del carrito:** Context o Zustand, persistencia en localStorage. Acciones: addItem (con modifiers/extras), removeItem, updateQuantity, clearCart, applyPromoCode
+- [x] **6.2** **Cart Sidebar (Sheet/Drawer):** Slide-in desde la derecha, lista de items (imagen, nombre, precio, controles +/-, icono eliminar), Subtotal, Tax (8.25%), Total, input promo code + Apply, boton "Proceed to checkout", link "Continue shopping"
+- [x] **6.3** **Checkout Step 1 - Shipping:** Stepper visual (3 circulos), formulario direccion (Full Name, Street Address, City, State, ZIP, Country), seleccion Delivery Option (Standard Free / Express $12.99), boton "Continue to Payment". Auto-rellenar si el usuario tiene direcciones guardadas
+- [x] **6.4** **Checkout Step 2 - Payment:** Seleccion metodo (Credit Card, Digital Wallet/Zelle/Binance), formulario tarjeta (Cardholder, Number, Expiry, CVC, checkbox Billing = Shipping), **Para Zelle/Binance:** mostrar datos de pago + upload de comprobante, Order Summary lateral (items, subtotal, tax 8.25%, shipping, total), boton "Continue to Review"
+- [x] **6.5** **Checkout Step 3 - Review:** Resumen de items (con Edit), Shipping Address (con Edit), Payment Method (con Edit), desglose total (Subtotal, Tax 8.25%, Shipping, Total destacado en terracotta), boton "Place Order" (gold CTA con icono candado)
+- [x] **6.6** **Order Success Page:** Banner oscuro con icono check verde, "Gracias! Your order is confirmed", numero de orden, Order Summary, seccion "What's next?" (3 pasos: Confirmation sent, Order preparation, Ready for pickup), botones "Track your order" y "Continue shopping"
+- [x] **6.7** Integracion con Stripe (Payment Intent) para tarjetas. Flujo manual para Zelle/Binance (estado Pending hasta aprobacion admin)
 
 ---
 
