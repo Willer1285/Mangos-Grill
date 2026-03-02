@@ -124,7 +124,7 @@ body {
 /* Dark scrollbar for sidebar and dark containers */
 .scrollbar-dark {
   scrollbar-width: thin;
-  scrollbar-color: #3B2314 #2C1810;
+  scrollbar-color: rgba(255, 255, 255, 0.05) #2C1810;
 }
 
 .scrollbar-dark::-webkit-scrollbar {
@@ -137,10 +137,10 @@ body {
 }
 
 .scrollbar-dark::-webkit-scrollbar-thumb {
-  background: #4A2E1C;
+  background: rgba(255, 255, 255, 0.05);
   border-radius: var(--radius-full);
 }
 
 .scrollbar-dark::-webkit-scrollbar-thumb:hover {
-  background: var(--color-brown-700);
+  background: rgba(255, 255, 255, 0.1);
 }
