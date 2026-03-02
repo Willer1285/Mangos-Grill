@@ -37,15 +37,17 @@ const ModalContent = React.forwardRef<
       ref={ref}
       className={cn(
         "fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2",
-        "rounded-xl bg-white p-6 shadow-xl",
+        "rounded-xl bg-white shadow-xl overflow-hidden",
         "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
         "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%]",
-        "max-h-[85vh] overflow-y-auto",
+        "max-h-[85vh]",
         className
       )}
       {...props}
     >
-      {children}
+      <div className="overflow-y-auto max-h-[85vh] p-6">
+        {children}
+      </div>
       <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm text-brown-500 transition-colors hover:text-brown-900 focus:outline-none focus:ring-2 focus:ring-terracotta-500 focus:ring-offset-2">
         <X className="h-5 w-5" />
         <span className="sr-only">Close</span>
