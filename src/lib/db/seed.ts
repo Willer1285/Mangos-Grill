@@ -117,39 +117,36 @@ async function seed() {
   const locations = [
     {
       name: "Mango's Grill - Montrose",
-      slug: "houston-montrose",
-      address: { street: "1547 Westheimer Rd", city: "Houston", state: "TX", zip: "77098", country: "US" },
+      city: "Houston",
+      address: "1547 Westheimer Rd, Houston, TX 77098",
       phone: "(713) 555-0199",
       email: "montrose@mangosgrill.com",
       mapCoordinates: { lat: 29.7425, lng: -95.3988 },
       isFlagship: true,
-      status: "Active",
     },
     {
       name: "Mango's Grill - Downtown Austin",
-      slug: "austin-downtown",
-      address: { street: "812 Congress Ave", city: "Austin", state: "TX", zip: "78701", country: "US" },
+      city: "Austin",
+      address: "812 Congress Ave, Austin, TX 78701",
       phone: "(512) 555-0234",
       email: "austin@mangosgrill.com",
       mapCoordinates: { lat: 30.2672, lng: -97.7431 },
       isFlagship: false,
-      status: "Active",
     },
     {
       name: "Mango's Grill - Deep Ellum",
-      slug: "dallas-deep-ellum",
-      address: { street: "2845 Elm St", city: "Dallas", state: "TX", zip: "75226", country: "US" },
+      city: "Dallas",
+      address: "2845 Elm St, Dallas, TX 75226",
       phone: "(214) 555-0178",
       email: "dallas@mangosgrill.com",
       mapCoordinates: { lat: 32.7834, lng: -96.7836 },
       isFlagship: false,
-      status: "Active",
     },
   ];
 
   for (const loc of locations) {
     await Location.findOneAndUpdate(
-      { slug: loc.slug },
+      { name: loc.name },
       { $setOnInsert: loc },
       { upsert: true }
     );
