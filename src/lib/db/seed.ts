@@ -3,7 +3,12 @@
  * Run with: npx tsx src/lib/db/seed.ts
  */
 
-import "dotenv/config";
+import dotenv from "dotenv";
+import path from "path";
+
+// Load .env.local from project root
+dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
+
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import { connectDB } from "./connection";
