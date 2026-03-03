@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
@@ -167,7 +168,7 @@ export function Navbar({ user, cartCount = 0, notificationCount = 0, onCartClick
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem destructive className="gap-2">
+                <DropdownMenuItem destructive className="gap-2" onClick={() => signOut({ callbackUrl: "/" })}>
                   <LogOut className="h-4 w-4" />
                   {t("logout")}
                 </DropdownMenuItem>

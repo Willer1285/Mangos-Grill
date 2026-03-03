@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { Link } from "@/i18n/navigation";
@@ -94,7 +95,10 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
                   </Link>
                 );
               })}
-              <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-error-500 transition-colors hover:bg-error-500/10">
+              <button
+                onClick={() => signOut({ callbackUrl: "/" })}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-error-500 transition-colors hover:bg-error-500/10"
+              >
                 <LogOut className="h-4 w-4" />
                 {t("logout")}
               </button>

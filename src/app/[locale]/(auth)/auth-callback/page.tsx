@@ -1,0 +1,26 @@
+"use client";
+
+import { useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+
+export default function AuthCallbackPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "loading") return;
+
+    if (session?.user?.role === "SuperAdmin" || session?.user?.role === "Manager") {
+      router.replace("/admin");
+    } else {
+      router.replace("/");
+    }
+  }, [session, status, router]);
+
+  return (
+    <div className="flex items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-cream-300 border-t-terracotta-500" />
+    </div>
+  );
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { signOut } from "next-auth/react";
 import { Link } from "@/i18n/navigation";
 import { usePathname } from "next/navigation";
 import {
@@ -130,7 +131,10 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
             {item.label}
           </Link>
         ))}
-        <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-cream-400 transition-colors hover:bg-white/5 hover:text-white">
+        <button
+          onClick={() => signOut({ callbackUrl: "/" })}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-cream-400 transition-colors hover:bg-white/5 hover:text-white"
+        >
           <LogOut className="h-5 w-5" />
           Log out
         </button>
