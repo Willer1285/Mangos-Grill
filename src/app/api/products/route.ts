@@ -30,6 +30,14 @@ export async function GET(req: NextRequest) {
       filter.featured = true;
     }
 
+    const location = searchParams.get("location");
+    if (location) {
+      filter.$and = [
+        ...(filter.$and ? (filter.$and as unknown[]) : []),
+        { $or: [{ locations: { $size: 0 } }, { locations: location }] },
+      ];
+    }
+
     const products = await Product.find(filter)
       .populate("category")
       .lean();

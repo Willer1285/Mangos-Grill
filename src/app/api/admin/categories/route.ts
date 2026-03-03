@@ -6,7 +6,7 @@ import Category from "@/lib/db/models/category";
 
 export async function GET() {
   try {
-    const result = await requireAuth(["SuperAdmin", "Staff"]);
+    const result = await requireAuth(["SuperAdmin"]);
     if (result.error) return result.error;
 
     await connectDB();
@@ -22,7 +22,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const result = await requireAuth(["SuperAdmin", "Staff"]);
+    const result = await requireAuth(["SuperAdmin"]);
     if (result.error) return result.error;
 
     await connectDB();

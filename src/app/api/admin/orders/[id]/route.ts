@@ -11,7 +11,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const result = await requireAuth(["SuperAdmin", "Staff"]);
+    const result = await requireAuth(["SuperAdmin", "Manager"]);
     if (result.error) return result.error;
 
     await connectDB();
@@ -21,6 +21,11 @@ export async function GET(
 
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    // Manager can only view orders from their location
+    if (result.user!.role === "Manager" && result.user!.location && order.location !== result.user!.location) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     return NextResponse.json(order);
@@ -35,7 +40,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const result = await requireAuth(["SuperAdmin", "Staff"]);
+    const result = await requireAuth(["SuperAdmin", "Manager"]);
     if (result.error) return result.error;
 
     await connectDB();
@@ -46,6 +51,11 @@ export async function PATCH(
     const existing = await Order.findById(id);
     if (!existing) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    // Manager can only update orders from their location
+    if (result.user!.role === "Manager" && result.user!.location && existing.location !== result.user!.location) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Status-only update (works for any current status)

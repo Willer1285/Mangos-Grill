@@ -80,6 +80,7 @@ export const authConfig: NextAuthConfig = {
           token.role = dbUser.role;
           token.firstName = dbUser.firstName;
           token.lastName = dbUser.lastName;
+          token.location = dbUser.location || undefined;
         }
       }
       return token;
@@ -90,6 +91,7 @@ export const authConfig: NextAuthConfig = {
         session.user.role = token.role as string;
         session.user.firstName = token.firstName as string;
         session.user.lastName = token.lastName as string;
+        session.user.location = (token.location as string) || undefined;
       }
       return session;
     },

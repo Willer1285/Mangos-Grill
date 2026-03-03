@@ -15,7 +15,7 @@ function generateSlug(name: string): string {
 
 export async function GET(req: NextRequest) {
   try {
-    const result = await requireAuth(["SuperAdmin", "Staff"]);
+    const result = await requireAuth(["SuperAdmin"]);
     if (result.error) return result.error;
 
     await connectDB();
@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const result = await requireAuth(["SuperAdmin", "Staff"]);
+    const result = await requireAuth(["SuperAdmin"]);
     if (result.error) return result.error;
 
     await connectDB();

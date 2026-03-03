@@ -9,7 +9,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const result = await requireAuth(["SuperAdmin", "Staff"]);
+    const result = await requireAuth(["SuperAdmin"]);
     if (result.error) return result.error;
 
     await connectDB();
@@ -19,6 +19,12 @@ export async function PUT(
 
     // Don't allow password update through this endpoint
     delete body.password;
+
+    // Clear location if role is not Manager
+    if (body.role && body.role !== "Manager") {
+      body.location = undefined;
+      body.$unset = { location: "" };
+    }
 
     const user = await User.findByIdAndUpdate(id, body, { new: true }).lean();
     if (!user) {

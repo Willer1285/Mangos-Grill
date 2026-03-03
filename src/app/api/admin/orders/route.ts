@@ -8,7 +8,7 @@ import User from "@/lib/db/models/user";
 
 export async function GET(req: NextRequest) {
   try {
-    const result = await requireAuth(["SuperAdmin", "Staff"]);
+    const result = await requireAuth(["SuperAdmin", "Manager"]);
     if (result.error) return result.error;
 
     await connectDB();
@@ -20,6 +20,11 @@ export async function GET(req: NextRequest) {
 
     const filter: Record<string, unknown> = {};
     if (status) filter.status = sanitize(status);
+
+    // Manager can only see orders from their assigned location
+    if (result.user!.role === "Manager" && result.user!.location) {
+      filter.location = result.user!.location;
+    }
 
     const [orders, total] = await Promise.all([
       Order.find(filter)
@@ -45,7 +50,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const result = await requireAuth(["SuperAdmin", "Staff"]);
+    const result = await requireAuth(["SuperAdmin", "Manager"]);
     if (result.error) return result.error;
 
     await connectDB();
@@ -56,6 +61,7 @@ export async function POST(req: NextRequest) {
       items,
       deliveryType,
       tableNumber,
+      location,
       paymentMethod,
       paymentStatus,
       subtotal,
@@ -67,6 +73,15 @@ export async function POST(req: NextRequest) {
 
     if (!items || !items.length) {
       return NextResponse.json({ error: "At least one item is required" }, { status: 400 });
+    }
+
+    // Determine location: Manager uses their assigned location, SuperAdmin must provide it
+    const orderLocation = result.user!.role === "Manager"
+      ? result.user!.location
+      : location;
+
+    if (!orderLocation) {
+      return NextResponse.json({ error: "Location is required" }, { status: 400 });
     }
 
     // Find or create a guest customer
@@ -95,6 +110,7 @@ export async function POST(req: NextRequest) {
       items,
       deliveryType: deliveryType || "Dine-in",
       tableNumber,
+      location: orderLocation,
       status: "New",
       paymentMethod: paymentMethod || "Cash",
       paymentStatus: paymentStatus || "Pending",

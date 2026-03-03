@@ -9,6 +9,7 @@ import {
   Switch,
   Spinner,
   Textarea,
+  Badge,
   Modal,
   ModalContent,
   ModalHeader,
@@ -22,13 +23,18 @@ import {
   SelectValue,
   ImageUpload,
 } from "@/components/ui";
-import { UtensilsCrossed, Plus, Edit2, Trash2 } from "lucide-react";
+import { UtensilsCrossed, Plus, Edit2, Trash2, MapPin, Package } from "lucide-react";
 import { motion } from "framer-motion";
 import { autoTranslate } from "@/lib/utils/translate";
 
 interface Category {
   _id: string;
   name: { en: string; es: string };
+}
+
+interface Location {
+  _id: string;
+  name: string;
 }
 
 interface Product {
@@ -40,6 +46,9 @@ interface Product {
   image?: string;
   ingredients?: { en: string[]; es: string[] };
   status: "Available" | "Unavailable";
+  locations: string[];
+  hasStock: boolean;
+  stock: number;
 }
 
 const EMPTY_FORM = {
@@ -49,6 +58,10 @@ const EMPTY_FORM = {
   category: "",
   image: "",
   ingredients: "",
+  locations: [] as string[],
+  allLocations: true,
+  hasStock: false,
+  stock: "",
 };
 
 const containerVariants = {
@@ -64,6 +77,7 @@ const itemVariants = {
 export default function MenuPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("All");
   const [modalOpen, setModalOpen] = useState(false);
@@ -78,13 +92,15 @@ export default function MenuPage() {
       const params = new URLSearchParams();
       if (activeCategory !== "All") params.set("category", activeCategory);
 
-      const [prodRes, catRes] = await Promise.all([
+      const [prodRes, catRes, locRes] = await Promise.all([
         fetch(`/api/admin/products?${params}`),
         fetch("/api/admin/categories"),
+        fetch("/api/admin/locations"),
       ]);
 
       if (prodRes.ok) setProducts(await prodRes.json());
       if (catRes.ok) setCategories(await catRes.json());
+      if (locRes.ok) setLocations(await locRes.json());
     } catch {
       /* empty */
     } finally {
@@ -98,7 +114,6 @@ export default function MenuPage() {
 
   async function handleToggle(product: Product) {
     const newStatus = product.status === "Available" ? "Unavailable" : "Available";
-    // Optimistic update
     setProducts((prev) =>
       prev.map((p) => (p._id === product._id ? { ...p, status: newStatus } : p))
     );
@@ -109,7 +124,6 @@ export default function MenuPage() {
         body: JSON.stringify({ status: newStatus }),
       });
       if (!res.ok) {
-        // Revert on failure
         setProducts((prev) =>
           prev.map((p) => (p._id === product._id ? { ...p, status: product.status } : p))
         );
@@ -129,6 +143,8 @@ export default function MenuPage() {
   }
 
   function openEdit(item: Product) {
+    const itemLocations = item.locations || [];
+    const isAllLocations = itemLocations.length === 0;
     setEditingId(item._id);
     setFormData({
       name: item.name.en || item.name.es,
@@ -137,6 +153,10 @@ export default function MenuPage() {
       category: item.category?._id || "",
       image: item.image || "",
       ingredients: item.ingredients?.en?.join(", ") || "",
+      locations: itemLocations,
+      allLocations: isAllLocations,
+      hasStock: item.hasStock || false,
+      stock: item.hasStock ? String(item.stock) : "",
     });
     setError("");
     setModalOpen(true);
@@ -162,6 +182,9 @@ export default function MenuPage() {
         category: formData.category,
         image: formData.image,
         ingredients: { en: ingredientArray, es: ingredientArray },
+        locations: formData.allLocations ? [] : formData.locations,
+        hasStock: formData.hasStock,
+        stock: formData.hasStock ? parseInt(formData.stock) || 0 : 0,
       };
       const url = editingId
         ? `/api/admin/products/${editingId}`
@@ -199,6 +222,18 @@ export default function MenuPage() {
     } catch {
       alert("Failed to delete product");
     }
+  }
+
+  function toggleLocation(locName: string) {
+    setFormData((prev) => {
+      const has = prev.locations.includes(locName);
+      return {
+        ...prev,
+        locations: has
+          ? prev.locations.filter((l) => l !== locName)
+          : [...prev.locations, locName],
+      };
+    });
   }
 
   return (
@@ -267,6 +302,24 @@ export default function MenuPage() {
                     <h3 className="font-semibold text-brown-900">{item.name.es || item.name.en}</h3>
                     <p className="text-xs text-brown-500">{item.name.en}</p>
                     <p className="mt-1 text-sm text-brown-600">{item.description.en}</p>
+                  </div>
+                  <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                    {item.locations && item.locations.length > 0 ? (
+                      item.locations.map((loc) => (
+                        <Badge key={loc} variant="default" className="text-[10px]">
+                          <MapPin className="mr-0.5 h-2.5 w-2.5" />
+                          {loc}
+                        </Badge>
+                      ))
+                    ) : (
+                      <Badge variant="default" className="text-[10px]">All Locations</Badge>
+                    )}
+                    {item.hasStock && (
+                      <Badge variant={item.stock > 0 ? "active" : "disabled"} className="text-[10px]">
+                        <Package className="mr-0.5 h-2.5 w-2.5" />
+                        {item.stock > 0 ? `${item.stock} in stock` : "Out of stock"}
+                      </Badge>
+                    )}
                   </div>
                   <p className="mb-4 text-lg font-bold text-terracotta-500">
                     ${item.price.toFixed(2)}
@@ -365,6 +418,66 @@ export default function MenuPage() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="border-t border-cream-200" />
+
+            {/* Locations */}
+            <div className="space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Availability by Location</p>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={formData.allLocations}
+                  onChange={(e) => setFormData((p) => ({ ...p, allLocations: e.target.checked, locations: [] }))}
+                  className="h-4 w-4 rounded border-cream-300 text-terracotta-500 focus:ring-terracotta-500"
+                />
+                <span className="text-sm text-brown-700">Available at all locations</span>
+              </label>
+              {!formData.allLocations && locations.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {locations.map((loc) => (
+                    <button
+                      key={loc._id}
+                      type="button"
+                      onClick={() => toggleLocation(loc.name)}
+                      className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                        formData.locations.includes(loc.name)
+                          ? "border-terracotta-500 bg-terracotta-500 text-white"
+                          : "border-cream-300 bg-white text-brown-700 hover:border-terracotta-300"
+                      }`}
+                    >
+                      {loc.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="border-t border-cream-200" />
+
+            {/* Stock */}
+            <div className="space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Stock Management</p>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={formData.hasStock}
+                  onChange={(e) => setFormData((p) => ({ ...p, hasStock: e.target.checked, stock: "" }))}
+                  className="h-4 w-4 rounded border-cream-300 text-terracotta-500 focus:ring-terracotta-500"
+                />
+                <span className="text-sm text-brown-700">Track stock for this item</span>
+              </label>
+              {formData.hasStock && (
+                <Input
+                  label="Stock Quantity"
+                  type="number"
+                  min="0"
+                  required
+                  value={formData.stock}
+                  onChange={(e) => setFormData((p) => ({ ...p, stock: e.target.value }))}
+                />
+              )}
             </div>
 
             <ModalFooter>

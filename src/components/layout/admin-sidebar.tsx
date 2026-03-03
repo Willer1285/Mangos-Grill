@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { usePathname } from "next/navigation";
 import {
@@ -26,29 +26,40 @@ interface AdminSidebarProps {
     firstName: string;
     lastName: string;
     role: string;
+    location?: string;
     avatar?: string | null;
   };
 }
 
-const navItems = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/users", label: "Users", icon: Users },
-  { href: "/admin/menu", label: "Menu", icon: UtensilsCrossed },
-  { href: "/admin/categories", label: "Categories", icon: FolderOpen },
-  { href: "/admin/payments", label: "Payments", icon: CreditCard },
-  { href: "/admin/orders", label: "Orders", icon: ClipboardList },
-  { href: "/admin/reservations", label: "Reservations", icon: CalendarDays },
-  { href: "/admin/locations", label: "Locations", icon: MapPin },
-  { href: "/admin/jobs", label: "Jobs", icon: Briefcase },
+const allNavItems = [
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, roles: ["SuperAdmin", "Manager"] },
+  { href: "/admin/users", label: "Users", icon: Users, roles: ["SuperAdmin"] },
+  { href: "/admin/menu", label: "Menu", icon: UtensilsCrossed, roles: ["SuperAdmin"] },
+  { href: "/admin/categories", label: "Categories", icon: FolderOpen, roles: ["SuperAdmin"] },
+  { href: "/admin/payments", label: "Payments", icon: CreditCard, roles: ["SuperAdmin"] },
+  { href: "/admin/orders", label: "Orders", icon: ClipboardList, roles: ["SuperAdmin", "Manager"] },
+  { href: "/admin/reservations", label: "Reservations", icon: CalendarDays, roles: ["SuperAdmin", "Manager"] },
+  { href: "/admin/locations", label: "Locations", icon: MapPin, roles: ["SuperAdmin"] },
+  { href: "/admin/jobs", label: "Jobs", icon: Briefcase, roles: ["SuperAdmin"] },
 ];
 
-const bottomItems = [
-  { href: "/admin/settings", label: "Settings", icon: Settings },
+const allBottomItems = [
+  { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["SuperAdmin"] },
 ];
 
 export function AdminSidebar({ user }: AdminSidebarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const navItems = useMemo(
+    () => allNavItems.filter((item) => item.roles.includes(user.role)),
+    [user.role]
+  );
+
+  const bottomItems = useMemo(
+    () => allBottomItems.filter((item) => item.roles.includes(user.role)),
+    [user.role]
+  );
 
   function isActive(href: string) {
     const cleanPath = pathname.replace(/^\/(en|es)/, "");
@@ -70,6 +81,16 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
           <p className="text-xs text-cream-400">Admin Panel</p>
         </div>
       </div>
+
+      {/* Location indicator for Manager */}
+      {user.role === "Manager" && user.location && (
+        <div className="mx-3 mb-2 rounded-lg bg-terracotta-500/10 px-3 py-2">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-3.5 w-3.5 text-terracotta-400" />
+            <span className="truncate text-xs font-medium text-terracotta-400">{user.location}</span>
+          </div>
+        </div>
+      )}
 
       {/* Nav items */}
       <nav className="flex-1 overflow-y-auto scrollbar-dark space-y-1 px-3 py-4">

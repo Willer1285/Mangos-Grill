@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { Stepper } from "@/components/ui";
@@ -10,7 +10,14 @@ import { PaymentStep, type PaymentData } from "./_components/payment-step";
 import { ReviewStep } from "./_components/review-step";
 import { OrderSummarySidebar } from "./_components/order-summary-sidebar";
 import { toast } from "sonner";
+import { MapPin } from "lucide-react";
 import type { ShippingAddressInput } from "@/lib/validators/order";
+
+interface Location {
+  _id: string;
+  name: string;
+  address: string;
+}
 
 const checkoutSteps = [
   { label: "Shipping" },
@@ -29,6 +36,24 @@ export default function CheckoutPage() {
   const [deliveryOption, setDeliveryOption] = useState<"standard" | "express">("standard");
   const [paymentMethod, setPaymentMethod] = useState<"credit_card" | "zelle" | "binance">("credit_card");
   const [loading, setLoading] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [locations, setLocations] = useState<Location[]>([]);
+
+  useEffect(() => {
+    async function fetchLocations() {
+      try {
+        const res = await fetch("/api/locations");
+        if (res.ok) {
+          const data = await res.json();
+          setLocations(data);
+          if (data.length === 1) setSelectedLocation(data[0].name);
+        }
+      } catch {
+        /* empty */
+      }
+    }
+    fetchLocations();
+  }, []);
 
   // Redirect if cart empty
   if (state.items.length === 0) {
@@ -57,7 +82,7 @@ export default function CheckoutPage() {
   }
 
   async function handlePlaceOrder() {
-    if (!shippingData || !paymentData) return;
+    if (!shippingData || !paymentData || !selectedLocation) return;
 
     setLoading(true);
     try {
@@ -70,6 +95,7 @@ export default function CheckoutPage() {
         })),
         deliveryType: "Delivery" as const,
         deliveryAddress: shippingData,
+        location: selectedLocation,
         paymentMethod: paymentData.method,
         promoCode: state.promoCode || undefined,
       };
@@ -104,6 +130,36 @@ export default function CheckoutPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* Location Selector */}
+        {locations.length > 1 && (
+          <div className="mb-8">
+            <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-brown-900">
+              <MapPin className="h-4 w-4 text-terracotta-500" />
+              Select Location
+            </label>
+            <div className="flex flex-wrap gap-3">
+              {locations.map((loc) => (
+                <button
+                  key={loc._id}
+                  type="button"
+                  onClick={() => setSelectedLocation(loc.name)}
+                  className={`rounded-xl border-2 px-5 py-3 text-sm font-medium transition-all ${
+                    selectedLocation === loc.name
+                      ? "border-terracotta-500 bg-terracotta-500/10 text-terracotta-600"
+                      : "border-cream-200 bg-white text-brown-700 hover:border-terracotta-300"
+                  }`}
+                >
+                  <span className="font-semibold">{loc.name}</span>
+                  <span className="mt-0.5 block text-xs text-brown-500">{loc.address}</span>
+                </button>
+              ))}
+            </div>
+            {!selectedLocation && (
+              <p className="mt-2 text-xs text-error-500">Please select a location to continue</p>
+            )}
+          </div>
+        )}
+
         {/* Stepper */}
         <Stepper
           steps={checkoutSteps}

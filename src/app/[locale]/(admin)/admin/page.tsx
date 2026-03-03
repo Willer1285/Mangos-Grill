@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import { Card, CardContent, Badge, Button, Spinner } from "@/components/ui";
 import {
@@ -10,7 +11,7 @@ import {
   CalendarDays,
   Plus,
   UtensilsCrossed,
-  FileDown,
+  MapPin,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 
@@ -21,6 +22,7 @@ interface Order {
   items: { name: string }[];
   total: number;
   status: string;
+  location?: string;
   createdAt: string;
 }
 
@@ -41,22 +43,31 @@ const badgeVariant: Record<string, string> = {
 };
 
 export default function AdminDashboardPage() {
+  const { data: session } = useSession();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const isSuperAdmin = session?.user?.role === "SuperAdmin";
 
   useEffect(() => {
     async function fetchDashboard() {
       setLoading(true);
       try {
-        const [ordersRes, usersRes, reservationsRes] = await Promise.all([
+        const fetches: Promise<Response>[] = [
           fetch("/api/admin/orders?limit=5"),
-          fetch("/api/admin/users?limit=1"),
           fetch("/api/admin/reservations?status=Pending"),
-        ]);
+        ];
 
-        const ordersData = ordersRes.ok ? await ordersRes.json() : { orders: [], total: 0 };
-        const usersData = usersRes.ok ? await usersRes.json() : { total: 0 };
-        const reservationsData = reservationsRes.ok ? await reservationsRes.json() : [];
+        // Only fetch users for SuperAdmin
+        if (isSuperAdmin) {
+          fetches.push(fetch("/api/admin/users?limit=1"));
+        }
+
+        const results = await Promise.all(fetches);
+
+        const ordersData = results[0].ok ? await results[0].json() : { orders: [], total: 0 };
+        const reservationsData = results[1].ok ? await results[1].json() : [];
+        const usersData = isSuperAdmin && results[2]?.ok ? await results[2].json() : { total: 0 };
 
         setData({
           totalOrders: ordersData.total,
@@ -76,7 +87,7 @@ export default function AdminDashboardPage() {
       }
     }
     fetchDashboard();
-  }, []);
+  }, [isSuperAdmin]);
 
   if (loading) {
     return (
@@ -88,9 +99,27 @@ export default function AdminDashboardPage() {
 
   const kpis = [
     { label: "Total Orders", value: data?.totalOrders ?? 0, icon: ClipboardList, color: "bg-terracotta-500/10 text-terracotta-500" },
-    { label: "Active Users", value: data?.totalUsers ?? 0, icon: Users, color: "bg-info-500/10 text-info-500" },
+    ...(isSuperAdmin
+      ? [{ label: "Active Users", value: data?.totalUsers ?? 0, icon: Users, color: "bg-info-500/10 text-info-500" }]
+      : []),
     { label: "Pending Reservations", value: data?.pendingReservations ?? 0, icon: CalendarDays, color: "bg-warning-500/10 text-warning-500" },
   ];
+
+  // Manager quick actions - only orders and reservations
+  const managerQuickActions = [
+    { href: "/admin/orders", label: "Orders", icon: Plus, iconBg: "bg-terracotta-500/10", iconColor: "text-terracotta-500" },
+    { href: "/admin/reservations", label: "Reservations", icon: CalendarDays, iconBg: "bg-info-500/10", iconColor: "text-info-500" },
+  ];
+
+  // SuperAdmin quick actions - all
+  const superAdminQuickActions = [
+    { href: "/admin/orders", label: "Orders", icon: Plus, iconBg: "bg-terracotta-500/10", iconColor: "text-terracotta-500" },
+    { href: "/admin/menu", label: "Menu", icon: UtensilsCrossed, iconBg: "bg-success-500/10", iconColor: "text-success-500" },
+    { href: "/admin/reservations", label: "Reservations", icon: CalendarDays, iconBg: "bg-info-500/10", iconColor: "text-info-500" },
+    { href: "/admin/payments", label: "Payments", icon: DollarSign, iconBg: "bg-warning-500/10", iconColor: "text-warning-500" },
+  ];
+
+  const quickActions = isSuperAdmin ? superAdminQuickActions : managerQuickActions;
 
   return (
     <div className="space-y-6">
@@ -98,12 +127,20 @@ export default function AdminDashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-brown-900">Dashboard</h1>
-          <p className="text-sm text-brown-500">Welcome back, Admin. Here&apos;s what&apos;s happening today.</p>
+          <p className="text-sm text-brown-500">
+            Welcome back{session?.user?.firstName ? `, ${session.user.firstName}` : ""}. Here&apos;s what&apos;s happening today.
+          </p>
+          {!isSuperAdmin && session?.user?.location && (
+            <p className="mt-1 flex items-center gap-1 text-xs text-terracotta-500">
+              <MapPin className="h-3.5 w-3.5" />
+              {session.user.location}
+            </p>
+          )}
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className={`grid gap-4 sm:grid-cols-2 ${isSuperAdmin ? "lg:grid-cols-3" : "lg:grid-cols-2"}`}>
         {kpis.map((kpi, i) => (
           <motion.div
             key={kpi.label}
@@ -182,30 +219,14 @@ export default function AdminDashboardPage() {
           <CardContent className="p-5">
             <h2 className="mb-4 text-lg font-semibold text-brown-900">Quick Actions</h2>
             <div className="grid grid-cols-2 gap-3">
-              <Link href="/admin/orders" className="flex flex-col items-center gap-2 rounded-lg border border-cream-200 p-4 transition-colors hover:bg-cream-100">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-terracotta-500/10">
-                  <Plus className="h-5 w-5 text-terracotta-500" />
-                </div>
-                <span className="text-xs font-medium text-brown-700">Orders</span>
-              </Link>
-              <Link href="/admin/menu" className="flex flex-col items-center gap-2 rounded-lg border border-cream-200 p-4 transition-colors hover:bg-cream-100">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success-500/10">
-                  <UtensilsCrossed className="h-5 w-5 text-success-500" />
-                </div>
-                <span className="text-xs font-medium text-brown-700">Menu</span>
-              </Link>
-              <Link href="/admin/reservations" className="flex flex-col items-center gap-2 rounded-lg border border-cream-200 p-4 transition-colors hover:bg-cream-100">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info-500/10">
-                  <CalendarDays className="h-5 w-5 text-info-500" />
-                </div>
-                <span className="text-xs font-medium text-brown-700">Reservations</span>
-              </Link>
-              <Link href="/admin/payments" className="flex flex-col items-center gap-2 rounded-lg border border-cream-200 p-4 transition-colors hover:bg-cream-100">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning-500/10">
-                  <DollarSign className="h-5 w-5 text-warning-500" />
-                </div>
-                <span className="text-xs font-medium text-brown-700">Payments</span>
-              </Link>
+              {quickActions.map((action) => (
+                <Link key={action.href} href={action.href} className="flex flex-col items-center gap-2 rounded-lg border border-cream-200 p-4 transition-colors hover:bg-cream-100">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${action.iconBg}`}>
+                    <action.icon className={`h-5 w-5 ${action.iconColor}`} />
+                  </div>
+                  <span className="text-xs font-medium text-brown-700">{action.label}</span>
+                </Link>
+              ))}
             </div>
           </CardContent>
         </Card>

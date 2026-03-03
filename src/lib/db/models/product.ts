@@ -30,6 +30,9 @@ export interface IProduct extends Document {
   ingredients: { en: string[]; es: string[] };
   modifiers: IModifier[];
   extras: IExtra[];
+  locations: string[];
+  hasStock: boolean;
+  stock: number;
   featured: boolean;
   sortOrder: number;
   createdAt: Date;
@@ -94,6 +97,9 @@ const productSchema = new Schema<IProduct>(
         price: { type: Number, min: 0 },
       },
     ],
+    locations: [{ type: String, trim: true }],
+    hasStock: { type: Boolean, default: false },
+    stock: { type: Number, default: 0, min: 0 },
     featured: { type: Boolean, default: false },
     sortOrder: { type: Number, default: 0 },
   },

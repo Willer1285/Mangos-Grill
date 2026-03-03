@@ -7,7 +7,7 @@ import User from "@/lib/db/models/user";
 
 export async function GET(req: NextRequest) {
   try {
-    const result = await requireAuth(["SuperAdmin", "Staff"]);
+    const result = await requireAuth(["SuperAdmin"]);
     if (result.error) return result.error;
 
     await connectDB();
@@ -54,16 +54,20 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const result = await requireAuth(["SuperAdmin", "Staff"]);
+    const result = await requireAuth(["SuperAdmin"]);
     if (result.error) return result.error;
 
     await connectDB();
 
     const body = sanitize(await req.json());
-    const { firstName, lastName, email, phone, password, role } = body;
+    const { firstName, lastName, email, phone, password, role, location } = body;
 
     if (!firstName || !lastName || !email || !password) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    if (role === "Manager" && !location) {
+      return NextResponse.json({ error: "Location is required for Manager role" }, { status: 400 });
     }
 
     const existing = await User.findOne({ email: email.toLowerCase() });
@@ -80,6 +84,7 @@ export async function POST(req: NextRequest) {
       phone,
       password: hashedPassword,
       role: role || "Client",
+      location: role === "Manager" ? location : undefined,
       provider: "credentials",
     });
 

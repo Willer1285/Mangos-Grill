@@ -28,6 +28,7 @@ export const checkoutSchema = z.object({
   deliveryType: z.enum(["Dine-in", "Delivery", "Pickup"]),
   deliveryAddress: shippingAddressSchema.optional(),
   tableNumber: z.string().optional(),
+  location: z.string().min(1, "Location is required"),
   paymentMethod: z.string().min(1, "Payment method required"),
   tip: z.number().min(0).optional(),
   promoCode: z.string().optional(),

@@ -24,6 +24,7 @@ export interface IOrder extends Document {
     phone: string;
   };
   tableNumber?: string;
+  location: string;
   status: "New" | "Preparing" | "Ready" | "InTransit" | "Delivered" | "Cancelled";
   paymentMethod: string;
   paymentStatus: "Pending" | "Completed" | "Failed" | "Refunded";
@@ -81,6 +82,7 @@ const orderSchema = new Schema<IOrder>(
       phone: { type: String },
     },
     tableNumber: { type: String },
+    location: { type: String, required: true, index: true },
     status: {
       type: String,
       enum: ["New", "Preparing", "Ready", "InTransit", "Delivered", "Cancelled"],
@@ -107,6 +109,7 @@ const orderSchema = new Schema<IOrder>(
 
 orderSchema.index({ createdAt: -1 });
 orderSchema.index({ customer: 1, createdAt: -1 });
+orderSchema.index({ location: 1, status: 1 });
 
 const Order: Model<IOrder> =
   mongoose.models.Order || mongoose.model<IOrder>("Order", orderSchema);

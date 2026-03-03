@@ -27,7 +27,8 @@ export interface IUser extends Document {
   password?: string;
   dateOfBirth?: Date;
   gender?: "male" | "female" | "other" | "prefer-not-to-say";
-  role: "SuperAdmin" | "Staff" | "Client";
+  role: "SuperAdmin" | "Manager" | "Client";
+  location?: string;
   status: "Active" | "Disabled";
   avatar?: string;
   provider: "credentials" | "google" | "apple";
@@ -77,9 +78,10 @@ const userSchema = new Schema<IUser>(
     },
     role: {
       type: String,
-      enum: ["SuperAdmin", "Staff", "Client"],
+      enum: ["SuperAdmin", "Manager", "Client"],
       default: "Client",
     },
+    location: { type: String, trim: true },
     status: {
       type: String,
       enum: ["Active", "Disabled"],

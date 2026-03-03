@@ -45,6 +45,7 @@ interface Order {
   deliveryType: "Dine-in" | "Delivery" | "Pickup";
   deliveryAddress?: { street?: string; city?: string };
   tableNumber?: string;
+  location?: string;
   paymentMethod: string;
   paymentStatus: string;
   notes?: string;
@@ -55,6 +56,11 @@ interface Product {
   _id: string;
   name: { en: string; es: string };
   price: number;
+}
+
+interface Location {
+  _id: string;
+  name: string;
 }
 
 type StatusFilter = "All" | "New" | "Preparing" | "Ready" | "InTransit" | "Delivered" | "Cancelled";
@@ -92,9 +98,11 @@ export default function OrdersManagementPage() {
   const [orderItems, setOrderItems] = useState<
     Array<{ productId: string; name: string; price: number; quantity: number }>
   >([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [orderForm, setOrderForm] = useState({
     deliveryType: "Dine-in",
     tableNumber: "",
+    location: "",
     paymentMethod: "Cash",
     paymentStatus: "Pending",
     notes: "",
@@ -176,6 +184,18 @@ export default function OrdersManagementPage() {
     await changeStatus(orderId, "Cancelled");
   }
 
+  useEffect(() => {
+    async function fetchLocations() {
+      try {
+        const res = await fetch("/api/admin/locations");
+        if (res.ok) setLocations(await res.json());
+      } catch {
+        /* empty */
+      }
+    }
+    fetchLocations();
+  }, []);
+
   // Fetch products when the create or edit modal opens
   useEffect(() => {
     if (!createOpen && !editOpen) return;
@@ -200,6 +220,7 @@ export default function OrdersManagementPage() {
     setOrderForm({
       deliveryType: "Dine-in",
       tableNumber: "",
+      location: "",
       paymentMethod: "Cash",
       paymentStatus: "Pending",
       notes: "",
@@ -295,6 +316,7 @@ export default function OrdersManagementPage() {
         ...(orderForm.deliveryType === "Dine-in" && orderForm.tableNumber
           ? { tableNumber: orderForm.tableNumber }
           : {}),
+        location: orderForm.location || undefined,
         paymentMethod: orderForm.paymentMethod,
         paymentStatus: orderForm.paymentStatus,
         subtotal: createSubtotal,
@@ -441,7 +463,7 @@ export default function OrdersManagementPage() {
   function renderOrderDetailsForm<T extends { deliveryType: string; tableNumber: string; paymentMethod: string; paymentStatus: string; notes: string }>(
     form: T,
     setForm: React.Dispatch<React.SetStateAction<T>>,
-    options?: { showCustomerName?: boolean; customerName?: string; onCustomerNameChange?: (v: string) => void }
+    options?: { showCustomerName?: boolean; customerName?: string; onCustomerNameChange?: (v: string) => void; showLocation?: boolean; location?: string; onLocationChange?: (v: string) => void }
   ) {
     return (
       <>
@@ -456,6 +478,21 @@ export default function OrdersManagementPage() {
                 value={options.customerName || ""}
                 onChange={(e) => options.onCustomerNameChange?.(e.target.value)}
               />
+            )}
+            {options?.showLocation && locations.length > 0 && (
+              <Select
+                value={options.location || ""}
+                onValueChange={(v) => options.onLocationChange?.(v)}
+              >
+                <SelectTrigger label="Location *">
+                  <SelectValue placeholder="Select location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations.map((loc) => (
+                    <SelectItem key={loc._id} value={loc.name}>{loc.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
             <Select
               value={form.deliveryType}
@@ -740,6 +777,9 @@ export default function OrdersManagementPage() {
             showCustomerName: true,
             customerName: orderForm.customerName,
             onCustomerNameChange: (v) => setOrderForm((f) => ({ ...f, customerName: v })),
+            showLocation: true,
+            location: orderForm.location,
+            onLocationChange: (v) => setOrderForm((f) => ({ ...f, location: v })),
           })}
           {renderSummary(createSubtotal, createTax, createTotal)}
 

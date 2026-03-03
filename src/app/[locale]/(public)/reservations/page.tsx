@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,6 +11,14 @@ import { CalendarDays, Clock, Phone, Mail, MapPin } from "lucide-react";
 import { InteractiveTableMap } from "./_components/interactive-table-map";
 import { toast } from "sonner";
 
+interface LocationData {
+  _id: string;
+  name: string;
+  address: string;
+  phone: string;
+  hours?: { day: string; open: string; close: string; closed: boolean }[];
+}
+
 const timeSlots = [
   "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "1:00 PM", "1:30 PM",
   "2:00 PM", "5:00 PM", "5:30 PM", "6:00 PM", "6:30 PM", "7:00 PM",
@@ -19,7 +27,7 @@ const timeSlots = [
 
 const partySizes = [1, 2, 3, 4, 5, 6, 7];
 
-const openingHours = [
+const defaultOpeningHours = [
   { day: "Monday", hours: "11:00 AM - 10:00 PM" },
   { day: "Tuesday", hours: "11:00 AM - 10:00 PM" },
   { day: "Wednesday", hours: "11:00 AM - 10:00 PM" },
@@ -35,31 +43,77 @@ export default function ReservationsPage() {
   const [selectedPartySize, setSelectedPartySize] = useState(2);
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [selectedOccasion, setSelectedOccasion] = useState<string>("");
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [locations, setLocations] = useState<LocationData[]>([]);
   const [loading, setLoading] = useState(false);
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<ReservationInput>({
     resolver: zodResolver(reservationSchema),
     defaultValues: {
       partySize: 2,
-      location: "Houston - Montrose District",
+      location: "",
     },
   });
+
+  useEffect(() => {
+    async function fetchLocations() {
+      try {
+        const res = await fetch("/api/locations");
+        if (res.ok) {
+          const data = await res.json();
+          setLocations(data);
+          if (data.length === 1) {
+            setSelectedLocation(data[0].name);
+            setValue("location", data[0].name);
+          }
+        }
+      } catch {
+        /* empty */
+      }
+    }
+    fetchLocations();
+  }, [setValue]);
+
+  function handleLocationSelect(locationName: string) {
+    setSelectedLocation(locationName);
+    setValue("location", locationName);
+    setSelectedTable(null);
+  }
 
   async function onSubmit(data: ReservationInput) {
     setLoading(true);
     try {
-      // TODO: API call to create reservation
-      toast.success("Reservation confirmed! Check your email for details.");
+      const res = await fetch("/api/reservations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        toast.success("Reservation confirmed! Check your email for details.");
+      } else {
+        const json = await res.json();
+        toast.error(json.error || "Failed to create reservation.");
+      }
     } catch {
       toast.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   }
+
+  const currentLocation = locations.find((l) => l.name === selectedLocation);
+
+  const openingHours = currentLocation?.hours?.length
+    ? currentLocation.hours.map((h) => ({
+        day: h.day,
+        hours: h.closed ? "Closed" : `${h.open} - ${h.close}`,
+      }))
+    : defaultOpeningHours;
 
   return (
     <>
@@ -74,6 +128,37 @@ export default function ReservationsPage() {
           {/* Reservation form */}
           <div className="flex-1">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              {/* Location Selector */}
+              {locations.length > 0 && (
+                <div>
+                  <label className="mb-2 flex items-center gap-2 text-sm font-medium text-brown-800">
+                    <MapPin className="h-4 w-4 text-terracotta-500" />
+                    {t("selectLocation") || "Select Location"}
+                  </label>
+                  <div className="flex flex-wrap gap-3">
+                    {locations.map((loc) => (
+                      <button
+                        key={loc._id}
+                        type="button"
+                        onClick={() => handleLocationSelect(loc.name)}
+                        className={`rounded-xl border-2 px-4 py-3 text-left text-sm transition-all ${
+                          selectedLocation === loc.name
+                            ? "border-terracotta-500 bg-terracotta-500/10 text-terracotta-600"
+                            : "border-cream-200 bg-white text-brown-700 hover:border-terracotta-300"
+                        }`}
+                      >
+                        <span className="font-semibold">{loc.name}</span>
+                        <span className="mt-0.5 block text-xs text-brown-500">{loc.address}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <input type="hidden" value={selectedLocation} {...register("location")} />
+                  {errors.location && (
+                    <p className="mt-1 text-xs text-error-500">{errors.location.message}</p>
+                  )}
+                </div>
+              )}
+
               {/* Date */}
               <Input
                 label={t("date")}
@@ -202,8 +287,6 @@ export default function ReservationsPage() {
                 {...register("specialRequests")}
               />
 
-              <input type="hidden" value="Houston - Montrose District" {...register("location")} />
-
               <Button type="submit" size="lg" className="w-full gap-2" loading={loading}>
                 <CalendarDays className="h-5 w-5" />
                 {t("confirmReservation")}
@@ -240,7 +323,9 @@ export default function ReservationsPage() {
                 <div className="mt-3 space-y-3">
                   <div className="flex items-start gap-2">
                     <Phone className="mt-0.5 h-4 w-4 text-terracotta-500" />
-                    <span className="text-xs text-brown-700">(713) 555-0199</span>
+                    <span className="text-xs text-brown-700">
+                      {currentLocation?.phone || "(713) 555-0199"}
+                    </span>
                   </div>
                   <div className="flex items-start gap-2">
                     <Mail className="mt-0.5 h-4 w-4 text-terracotta-500" />
@@ -249,7 +334,7 @@ export default function ReservationsPage() {
                   <div className="flex items-start gap-2">
                     <MapPin className="mt-0.5 h-4 w-4 text-terracotta-500" />
                     <span className="text-xs text-brown-700">
-                      1547 Westheimer Rd, Houston, TX 77098
+                      {currentLocation?.address || "1547 Westheimer Rd, Houston, TX 77098"}
                     </span>
                   </div>
                 </div>

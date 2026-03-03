@@ -75,6 +75,7 @@ export async function POST(req: NextRequest) {
       deliveryType: data.deliveryType,
       deliveryAddress: data.deliveryAddress,
       tableNumber: data.tableNumber,
+      location: data.location,
       status: "New",
       paymentMethod: data.paymentMethod,
       paymentStatus:

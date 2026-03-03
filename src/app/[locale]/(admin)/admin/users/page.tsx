@@ -24,10 +24,15 @@ import {
   SelectValue,
   ImageUpload,
 } from "@/components/ui";
-import { Search, Plus, Edit2, Trash2 } from "lucide-react";
+import { Search, Plus, Edit2, Trash2, MapPin } from "lucide-react";
 
-type Role = "All" | "SuperAdmin" | "Staff" | "Client";
+type Role = "All" | "SuperAdmin" | "Manager" | "Client";
 type Status = "All" | "Active" | "Disabled";
+
+interface Location {
+  _id: string;
+  name: string;
+}
 
 interface User {
   _id: string;
@@ -36,7 +41,8 @@ interface User {
   email: string;
   phone?: string;
   avatar?: string;
-  role: "SuperAdmin" | "Staff" | "Client";
+  role: "SuperAdmin" | "Manager" | "Client";
+  location?: string;
   status: "Active" | "Disabled";
   createdAt: string;
 }
@@ -48,7 +54,8 @@ interface FormData {
   phone: string;
   avatar: string;
   password: string;
-  role: "SuperAdmin" | "Staff" | "Client";
+  role: "SuperAdmin" | "Manager" | "Client";
+  location: string;
   status: "Active" | "Disabled";
 }
 
@@ -60,6 +67,7 @@ const EMPTY_FORM: FormData = {
   avatar: "",
   password: "",
   role: "Client",
+  location: "",
   status: "Active",
 };
 
@@ -76,6 +84,7 @@ export default function UsersPage() {
   const [formData, setFormData] = useState<FormData>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [locations, setLocations] = useState<Location[]>([]);
   const limit = 10;
 
   const fetchUsers = useCallback(async () => {
@@ -107,6 +116,18 @@ export default function UsersPage() {
     setCurrentPage(1);
   }, [roleFilter, statusFilter, searchQuery]);
 
+  useEffect(() => {
+    async function fetchLocations() {
+      try {
+        const res = await fetch("/api/admin/locations");
+        if (res.ok) setLocations(await res.json());
+      } catch {
+        /* empty */
+      }
+    }
+    fetchLocations();
+  }, []);
+
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   function openCreate() {
@@ -126,6 +147,7 @@ export default function UsersPage() {
       avatar: user.avatar || "",
       password: "",
       role: user.role,
+      location: user.location || "",
       status: user.status,
     });
     setError("");
@@ -137,9 +159,17 @@ export default function UsersPage() {
     setSubmitting(true);
     setError("");
     try {
+      if (formData.role === "Manager" && !formData.location) {
+        throw new Error("Location is required for Manager role");
+      }
+
+      const payload = {
+        ...formData,
+        location: formData.role === "Manager" ? formData.location : undefined,
+      };
+
       if (editingId) {
-        // Edit user
-        const { password: _, ...updateData } = formData;
+        const { password: _, ...updateData } = payload;
         const res = await fetch(`/api/admin/users/${editingId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -150,11 +180,10 @@ export default function UsersPage() {
           throw new Error(data.error || "Failed to update user");
         }
       } else {
-        // Create user
         const res = await fetch("/api/admin/users", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(payload),
         });
         if (!res.ok) {
           const data = await res.json();
@@ -220,7 +249,7 @@ export default function UsersPage() {
             >
               <option value="All">All Roles</option>
               <option value="SuperAdmin">SuperAdmin</option>
-              <option value="Staff">Staff</option>
+              <option value="Manager">Manager</option>
               <option value="Client">Client</option>
             </select>
             <select
@@ -253,6 +282,7 @@ export default function UsersPage() {
                     <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brown-900">Name</th>
                     <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brown-900">Email</th>
                     <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brown-900">Role</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brown-900">Location</th>
                     <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brown-900">Status</th>
                     <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-brown-900">Actions</th>
                   </tr>
@@ -271,6 +301,16 @@ export default function UsersPage() {
                       <td className="whitespace-nowrap px-6 py-4 text-sm text-brown-700">{user.email}</td>
                       <td className="whitespace-nowrap px-6 py-4">
                         <Badge variant="default">{user.role}</Badge>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-brown-600">
+                        {user.role === "Manager" && user.location ? (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3.5 w-3.5 text-terracotta-500" />
+                            {user.location}
+                          </span>
+                        ) : (
+                          <span className="text-brown-400">—</span>
+                        )}
                       </td>
                       <td className="whitespace-nowrap px-6 py-4">
                         <Badge variant={user.status === "Active" ? "active" : "disabled"}>
@@ -338,13 +378,13 @@ export default function UsersPage() {
                 <Input label="Password" required type="password" minLength={6} value={formData.password} onChange={(e) => setFormData((p) => ({ ...p, password: e.target.value }))} />
               )}
               <div className="grid grid-cols-2 gap-4">
-                <Select value={formData.role} onValueChange={(v) => setFormData((p) => ({ ...p, role: v as "SuperAdmin" | "Staff" | "Client" }))}>
+                <Select value={formData.role} onValueChange={(v) => setFormData((p) => ({ ...p, role: v as "SuperAdmin" | "Manager" | "Client", location: v !== "Manager" ? "" : p.location }))}>
                   <SelectTrigger label="Role">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Client">Client</SelectItem>
-                    <SelectItem value="Staff">Staff</SelectItem>
+                    <SelectItem value="Manager">Manager</SelectItem>
                     <SelectItem value="SuperAdmin">SuperAdmin</SelectItem>
                   </SelectContent>
                 </Select>
@@ -360,6 +400,20 @@ export default function UsersPage() {
                   </Select>
                 )}
               </div>
+
+              {/* Location assignment for Manager */}
+              {formData.role === "Manager" && (
+                <Select value={formData.location} onValueChange={(v) => setFormData((p) => ({ ...p, location: v }))}>
+                  <SelectTrigger label="Assigned Location *">
+                    <SelectValue placeholder="Select a location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map((loc) => (
+                      <SelectItem key={loc._id} value={loc.name}>{loc.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             <ModalFooter>

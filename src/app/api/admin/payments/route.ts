@@ -6,7 +6,7 @@ import Payment from "@/lib/db/models/payment";
 
 export async function GET(req: NextRequest) {
   try {
-    const result = await requireAuth(["SuperAdmin", "Staff"]);
+    const result = await requireAuth(["SuperAdmin"]);
     if (result.error) return result.error;
 
     await connectDB();

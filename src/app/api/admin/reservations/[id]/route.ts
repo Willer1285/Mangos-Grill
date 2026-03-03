@@ -9,12 +9,21 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const result = await requireAuth(["SuperAdmin", "Staff"]);
+    const result = await requireAuth(["SuperAdmin", "Manager"]);
     if (result.error) return result.error;
 
     await connectDB();
 
     const { id } = await params;
+
+    // Manager can only update reservations from their location
+    if (result.user!.role === "Manager" && result.user!.location) {
+      const existing = await Reservation.findById(id).lean();
+      if (existing && existing.location !== result.user!.location) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
     const body = sanitize(await req.json());
 
     const reservation = await Reservation.findByIdAndUpdate(id, body, { new: true })
@@ -37,12 +46,21 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const result = await requireAuth(["SuperAdmin", "Staff"]);
+    const result = await requireAuth(["SuperAdmin", "Manager"]);
     if (result.error) return result.error;
 
     await connectDB();
 
     const { id } = await params;
+
+    // Manager can only delete reservations from their location
+    if (result.user!.role === "Manager" && result.user!.location) {
+      const existing = await Reservation.findById(id).lean();
+      if (existing && existing.location !== result.user!.location) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
     const reservation = await Reservation.findByIdAndDelete(id);
     if (!reservation) {
       return NextResponse.json({ error: "Reservation not found" }, { status: 404 });

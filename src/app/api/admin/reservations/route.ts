@@ -6,7 +6,7 @@ import Reservation from "@/lib/db/models/reservation";
 
 export async function GET(req: NextRequest) {
   try {
-    const result = await requireAuth(["SuperAdmin", "Staff"]);
+    const result = await requireAuth(["SuperAdmin", "Manager"]);
     if (result.error) return result.error;
 
     await connectDB();
@@ -33,6 +33,11 @@ export async function GET(req: NextRequest) {
       ];
     }
 
+    // Manager can only see reservations from their assigned location
+    if (result.user!.role === "Manager" && result.user!.location) {
+      filter.location = result.user!.location;
+    }
+
     const reservations = await Reservation.find(filter)
       .populate("customer", "firstName lastName email")
       .populate("table")
@@ -48,12 +53,17 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const result = await requireAuth(["SuperAdmin", "Staff"]);
+    const result = await requireAuth(["SuperAdmin", "Manager"]);
     if (result.error) return result.error;
 
     await connectDB();
 
     const body = sanitize(await req.json());
+
+    // Manager auto-assigns their location
+    if (result.user!.role === "Manager" && result.user!.location) {
+      body.location = result.user!.location;
+    }
 
     if (!body.date || !body.time || !body.partySize || !body.location) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });

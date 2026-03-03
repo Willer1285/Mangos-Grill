@@ -4,7 +4,7 @@ export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "Mango's Grill";
 
 export const ROLES = {
   SUPER_ADMIN: "SuperAdmin",
-  STAFF: "Staff",
+  MANAGER: "Manager",
   CLIENT: "Client",
 } as const;
 
