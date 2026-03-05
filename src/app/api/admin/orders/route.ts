@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
     const body = sanitize(await req.json());
     const {
       customerIdNumber,
+      customerName,
       items,
       deliveryType,
       tableNumber,
@@ -92,9 +93,12 @@ export async function POST(req: NextRequest) {
     let customer = await User.findOne({ idNumber: customerIdNumber });
     if (!customer) {
       const guestEmail = `guest_${Date.now()}@mangos-grill.local`;
+      const nameParts = (customerName || "").trim().split(/\s+/);
+      const firstName = nameParts[0] || customerIdNumber;
+      const lastName = nameParts.slice(1).join(" ") || "";
       customer = await User.create({
-        firstName: "Client",
-        lastName: customerIdNumber,
+        firstName,
+        lastName,
         email: guestEmail,
         idNumber: customerIdNumber,
         role: "Client",

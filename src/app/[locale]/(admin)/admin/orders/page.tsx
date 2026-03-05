@@ -100,6 +100,7 @@ export default function OrdersManagementPage() {
   >([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [customerIdNumber, setCustomerIdNumber] = useState("");
+  const [customerName, setCustomerName] = useState("");
   const [customerFound, setCustomerFound] = useState<{ name: string; isNew: boolean } | null>(null);
   const [searchingCustomer, setSearchingCustomer] = useState(false);
   const [orderForm, setOrderForm] = useState({
@@ -220,6 +221,7 @@ export default function OrdersManagementPage() {
   function openCreateModal() {
     setOrderItems([]);
     setCustomerIdNumber("");
+    setCustomerName("");
     setCustomerFound(null);
     setOrderForm({
       deliveryType: "Dine-in",
@@ -242,13 +244,17 @@ export default function OrdersManagementPage() {
         const data = await res.json();
         const user = data.users?.[0];
         if (user && user.idNumber === customerIdNumber.trim()) {
-          setCustomerFound({ name: `${user.firstName} ${user.lastName}`, isNew: false });
+          const fullName = `${user.firstName} ${user.lastName}`;
+          setCustomerFound({ name: fullName, isNew: false });
+          setCustomerName(fullName);
         } else {
           setCustomerFound({ name: "New client (will be created)", isNew: true });
+          setCustomerName("");
         }
       }
     } catch {
       setCustomerFound({ name: "New client (will be created)", isNew: true });
+      setCustomerName("");
     } finally {
       setSearchingCustomer(false);
     }
@@ -333,6 +339,7 @@ export default function OrdersManagementPage() {
     try {
       const body = {
         customerIdNumber: customerIdNumber.trim(),
+        customerName: customerName.trim(),
         items: orderItems.map((i) => ({
           product: i.productId,
           name: i.name,
@@ -524,8 +531,17 @@ export default function OrdersManagementPage() {
               {customerFound && (
                 <p className={`flex items-center gap-1 text-xs ${customerFound.isNew ? "text-warning-500" : "text-success-600"}`}>
                   <CheckCircle2 className="h-3.5 w-3.5" />
-                  {customerFound.name}
+                  {customerFound.isNew ? "New client (will be created)" : customerFound.name}
                 </p>
+              )}
+              {customerFound && (
+                <Input
+                  label="Customer Name"
+                  placeholder="Full name"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  disabled={!customerFound.isNew}
+                />
               )}
             </div>
           )}

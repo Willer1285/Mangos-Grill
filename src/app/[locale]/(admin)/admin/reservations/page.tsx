@@ -22,7 +22,7 @@ import {
   SelectValue,
   Textarea,
 } from "@/components/ui";
-import { CalendarDays, Users, Plus, Search, XCircle, Trash2, MapPin, Pencil } from "lucide-react";
+import { CalendarDays, Users, Plus, Search, XCircle, Trash2, MapPin, Pencil, CheckCircle2, Clock, Eye } from "lucide-react";
 
 interface Reservation {
   _id: string;
@@ -122,6 +122,9 @@ export default function ReservationsManagementPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [locations, setLocations] = useState<Location[]>([]);
+
+  // View reservation modal
+  const [viewReservation, setViewReservation] = useState<Reservation | null>(null);
 
   // Table map modal
   const [tableMapLocation, setTableMapLocation] = useState<Location | null>(null);
@@ -430,10 +433,12 @@ export default function ReservationsManagementPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {[
           { label: "Reservations", value: todayCount, icon: CalendarDays, color: "bg-terracotta-500/10 text-terracotta-500" },
           { label: "Guests Expected", value: guestsExpected, icon: Users, color: "bg-info-500/10 text-info-500" },
+          { label: "Confirmed", value: reservations.filter((r) => r.status === "Confirmed").length, icon: CheckCircle2, color: "bg-success-500/10 text-success-500" },
+          { label: "Pending", value: reservations.filter((r) => r.status === "Pending").length, icon: Clock, color: "bg-warning-500/10 text-warning-500" },
           { label: "Cancellations", value: reservations.filter((r) => r.status === "Cancelled").length, icon: XCircle, color: "bg-error-500/10 text-error-500" },
         ].map((kpi, i) => (
           <motion.div key={kpi.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
@@ -576,6 +581,9 @@ export default function ReservationsManagementPage() {
                                 <SelectItem value="No-show">No-show</SelectItem>
                               </SelectContent>
                             </Select>
+                            <Button variant="ghost" size="icon-sm" onClick={() => setViewReservation(res)} title="View details">
+                              <Eye className="h-4 w-4 text-brown-500" />
+                            </Button>
                             <Button variant="ghost" size="icon-sm" onClick={() => openEditModal(res)}>
                               <Pencil className="h-4 w-4 text-brown-500" />
                             </Button>
@@ -635,6 +643,81 @@ export default function ReservationsManagementPage() {
               <Button type="submit" loading={editSubmitting}>Save Changes</Button>
             </ModalFooter>
           </form>
+        </ModalContent>
+      </Modal>
+
+      {/* View Reservation Modal */}
+      <Modal open={!!viewReservation} onOpenChange={(open) => { if (!open) setViewReservation(null); }}>
+        <ModalContent>
+          <ModalHeader>
+            <ModalTitle>Reservation Details</ModalTitle>
+            <ModalDescription>Full information for this reservation.</ModalDescription>
+          </ModalHeader>
+          {viewReservation && (() => {
+            const gName = viewReservation.customer
+              ? `${viewReservation.customer.firstName} ${viewReservation.customer.lastName}`
+              : viewReservation.guestName || "Unknown";
+            return (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Guest Name</p>
+                    <p className="mt-1 text-sm font-medium text-brown-900">{gName}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Status</p>
+                    <div className="mt-1">
+                      <Badge variant={badgeVariant[viewReservation.status] as "pending" | "confirmed" | "completed" | "cancelled"}>
+                        {viewReservation.status}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Email</p>
+                    <p className="mt-1 text-sm text-brown-700">{viewReservation.guestEmail || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Phone</p>
+                    <p className="mt-1 text-sm text-brown-700">{viewReservation.guestPhone || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Date</p>
+                    <p className="mt-1 text-sm text-brown-700">{new Date(viewReservation.date).toLocaleDateString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Time</p>
+                    <p className="mt-1 text-sm text-brown-700">{viewReservation.time}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Party Size</p>
+                    <p className="mt-1 text-sm text-brown-700">{viewReservation.partySize} {viewReservation.partySize === 1 ? "person" : "people"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Location</p>
+                    <p className="mt-1 text-sm text-brown-700">{viewReservation.location}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Table</p>
+                    <p className="mt-1 text-sm text-brown-700">{viewReservation.table ? `T-${viewReservation.table.number} (${viewReservation.table.name})` : "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Occasion</p>
+                    <p className="mt-1 text-sm text-brown-700">{viewReservation.occasion || "—"}</p>
+                  </div>
+                </div>
+                {viewReservation.specialRequests && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Special Requests</p>
+                    <p className="mt-1 text-sm text-brown-700">{viewReservation.specialRequests}</p>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+          <ModalFooter>
+            <Button variant="secondary" onClick={() => setViewReservation(null)}>Close</Button>
+            <Button onClick={() => { if (viewReservation) { setViewReservation(null); openEditModal(viewReservation); } }}>Edit Reservation</Button>
+          </ModalFooter>
         </ModalContent>
       </Modal>
 
