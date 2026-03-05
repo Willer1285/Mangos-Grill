@@ -12,6 +12,10 @@ import {
   Plus,
   UtensilsCrossed,
   MapPin,
+  TrendingUp,
+  XCircle,
+  CheckCircle2,
+  Package,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 
@@ -22,14 +26,19 @@ interface Order {
   items: { name: string }[];
   total: number;
   status: string;
-  location?: string;
   createdAt: string;
 }
 
 interface DashboardData {
   totalOrders: number;
-  totalUsers: number;
+  totalSales: number;
+  dishesSold: number;
+  deliveredOrders: number;
+  cancelledOrders: number;
+  confirmedReservations: number;
+  cancelledReservations: number;
   pendingReservations: number;
+  totalUsers: number;
   recentOrders: Order[];
 }
 
@@ -53,41 +62,18 @@ export default function AdminDashboardPage() {
     async function fetchDashboard() {
       setLoading(true);
       try {
-        const fetches: Promise<Response>[] = [
-          fetch("/api/admin/orders?limit=5"),
-          fetch("/api/admin/reservations?status=Pending"),
-        ];
-
-        // Only fetch users for SuperAdmin
-        if (isSuperAdmin) {
-          fetches.push(fetch("/api/admin/users?limit=1"));
+        const res = await fetch("/api/admin/dashboard");
+        if (res.ok) {
+          setData(await res.json());
         }
-
-        const results = await Promise.all(fetches);
-
-        const ordersData = results[0].ok ? await results[0].json() : { orders: [], total: 0 };
-        const reservationsData = results[1].ok ? await results[1].json() : [];
-        const usersData = isSuperAdmin && results[2]?.ok ? await results[2].json() : { total: 0 };
-
-        setData({
-          totalOrders: ordersData.total,
-          totalUsers: usersData.total,
-          pendingReservations: Array.isArray(reservationsData) ? reservationsData.length : 0,
-          recentOrders: ordersData.orders || [],
-        });
       } catch {
-        setData({
-          totalOrders: 0,
-          totalUsers: 0,
-          pendingReservations: 0,
-          recentOrders: [],
-        });
+        /* empty */
       } finally {
         setLoading(false);
       }
     }
     fetchDashboard();
-  }, [isSuperAdmin]);
+  }, []);
 
   if (loading) {
     return (
@@ -98,20 +84,24 @@ export default function AdminDashboardPage() {
   }
 
   const kpis = [
-    { label: "Total Orders", value: data?.totalOrders ?? 0, icon: ClipboardList, color: "bg-terracotta-500/10 text-terracotta-500" },
+    { label: "Orders", value: data?.totalOrders ?? 0, icon: ClipboardList, color: "bg-terracotta-500/10 text-terracotta-500" },
+    { label: "Sales", value: `$${(data?.totalSales ?? 0).toFixed(2)}`, icon: DollarSign, color: "bg-success-500/10 text-success-500" },
+    { label: "Dishes Sold", value: data?.dishesSold ?? 0, icon: Package, color: "bg-info-500/10 text-info-500" },
+    { label: "Delivered", value: data?.deliveredOrders ?? 0, icon: TrendingUp, color: "bg-success-500/10 text-success-500" },
+    { label: "Cancelled", value: data?.cancelledOrders ?? 0, icon: XCircle, color: "bg-error-500/10 text-error-500" },
+    { label: "Reserv. Confirmed", value: data?.confirmedReservations ?? 0, icon: CheckCircle2, color: "bg-success-500/10 text-success-500" },
+    { label: "Reserv. Cancelled", value: data?.cancelledReservations ?? 0, icon: XCircle, color: "bg-error-500/10 text-error-500" },
+    { label: "Reserv. Pending", value: data?.pendingReservations ?? 0, icon: CalendarDays, color: "bg-warning-500/10 text-warning-500" },
     ...(isSuperAdmin
-      ? [{ label: "Active Users", value: data?.totalUsers ?? 0, icon: Users, color: "bg-info-500/10 text-info-500" }]
+      ? [{ label: "Users", value: data?.totalUsers ?? 0, icon: Users, color: "bg-info-500/10 text-info-500" }]
       : []),
-    { label: "Pending Reservations", value: data?.pendingReservations ?? 0, icon: CalendarDays, color: "bg-warning-500/10 text-warning-500" },
   ];
 
-  // Manager quick actions - only orders and reservations
   const managerQuickActions = [
     { href: "/admin/orders", label: "Orders", icon: Plus, iconBg: "bg-terracotta-500/10", iconColor: "text-terracotta-500" },
     { href: "/admin/reservations", label: "Reservations", icon: CalendarDays, iconBg: "bg-info-500/10", iconColor: "text-info-500" },
   ];
 
-  // SuperAdmin quick actions - all
   const superAdminQuickActions = [
     { href: "/admin/orders", label: "Orders", icon: Plus, iconBg: "bg-terracotta-500/10", iconColor: "text-terracotta-500" },
     { href: "/admin/menu", label: "Menu", icon: UtensilsCrossed, iconBg: "bg-success-500/10", iconColor: "text-success-500" },
@@ -140,23 +130,21 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className={`grid gap-4 sm:grid-cols-2 ${isSuperAdmin ? "lg:grid-cols-3" : "lg:grid-cols-2"}`}>
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {kpis.map((kpi, i) => (
           <motion.div
             key={kpi.label}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
+            transition={{ delay: i * 0.05 }}
           >
             <Card>
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${kpi.color}`}>
-                    <kpi.icon className="h-5 w-5" />
-                  </div>
+              <CardContent className="p-4">
+                <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${kpi.color}`}>
+                  <kpi.icon className="h-4 w-4" />
                 </div>
-                <p className="mt-3 text-2xl font-bold text-brown-900">{kpi.value}</p>
-                <p className="text-xs text-brown-500">{kpi.label}</p>
+                <p className="mt-2 text-xl font-bold text-brown-900">{kpi.value}</p>
+                <p className="text-[11px] text-brown-500">{kpi.label}</p>
               </CardContent>
             </Card>
           </motion.div>

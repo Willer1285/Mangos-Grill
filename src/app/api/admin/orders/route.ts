@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
 
     const body = sanitize(await req.json());
     const {
-      customerName,
+      customerIdNumber,
       items,
       deliveryType,
       tableNumber,
@@ -75,6 +75,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "At least one item is required" }, { status: 400 });
     }
 
+    if (!customerIdNumber) {
+      return NextResponse.json({ error: "Customer ID number is required" }, { status: 400 });
+    }
+
     // Determine location: Manager uses their assigned location, SuperAdmin must provide it
     const orderLocation = result.user!.role === "Manager"
       ? result.user!.location
@@ -84,25 +88,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Location is required" }, { status: 400 });
     }
 
-    // Find or create a guest customer
-    let customerId: string;
-    const guestEmail = `guest_${Date.now()}@mangos-grill.local`;
-    const names = (customerName || "Guest").split(" ");
-    let guest = await User.findOne({ email: guestEmail });
-    if (!guest) {
-      guest = await User.create({
-        firstName: names[0] || "Guest",
-        lastName: names.slice(1).join(" ") || "Order",
+    // Find or create customer by ID number
+    let customer = await User.findOne({ idNumber: customerIdNumber });
+    if (!customer) {
+      const guestEmail = `guest_${Date.now()}@mangos-grill.local`;
+      customer = await User.create({
+        firstName: "Client",
+        lastName: customerIdNumber,
         email: guestEmail,
+        idNumber: customerIdNumber,
         role: "Client",
         status: "Active",
         provider: "credentials",
       });
     }
-    customerId = guest._id.toString();
+    const customerId = customer._id.toString();
 
-    // Generate order number
-    const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
+    // Generate correlative order number
+    const lastOrder = await Order.findOne().sort({ createdAt: -1 }).select("orderNumber").lean();
+    let nextNum = 1;
+    if (lastOrder?.orderNumber) {
+      const match = lastOrder.orderNumber.match(/ORD-(\d+)/);
+      if (match) nextNum = parseInt(match[1], 10) + 1;
+    }
+    const orderNumber = `ORD-${String(nextNum).padStart(6, "0")}`;
 
     const order = await Order.create({
       orderNumber,

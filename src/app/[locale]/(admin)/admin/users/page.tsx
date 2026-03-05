@@ -24,7 +24,7 @@ import {
   SelectValue,
   ImageUpload,
 } from "@/components/ui";
-import { Search, Plus, Edit2, Trash2, MapPin } from "lucide-react";
+import { Search, Plus, Edit2, Trash2, MapPin, Eye, Phone } from "lucide-react";
 
 type Role = "All" | "SuperAdmin" | "Manager" | "Client";
 type Status = "All" | "Active" | "Disabled";
@@ -40,6 +40,7 @@ interface User {
   lastName: string;
   email: string;
   phone?: string;
+  idNumber?: string;
   avatar?: string;
   role: "SuperAdmin" | "Manager" | "Client";
   location?: string;
@@ -52,6 +53,7 @@ interface FormData {
   lastName: string;
   email: string;
   phone: string;
+  idNumber: string;
   avatar: string;
   password: string;
   role: "SuperAdmin" | "Manager" | "Client";
@@ -64,6 +66,7 @@ const EMPTY_FORM: FormData = {
   lastName: "",
   email: "",
   phone: "",
+  idNumber: "",
   avatar: "",
   password: "",
   role: "Client",
@@ -85,6 +88,7 @@ export default function UsersPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [locations, setLocations] = useState<Location[]>([]);
+  const [viewUser, setViewUser] = useState<User | null>(null);
   const limit = 10;
 
   const fetchUsers = useCallback(async () => {
@@ -144,6 +148,7 @@ export default function UsersPage() {
       lastName: user.lastName,
       email: user.email,
       phone: user.phone || "",
+      idNumber: user.idNumber || "",
       avatar: user.avatar || "",
       password: "",
       role: user.role,
@@ -280,9 +285,9 @@ export default function UsersPage() {
                 <thead>
                   <tr className="border-b border-cream-200 bg-cream-50">
                     <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brown-900">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brown-900">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brown-900">ID Number</th>
                     <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brown-900">Role</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brown-900">Location</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brown-900">Phone</th>
                     <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brown-900">Status</th>
                     <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-brown-900">Actions</th>
                   </tr>
@@ -298,15 +303,17 @@ export default function UsersPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-brown-700">{user.email}</td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-brown-700">
+                        {user.idNumber || <span className="text-brown-400">—</span>}
+                      </td>
                       <td className="whitespace-nowrap px-6 py-4">
                         <Badge variant="default">{user.role}</Badge>
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-sm text-brown-600">
-                        {user.role === "Manager" && user.location ? (
+                        {user.phone ? (
                           <span className="flex items-center gap-1">
-                            <MapPin className="h-3.5 w-3.5 text-terracotta-500" />
-                            {user.location}
+                            <Phone className="h-3.5 w-3.5 text-brown-400" />
+                            {user.phone}
                           </span>
                         ) : (
                           <span className="text-brown-400">—</span>
@@ -319,6 +326,9 @@ export default function UsersPage() {
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1">
+                          <Button variant="icon" size="icon-sm" aria-label="View user" onClick={() => setViewUser(user)}>
+                            <Eye className="h-4 w-4 text-info-500" />
+                          </Button>
                           <Button variant="icon" size="icon-sm" aria-label="Edit user" onClick={() => openEdit(user)}>
                             <Edit2 className="h-4 w-4" />
                           </Button>
@@ -367,7 +377,10 @@ export default function UsersPage() {
                 <Input label="Last Name" required value={formData.lastName} onChange={(e) => setFormData((p) => ({ ...p, lastName: e.target.value }))} />
               </div>
               <Input label="Email" required type="email" value={formData.email} onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))} disabled={!!editingId} />
-              <Input label="Phone" value={formData.phone} onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))} placeholder="Optional" />
+              <div className="grid grid-cols-2 gap-4">
+                <Input label="Phone" value={formData.phone} onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))} placeholder="+15551234567" />
+                <Input label="ID Number" value={formData.idNumber} onChange={(e) => setFormData((p) => ({ ...p, idNumber: e.target.value }))} placeholder="V-12345678" />
+              </div>
             </div>
 
             <div className="border-t border-cream-200" />
@@ -423,6 +436,62 @@ export default function UsersPage() {
               </Button>
             </ModalFooter>
           </form>
+        </ModalContent>
+      </Modal>
+
+      {/* View User Profile Modal */}
+      <Modal open={!!viewUser} onOpenChange={() => setViewUser(null)}>
+        <ModalContent>
+          <ModalHeader>
+            <ModalTitle>User Profile</ModalTitle>
+            <ModalDescription>Complete profile information for this user.</ModalDescription>
+          </ModalHeader>
+          {viewUser && (
+            <div className="space-y-5">
+              <div className="flex items-center gap-4">
+                <Avatar initials={getInitials(viewUser.firstName, viewUser.lastName)} src={viewUser.avatar} size="lg" />
+                <div>
+                  <p className="text-lg font-semibold text-brown-900">{viewUser.firstName} {viewUser.lastName}</p>
+                  <Badge variant={viewUser.status === "Active" ? "active" : "disabled"}>{viewUser.status}</Badge>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 rounded-lg border border-cream-200 bg-cream-50 p-4">
+                <div>
+                  <p className="text-xs font-medium uppercase text-brown-400">Email</p>
+                  <p className="text-sm text-brown-900">{viewUser.email}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase text-brown-400">Phone</p>
+                  <p className="text-sm text-brown-900">{viewUser.phone || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase text-brown-400">ID Number</p>
+                  <p className="text-sm text-brown-900">{viewUser.idNumber || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase text-brown-400">Role</p>
+                  <p className="text-sm text-brown-900">{viewUser.role}</p>
+                </div>
+                {viewUser.role === "Manager" && viewUser.location && (
+                  <div>
+                    <p className="text-xs font-medium uppercase text-brown-400">Location</p>
+                    <p className="flex items-center gap-1 text-sm text-brown-900">
+                      <MapPin className="h-3.5 w-3.5 text-terracotta-500" />
+                      {viewUser.location}
+                    </p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-xs font-medium uppercase text-brown-400">Registered</p>
+                  <p className="text-sm text-brown-900">{new Date(viewUser.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+              <ModalFooter>
+                <Button variant="secondary" onClick={() => setViewUser(null)}>Close</Button>
+                <Button onClick={() => { setViewUser(null); openEdit(viewUser); }}>Edit User</Button>
+              </ModalFooter>
+            </div>
+          )}
         </ModalContent>
       </Modal>
     </div>

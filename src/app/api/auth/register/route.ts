@@ -26,14 +26,48 @@ export async function POST(request: Request) {
       );
     }
 
-    const { firstName, lastName, email, phone, password } = parsed.data;
+    const { firstName, lastName, email, phone, idNumber, password } = parsed.data;
 
     await connectDB();
 
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    // Check if user already exists by email, phone, or idNumber
+    const existingByEmail = await User.findOne({ email: email.toLowerCase() });
+    const existingByPhone = phone ? await User.findOne({ phone: phone.trim() }) : null;
+    const existingByIdNumber = await User.findOne({ idNumber: idNumber.trim() });
+
+    const existingUser = existingByEmail || existingByPhone || existingByIdNumber;
+
     if (existingUser) {
+      // User was pre-created (e.g. from a manual order) — has no password yet
+      if (!existingUser.password) {
+        const hashedPassword = await bcrypt.hash(password, 12);
+        existingUser.firstName = firstName.trim();
+        existingUser.lastName = lastName.trim();
+        existingUser.email = email.toLowerCase().trim();
+        existingUser.phone = phone?.trim() || existingUser.phone;
+        existingUser.idNumber = idNumber.trim();
+        existingUser.password = hashedPassword;
+        existingUser.provider = "credentials";
+        await existingUser.save();
+
+        return NextResponse.json(
+          {
+            message: "Account updated successfully. You can now sign in.",
+            user: {
+              id: existingUser._id.toString(),
+              email: existingUser.email,
+              firstName: existingUser.firstName,
+              lastName: existingUser.lastName,
+            },
+          },
+          { status: 200 }
+        );
+      }
+
+      // User is fully registered already
+      const field = existingByEmail ? "email" : existingByPhone ? "phone" : "ID number";
       return NextResponse.json(
-        { error: "An account with this email already exists." },
+        { error: `An account with this ${field} already exists. Please sign in and update your missing data.` },
         { status: 409 }
       );
     }
@@ -44,7 +78,8 @@ export async function POST(request: Request) {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       email: email.toLowerCase().trim(),
-      phone: phone?.trim(),
+      phone: phone?.trim() || undefined,
+      idNumber: idNumber.trim(),
       password: hashedPassword,
       role: "Client",
       status: "Active",

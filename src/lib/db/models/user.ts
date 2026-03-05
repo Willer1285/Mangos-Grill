@@ -24,6 +24,7 @@ export interface IUser extends Document {
   lastName: string;
   email: string;
   phone?: string;
+  idNumber?: string;
   password?: string;
   dateOfBirth?: Date;
   gender?: "male" | "female" | "other" | "prefer-not-to-say";
@@ -69,7 +70,8 @@ const userSchema = new Schema<IUser>(
       trim: true,
       index: true,
     },
-    phone: { type: String, trim: true },
+    phone: { type: String, trim: true, sparse: true },
+    idNumber: { type: String, trim: true, sparse: true },
     password: { type: String, select: false },
     dateOfBirth: { type: Date },
     gender: {
@@ -113,6 +115,8 @@ const userSchema = new Schema<IUser>(
 );
 
 userSchema.index({ role: 1, status: 1 });
+userSchema.index({ phone: 1 }, { unique: true, sparse: true });
+userSchema.index({ idNumber: 1 }, { unique: true, sparse: true });
 
 const User: Model<IUser> =
   mongoose.models.User || mongoose.model<IUser>("User", userSchema);

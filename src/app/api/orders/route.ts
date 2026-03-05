@@ -6,12 +6,14 @@ import Product from "@/lib/db/models/product";
 import { checkoutSchema } from "@/lib/validators/order";
 import { sanitize } from "@/lib/db/sanitize";
 import { TX_TAX_RATE } from "@/lib/constants";
-import crypto from "crypto";
-
-function generateOrderNumber(): string {
-  const timestamp = Date.now().toString(36).toUpperCase();
-  const random = crypto.randomBytes(2).toString("hex").toUpperCase();
-  return `MG-${timestamp}${random}`;
+async function generateOrderNumber(): Promise<string> {
+  const lastOrder = await Order.findOne().sort({ createdAt: -1 }).select("orderNumber").lean();
+  let nextNum = 1;
+  if (lastOrder?.orderNumber) {
+    const match = lastOrder.orderNumber.match(/ORD-(\d+)/);
+    if (match) nextNum = parseInt(match[1], 10) + 1;
+  }
+  return `ORD-${String(nextNum).padStart(6, "0")}`;
 }
 
 export async function POST(req: NextRequest) {
@@ -69,7 +71,7 @@ export async function POST(req: NextRequest) {
     const total = subtotal + taxAmount + shippingCost + tip;
 
     const order = await Order.create({
-      orderNumber: generateOrderNumber(),
+      orderNumber: await generateOrderNumber(),
       customer: session.user.id,
       items: orderItems,
       deliveryType: data.deliveryType,

@@ -5,12 +5,19 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+export const phoneSchema = z
+  .string()
+  .regex(/^\+?[1-9]\d{6,14}$/, "Invalid phone number. Include country code (e.g. +1XXX...)")
+  .optional()
+  .or(z.literal(""));
+
 export const registerSchema = z
   .object({
     firstName: z.string().min(1, "First name is required").max(50),
     lastName: z.string().min(1, "Last name is required").max(50),
     email: z.email("Invalid email address"),
-    phone: z.string().optional(),
+    phone: phoneSchema,
+    idNumber: z.string().min(1, "ID number is required").max(30),
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")

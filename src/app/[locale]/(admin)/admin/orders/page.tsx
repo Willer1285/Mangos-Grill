@@ -22,7 +22,7 @@ import {
   SelectValue,
   Textarea,
 } from "@/components/ui";
-import { ChevronDown, ChevronUp, Package, Plus, X, Pencil, Ban } from "lucide-react";
+import { ChevronDown, ChevronUp, Package, Plus, X, Pencil, Ban, Search, CheckCircle2 } from "lucide-react";
 
 interface OrderItem {
   name: string;
@@ -99,6 +99,9 @@ export default function OrdersManagementPage() {
     Array<{ productId: string; name: string; price: number; quantity: number }>
   >([]);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [customerIdNumber, setCustomerIdNumber] = useState("");
+  const [customerFound, setCustomerFound] = useState<{ name: string; isNew: boolean } | null>(null);
+  const [searchingCustomer, setSearchingCustomer] = useState(false);
   const [orderForm, setOrderForm] = useState({
     deliveryType: "Dine-in",
     tableNumber: "",
@@ -106,7 +109,6 @@ export default function OrdersManagementPage() {
     paymentMethod: "Cash",
     paymentStatus: "Pending",
     notes: "",
-    customerName: "",
   });
 
   // Edit modal state
@@ -217,6 +219,8 @@ export default function OrdersManagementPage() {
 
   function openCreateModal() {
     setOrderItems([]);
+    setCustomerIdNumber("");
+    setCustomerFound(null);
     setOrderForm({
       deliveryType: "Dine-in",
       tableNumber: "",
@@ -224,10 +228,30 @@ export default function OrdersManagementPage() {
       paymentMethod: "Cash",
       paymentStatus: "Pending",
       notes: "",
-      customerName: "",
     });
     setCreateError("");
     setCreateOpen(true);
+  }
+
+  async function searchCustomerByIdNumber() {
+    if (!customerIdNumber.trim()) return;
+    setSearchingCustomer(true);
+    try {
+      const res = await fetch(`/api/admin/users?search=${encodeURIComponent(customerIdNumber.trim())}&limit=1`);
+      if (res.ok) {
+        const data = await res.json();
+        const user = data.users?.[0];
+        if (user && user.idNumber === customerIdNumber.trim()) {
+          setCustomerFound({ name: `${user.firstName} ${user.lastName}`, isNew: false });
+        } else {
+          setCustomerFound({ name: "New client (will be created)", isNew: true });
+        }
+      }
+    } catch {
+      setCustomerFound({ name: "New client (will be created)", isNew: true });
+    } finally {
+      setSearchingCustomer(false);
+    }
   }
 
   function openEditModal(order: Order) {
@@ -300,11 +324,15 @@ export default function OrdersManagementPage() {
       setCreateError("Please add at least one product.");
       return;
     }
+    if (!customerIdNumber.trim()) {
+      setCreateError("Customer ID number is required.");
+      return;
+    }
     setSubmitting(true);
     setCreateError("");
     try {
       const body = {
-        customerName: orderForm.customerName || "Guest",
+        customerIdNumber: customerIdNumber.trim(),
         items: orderItems.map((i) => ({
           product: i.productId,
           name: i.name,
@@ -463,22 +491,45 @@ export default function OrdersManagementPage() {
   function renderOrderDetailsForm<T extends { deliveryType: string; tableNumber: string; paymentMethod: string; paymentStatus: string; notes: string }>(
     form: T,
     setForm: React.Dispatch<React.SetStateAction<T>>,
-    options?: { showCustomerName?: boolean; customerName?: string; onCustomerNameChange?: (v: string) => void; showLocation?: boolean; location?: string; onLocationChange?: (v: string) => void }
+    options?: { showCustomerIdNumber?: boolean; showLocation?: boolean; location?: string; onLocationChange?: (v: string) => void }
   ) {
     return (
       <>
         <hr className="my-4 border-cream-200" />
         <div className="space-y-3">
           <h3 className="text-sm font-semibold uppercase tracking-wide text-brown-500">Order Details</h3>
+          {options?.showCustomerIdNumber && (
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Input
+                    label="Customer ID Number"
+                    placeholder="V-12345678"
+                    value={customerIdNumber}
+                    onChange={(e) => { setCustomerIdNumber(e.target.value); setCustomerFound(null); }}
+                  />
+                </div>
+                <div className="flex items-end">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={searchCustomerByIdNumber}
+                    disabled={searchingCustomer || !customerIdNumber.trim()}
+                    className="h-10"
+                  >
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              {customerFound && (
+                <p className={`flex items-center gap-1 text-xs ${customerFound.isNew ? "text-warning-500" : "text-success-600"}`}>
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  {customerFound.name}
+                </p>
+              )}
+            </div>
+          )}
           <div className="grid gap-3 sm:grid-cols-2">
-            {options?.showCustomerName && (
-              <Input
-                label="Customer Name"
-                placeholder="Guest"
-                value={options.customerName || ""}
-                onChange={(e) => options.onCustomerNameChange?.(e.target.value)}
-              />
-            )}
             {options?.showLocation && locations.length > 0 && (
               <Select
                 value={options.location || ""}
@@ -774,9 +825,7 @@ export default function OrdersManagementPage() {
 
           {renderItemsList(orderItems, setOrderItems, createSubtotal)}
           {renderOrderDetailsForm(orderForm, setOrderForm, {
-            showCustomerName: true,
-            customerName: orderForm.customerName,
-            onCustomerNameChange: (v) => setOrderForm((f) => ({ ...f, customerName: v })),
+            showCustomerIdNumber: true,
             showLocation: true,
             location: orderForm.location,
             onLocationChange: (v) => setOrderForm((f) => ({ ...f, location: v })),

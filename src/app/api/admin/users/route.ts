@@ -28,6 +28,8 @@ export async function GET(req: NextRequest) {
         { firstName: { $regex: s, $options: "i" } },
         { lastName: { $regex: s, $options: "i" } },
         { email: { $regex: s, $options: "i" } },
+        { idNumber: { $regex: s, $options: "i" } },
+        { phone: { $regex: s, $options: "i" } },
       ];
     }
 
@@ -60,7 +62,7 @@ export async function POST(req: NextRequest) {
     await connectDB();
 
     const body = sanitize(await req.json());
-    const { firstName, lastName, email, phone, password, role, location } = body;
+    const { firstName, lastName, email, phone, idNumber, password, role, location } = body;
 
     if (!firstName || !lastName || !email || !password) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -81,7 +83,8 @@ export async function POST(req: NextRequest) {
       firstName,
       lastName,
       email: email.toLowerCase(),
-      phone,
+      phone: phone || undefined,
+      idNumber: idNumber || undefined,
       password: hashedPassword,
       role: role || "Client",
       location: role === "Manager" ? location : undefined,

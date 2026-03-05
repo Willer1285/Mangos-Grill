@@ -38,7 +38,7 @@ export default function RegisterPage() {
         return;
       }
 
-      toast.success("Account created! Signing you in...");
+      toast.success(json.message || "Account created! Signing you in...");
 
       await signIn("credentials", {
         email: data.email,
@@ -87,9 +87,16 @@ export default function RegisterPage() {
           <Input
             label={t("phone")}
             type="tel"
-            placeholder="+1 (555) 123-4567"
+            placeholder="+15551234567"
             error={errors.phone?.message}
             {...register("phone")}
+          />
+
+          <Input
+            label="ID Number"
+            placeholder="V-12345678"
+            error={errors.idNumber?.message}
+            {...register("idNumber")}
           />
 
           <Input

@@ -425,15 +425,11 @@ export default function MenuPage() {
             {/* Locations */}
             <div className="space-y-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Availability by Location</p>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData.allLocations}
-                  onChange={(e) => setFormData((p) => ({ ...p, allLocations: e.target.checked, locations: [] }))}
-                  className="h-4 w-4 rounded border-cream-300 text-terracotta-500 focus:ring-terracotta-500"
-                />
-                <span className="text-sm text-brown-700">Available at all locations</span>
-              </label>
+              <Switch
+                checked={formData.allLocations}
+                onCheckedChange={(checked) => setFormData((p) => ({ ...p, allLocations: checked, locations: [] }))}
+                label="Available at all locations"
+              />
               {!formData.allLocations && locations.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {locations.map((loc) => (
@@ -459,15 +455,11 @@ export default function MenuPage() {
             {/* Stock */}
             <div className="space-y-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Stock Management</p>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData.hasStock}
-                  onChange={(e) => setFormData((p) => ({ ...p, hasStock: e.target.checked, stock: "" }))}
-                  className="h-4 w-4 rounded border-cream-300 text-terracotta-500 focus:ring-terracotta-500"
-                />
-                <span className="text-sm text-brown-700">Track stock for this item</span>
-              </label>
+              <Switch
+                checked={formData.hasStock}
+                onCheckedChange={(checked) => setFormData((p) => ({ ...p, hasStock: checked, stock: "" }))}
+                label="Track stock for this item"
+              />
               {formData.hasStock && (
                 <Input
                   label="Stock Quantity"
