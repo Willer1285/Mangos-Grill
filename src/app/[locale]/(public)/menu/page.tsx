@@ -7,8 +7,10 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { Card, Spinner, Badge } from "@/components/ui";
-import { Plus, ArrowRight, UtensilsCrossed } from "lucide-react";
+import { Plus, ArrowRight, UtensilsCrossed, Star } from "lucide-react";
 import type { BadgeVariant } from "@/components/ui/badge";
+import { useCart } from "@/lib/cart/cart-context";
+import { toast } from "sonner";
 
 interface Category {
   _id: string;
@@ -37,22 +39,27 @@ const TAG_VARIANT_MAP: Record<string, BadgeVariant> = {
   "Chef's Choice": "primary",
 };
 
+type RatingsMap = Record<string, { avgRating: number; count: number }>;
+
 export default function MenuPage() {
   const t = useTranslations("menu");
+  const { addItem } = useCart();
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get("category") || "all";
   const [activeCategory, setActiveCategory] = useState(initialCategory);
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [ratings, setRatings] = useState<RatingsMap>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
       try {
-        const [catRes, prodRes] = await Promise.all([
+        const [catRes, prodRes, ratingsRes] = await Promise.all([
           fetch("/api/categories"),
           fetch("/api/products"),
+          fetch("/api/reviews/summary"),
         ]);
         if (catRes.ok) {
           const catData = await catRes.json();
@@ -61,6 +68,9 @@ export default function MenuPage() {
         if (prodRes.ok) {
           const prodData = await prodRes.json();
           setProducts(Array.isArray(prodData) ? prodData : []);
+        }
+        if (ratingsRes.ok) {
+          setRatings(await ratingsRes.json());
         }
       } catch { /* empty */ }
       finally { setLoading(false); }
@@ -144,6 +154,7 @@ export default function MenuPage() {
               <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {filtered.map((item, i) => {
                   const catName = typeof item.category === "object" ? item.category.name.en : "";
+                  const r = ratings[item._id];
                   return (
                     <motion.div
                       key={item._id}
@@ -186,6 +197,20 @@ export default function MenuPage() {
                           <p className="mt-0.5 line-clamp-2 text-xs text-brown-600">
                             {item.description.en}
                           </p>
+                          {/* Star rating */}
+                          {r && r.count > 0 && (
+                            <div className="mt-1.5 flex items-center gap-1">
+                              <div className="flex gap-0.5">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <Star
+                                    key={s}
+                                    className={`h-3 w-3 ${s <= Math.round(r.avgRating) ? "fill-gold-400 text-gold-400" : "text-cream-300"}`}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-[10px] text-brown-500">({r.count})</span>
+                            </div>
+                          )}
                           <div className="mt-auto flex items-center justify-between pt-3">
                             <span className="text-base font-bold text-terracotta-600">
                               ${item.price.toFixed(2)}
@@ -193,12 +218,24 @@ export default function MenuPage() {
                             <div className="flex items-center gap-1.5">
                               <Link
                                 href={`/menu/${item.slug || item._id}`}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-brown-500 transition-colors hover:bg-cream-200 hover:text-brown-900"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-cream-200 text-brown-600 transition-colors hover:bg-cream-300 hover:text-brown-900"
                                 aria-label="View details"
                               >
                                 <ArrowRight className="h-4 w-4" />
                               </Link>
                               <button
+                                onClick={() => {
+                                  addItem({
+                                    productId: item._id,
+                                    name: item.name.en,
+                                    image: item.image,
+                                    price: item.price,
+                                    quantity: 1,
+                                    modifiers: [],
+                                    extras: [],
+                                  });
+                                  toast.success(`${item.name.en} added to cart`);
+                                }}
                                 className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-brown-900 text-white transition-colors hover:bg-brown-800"
                                 aria-label="Add to cart"
                               >

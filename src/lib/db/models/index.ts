@@ -30,3 +30,6 @@ export type { ILocation, IBusinessHours } from "./location";
 
 export { default as SiteConfig } from "./site-config";
 export type { ISiteConfig } from "./site-config";
+
+export { default as Review } from "./review";
+export type { IReview } from "./review";
