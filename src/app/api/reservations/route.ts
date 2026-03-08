@@ -4,6 +4,7 @@ import { sanitize } from "@/lib/db/sanitize";
 import { auth } from "@/lib/auth";
 import Reservation from "@/lib/db/models/reservation";
 import { reservationSchema } from "@/lib/validators/reservation";
+import { sendReservationConfirmation } from "@/lib/email/resend";
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,6 +29,15 @@ export async function POST(req: NextRequest) {
       ...(session?.user?.id ? { customer: session.user.id } : {}),
       status: "Pending",
     });
+
+    await sendReservationConfirmation(
+      data.email,
+      data.fullName,
+      data.date,
+      data.time,
+      data.partySize,
+      data.location
+    );
 
     return NextResponse.json(
       { message: "Reservation created successfully", reservation },

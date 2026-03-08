@@ -4,6 +4,7 @@ import { connectDB, sanitize } from "@/lib/db";
 import User from "@/lib/db/models/user";
 import { forgotPasswordSchema } from "@/lib/validators/auth";
 import { checkRateLimit } from "@/lib/auth/rate-limit";
+import { sendPasswordResetEmail } from "@/lib/email/resend";
 
 export async function POST(request: Request) {
   try {
@@ -47,8 +48,8 @@ export async function POST(request: Request) {
     user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
     await user.save();
 
-    // TODO: Send email via Resend with reset link
-    // const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}`;
+    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}`;
+    await sendPasswordResetEmail(user.email, resetUrl);
 
     return NextResponse.json({
       message: "If an account with that email exists, we sent a reset link.",

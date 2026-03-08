@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { sanitize } from "@/lib/db/sanitize";
 import { contactSchema } from "@/lib/validators/contact";
 import { checkRateLimit } from "@/lib/auth/rate-limit";
+import { sendContactEmail } from "@/lib/email/resend";
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,8 +28,12 @@ export async function POST(req: NextRequest) {
 
     const data = sanitize(parsed.data);
 
-    // TODO: Send email via Resend
-    console.log("Contact form submission:", data);
+    await sendContactEmail(
+      data.email,
+      data.phone,
+      data.subject,
+      data.message
+    );
 
     return NextResponse.json(
       { message: "Message sent successfully" },

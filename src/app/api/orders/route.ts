@@ -3,9 +3,11 @@ import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db/connection";
 import Order from "@/lib/db/models/order";
 import Product from "@/lib/db/models/product";
+import User from "@/lib/db/models/user";
 import { checkoutSchema } from "@/lib/validators/order";
 import { sanitize } from "@/lib/db/sanitize";
 import { TX_TAX_RATE } from "@/lib/constants";
+import { sendOrderConfirmation } from "@/lib/email/resend";
 async function generateOrderNumber(): Promise<string> {
   const lastOrder = await Order.findOne().sort({ createdAt: -1 }).select("orderNumber").lean();
   let nextNum = 1;
@@ -91,6 +93,18 @@ export async function POST(req: NextRequest) {
       promoCode: data.promoCode,
       notes: data.notes,
     });
+
+    const customer = await User.findById(session.user.id)
+      .select("email firstName")
+      .lean();
+    if (customer?.email) {
+      sendOrderConfirmation(
+        customer.email,
+        customer.firstName || "Customer",
+        order.orderNumber,
+        total
+      ).catch((err) => console.error("Failed to send order email:", err));
+    }
 
     return NextResponse.json(
       { orderNumber: order.orderNumber, orderId: order._id },

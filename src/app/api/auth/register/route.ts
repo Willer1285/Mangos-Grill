@@ -4,6 +4,7 @@ import { connectDB, sanitize } from "@/lib/db";
 import User from "@/lib/db/models/user";
 import { registerSchema } from "@/lib/validators/auth";
 import { checkRateLimit } from "@/lib/auth/rate-limit";
+import { sendWelcomeEmail } from "@/lib/email/resend";
 
 export async function POST(request: Request) {
   try {
@@ -85,6 +86,10 @@ export async function POST(request: Request) {
       status: "Active",
       provider: "credentials",
     });
+
+    sendWelcomeEmail(user.email, user.firstName).catch((err) =>
+      console.error("Failed to send welcome email:", err)
+    );
 
     return NextResponse.json(
       {
