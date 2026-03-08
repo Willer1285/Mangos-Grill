@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useLocale } from "next-intl";
 import { useRouter, usePathname } from "@/i18n/navigation";
 import { Globe } from "lucide-react";
@@ -19,9 +20,24 @@ export function LanguageSwitcher() {
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   function switchLocale(newLocale: "en" | "es") {
     router.replace(pathname, { locale: newLocale });
+  }
+
+  // Render a static button during SSR to avoid Radix id hydration mismatch
+  if (!mounted) {
+    return (
+      <button
+        className="inline-flex h-10 w-10 items-center justify-center rounded-md text-cream-300 transition-colors hover:bg-brown-700"
+        aria-label="Switch language"
+      >
+        <Globe className="h-5 w-5" />
+      </button>
+    );
   }
 
   return (
