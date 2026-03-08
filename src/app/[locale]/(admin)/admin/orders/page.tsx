@@ -197,7 +197,7 @@ export default function OrdersManagementPage() {
   }
 
   async function handleCancelOrder(orderId: string) {
-    if (!confirm("Are you sure you want to cancel this order?")) return;
+    if (!confirm(t("confirmCancelOrder"))) return;
     await changeStatus(orderId, "Cancelled");
   }
 
@@ -262,7 +262,7 @@ export default function OrdersManagementPage() {
           setCustomerFound({ name: fullName, isNew: false });
           setCustomerName(fullName);
         } else {
-          setCustomerFound({ name: "New client (will be created)", isNew: true });
+          setCustomerFound({ name: t("newClient"), isNew: true });
           setCustomerName("");
         }
       }
@@ -309,7 +309,7 @@ export default function OrdersManagementPage() {
           i.productId === productId ? { ...i, quantity: i.quantity + 1 } : i
         );
       }
-      return [...prev, { productId, name: product.name.en, price: product.price, quantity: 1 }];
+      return [...prev, { productId, name: product.name[locale] || product.name.en, price: product.price, quantity: 1 }];
     });
   }
 
@@ -341,11 +341,11 @@ export default function OrdersManagementPage() {
 
   async function handleCreateOrder() {
     if (orderItems.length === 0) {
-      setCreateError("Please add at least one product.");
+      setCreateError(t("addAtLeastOneProduct"));
       return;
     }
     if (!customerIdNumber.trim()) {
-      setCreateError("Customer ID number is required.");
+      setCreateError(t("customerIdRequired"));
       return;
     }
     setSubmitting(true);
@@ -394,7 +394,7 @@ export default function OrdersManagementPage() {
 
   async function handleEditOrder() {
     if (editItems.length === 0) {
-      setEditError("Please add at least one product.");
+      setEditError(t("addAtLeastOneProduct"));
       return;
     }
     setEditSubmitting(true);
@@ -897,10 +897,10 @@ export default function OrdersManagementPage() {
 
           <ModalFooter>
             <Button variant="secondary" onClick={() => setEditOpen(false)} disabled={editSubmitting}>
-              Cancel
+              {tc("cancel")}
             </Button>
             <Button onClick={handleEditOrder} loading={editSubmitting} disabled={editItems.length === 0}>
-              Save Changes
+              {t("saveChanges")}
             </Button>
           </ModalFooter>
         </ModalContent>
