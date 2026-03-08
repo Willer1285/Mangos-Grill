@@ -177,7 +177,7 @@ export default function ContactPage() {
                 placeholder="Enter your email"
                 className="border-brown-700 bg-brown-800 text-white placeholder:text-cream-400/50"
               />
-              <Button variant="cta" size="md" className="shrink-0">
+              <Button size="md" className="shrink-0 bg-terracotta-500 text-white shadow-sm hover:bg-terracotta-600">
                 Subscribe
               </Button>
             </div>

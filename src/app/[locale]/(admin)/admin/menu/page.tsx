@@ -49,7 +49,11 @@ interface Product {
   locations: string[];
   hasStock: boolean;
   stock: number;
+  featured: boolean;
+  tags: string[];
 }
+
+const AVAILABLE_TAGS = ["Popular", "Spicy", "Vegan", "New", "Gluten-Free", "Chef's Choice"];
 
 const EMPTY_FORM = {
   name: "",
@@ -62,6 +66,8 @@ const EMPTY_FORM = {
   allLocations: true,
   hasStock: false,
   stock: "",
+  featured: false,
+  tags: [] as string[],
 };
 
 const containerVariants = {
@@ -157,6 +163,8 @@ export default function MenuPage() {
       allLocations: isAllLocations,
       hasStock: item.hasStock || false,
       stock: item.hasStock ? String(item.stock) : "",
+      featured: item.featured || false,
+      tags: item.tags || [],
     });
     setError("");
     setModalOpen(true);
@@ -185,6 +193,8 @@ export default function MenuPage() {
         locations: formData.allLocations ? [] : formData.locations,
         hasStock: formData.hasStock,
         stock: formData.hasStock ? parseInt(formData.stock) || 0 : 0,
+        featured: formData.featured,
+        tags: formData.tags,
       };
       const url = editingId
         ? `/api/admin/products/${editingId}`
@@ -299,10 +309,22 @@ export default function MenuPage() {
                 </div>
                 <CardContent className="p-4">
                   <div className="mb-2">
-                    <h3 className="font-semibold text-brown-900">{item.name.es || item.name.en}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-brown-900">{item.name.es || item.name.en}</h3>
+                      {item.featured && (
+                        <Badge variant="warning" className="text-[10px]">Homepage</Badge>
+                      )}
+                    </div>
                     <p className="text-xs text-brown-500">{item.name.en}</p>
-                    <p className="mt-1 text-sm text-brown-600">{item.description.en}</p>
+                    <p className="mt-1 text-sm text-brown-600 line-clamp-2">{item.description.en}</p>
                   </div>
+                  {item.tags && item.tags.length > 0 && (
+                    <div className="mb-2 flex flex-wrap gap-1">
+                      {item.tags.map((tag) => (
+                        <Badge key={tag} variant="primary" className="text-[10px]">{tag}</Badge>
+                      ))}
+                    </div>
+                  )}
                   <div className="mb-2 flex flex-wrap items-center gap-1.5">
                     {item.locations && item.locations.length > 0 ? (
                       item.locations.map((loc) => (
@@ -470,6 +492,44 @@ export default function MenuPage() {
                   onChange={(e) => setFormData((p) => ({ ...p, stock: e.target.value }))}
                 />
               )}
+            </div>
+
+            <div className="border-t border-cream-200" />
+
+            {/* Homepage & Tags */}
+            <div className="space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Visibility & Tags</p>
+              <Switch
+                checked={formData.featured}
+                onCheckedChange={(checked) => setFormData((p) => ({ ...p, featured: checked }))}
+                label="Show on Homepage"
+              />
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-brown-700">Tags</label>
+                <div className="flex flex-wrap gap-2">
+                  {AVAILABLE_TAGS.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() =>
+                        setFormData((p) => ({
+                          ...p,
+                          tags: p.tags.includes(tag)
+                            ? p.tags.filter((t) => t !== tag)
+                            : [...p.tags, tag],
+                        }))
+                      }
+                      className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                        formData.tags.includes(tag)
+                          ? "bg-terracotta-500 text-white"
+                          : "border border-cream-300 bg-white text-brown-600 hover:border-terracotta-300"
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <ModalFooter>

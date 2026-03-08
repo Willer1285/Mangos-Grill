@@ -5,8 +5,10 @@ import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Button, Card, Spinner } from "@/components/ui";
-import { Plus, UtensilsCrossed } from "lucide-react";
+import { Link } from "@/i18n/navigation";
+import { Card, Spinner, Badge } from "@/components/ui";
+import { Plus, ArrowRight, UtensilsCrossed } from "lucide-react";
+import type { BadgeVariant } from "@/components/ui/badge";
 
 interface Category {
   _id: string;
@@ -19,10 +21,21 @@ interface Product {
   name: { en: string; es: string };
   description: { en: string; es: string };
   price: number;
+  slug?: string;
   image?: string;
   category: Category | string;
   status: string;
+  tags?: string[];
 }
+
+const TAG_VARIANT_MAP: Record<string, BadgeVariant> = {
+  Popular: "popular",
+  Spicy: "spicy",
+  Vegan: "vegan",
+  New: "new-tag",
+  "Gluten-Free": "olive",
+  "Chef's Choice": "primary",
+};
 
 export default function MenuPage() {
   const t = useTranslations("menu");
@@ -138,7 +151,7 @@ export default function MenuPage() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, delay: i * 0.05 }}
                     >
-                      <Card className="group overflow-hidden transition-shadow hover:shadow-md">
+                      <Card className="group flex h-full flex-col overflow-hidden transition-shadow hover:shadow-md">
                         <div className="relative aspect-[4/3] bg-cream-200">
                           {item.image ? (
                             <Image src={item.image} alt={item.name.en} fill className="object-cover transition-transform group-hover:scale-105" />
@@ -147,23 +160,51 @@ export default function MenuPage() {
                               {item.name.en}
                             </div>
                           )}
+                          {item.tags && item.tags.length > 0 && (
+                            <div className="absolute left-2 top-2 flex flex-wrap gap-1">
+                              {item.tags.slice(0, 2).map((tag) => (
+                                <Badge
+                                  key={tag}
+                                  variant={TAG_VARIANT_MAP[tag] || "default"}
+                                  className="text-[10px] shadow-sm"
+                                >
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                        <div className="p-4">
+                        <div className="flex flex-1 flex-col p-4">
                           {catName && (
                             <span className="text-xs font-medium text-terracotta-500">
                               {catName}
                             </span>
                           )}
-                          <h3 className="mt-1 text-sm font-semibold text-brown-900">{item.name.en}</h3>
-                          <p className="mt-0.5 text-xs text-brown-600 line-clamp-2">{item.description.en}</p>
-                          <div className="mt-3 flex items-center justify-between">
+                          <h3 className="mt-1 line-clamp-1 text-sm font-semibold text-brown-900">
+                            {item.name.en}
+                          </h3>
+                          <p className="mt-0.5 line-clamp-2 text-xs text-brown-600">
+                            {item.description.en}
+                          </p>
+                          <div className="mt-auto flex items-center justify-between pt-3">
                             <span className="text-base font-bold text-terracotta-600">
                               ${item.price.toFixed(2)}
                             </span>
-                            <Button variant="cta" size="sm" className="gap-1">
-                              <Plus className="h-3.5 w-3.5" />
-                              {t("addToCart")}
-                            </Button>
+                            <div className="flex items-center gap-1.5">
+                              <Link
+                                href={`/menu/${item.slug || item._id}`}
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-brown-500 transition-colors hover:bg-cream-200 hover:text-brown-900"
+                                aria-label="View details"
+                              >
+                                <ArrowRight className="h-4 w-4" />
+                              </Link>
+                              <button
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-brown-900 text-white transition-colors hover:bg-brown-800"
+                                aria-label="Add to cart"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </Card>

@@ -16,9 +16,10 @@ interface Product {
   name: { en: string; es: string };
   description: { en: string; es: string };
   price: number;
+  slug?: string;
   image?: string;
   category?: { name: { en: string; es: string } };
-  totalSold?: number;
+  tags?: string[];
 }
 
 export function HomepageCategories() {

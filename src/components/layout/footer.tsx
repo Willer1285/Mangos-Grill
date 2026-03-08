@@ -139,7 +139,7 @@ export function Footer() {
                 placeholder={tHome("emailPlaceholder")}
                 className="h-10 flex-1 rounded-l-md border-0 bg-brown-700 px-3 text-sm text-white placeholder:text-cream-400/50 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               />
-              <Button variant="cta" size="sm" className="rounded-l-none">
+              <Button size="sm" className="rounded-l-none bg-terracotta-500 text-white shadow-sm hover:bg-terracotta-600">
                 {tHome("subscribe")}
               </Button>
             </form>

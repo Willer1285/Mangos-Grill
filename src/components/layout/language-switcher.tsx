@@ -28,7 +28,7 @@ export function LanguageSwitcher() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="inline-flex h-10 w-10 items-center justify-center rounded-md text-brown-700 transition-colors hover:bg-cream-200"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-md text-cream-300 transition-colors hover:bg-brown-700"
           aria-label="Switch language"
         >
           <Globe className="h-5 w-5" />

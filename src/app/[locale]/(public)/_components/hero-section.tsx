@@ -32,7 +32,7 @@ export function HeroSection() {
 
           <div className="mt-8 flex flex-wrap gap-4">
             <Link href="/reservations">
-              <Button variant="cta" size="lg" className="gap-2">
+              <Button size="lg" className="gap-2 bg-terracotta-500 text-white shadow-sm hover:bg-terracotta-600">
                 {t("reserveTable")}
               </Button>
             </Link>

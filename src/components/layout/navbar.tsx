@@ -103,7 +103,7 @@ export function Navbar({ user, cartCount = 0, notificationCount = 0, onCartClick
           )}
 
           {/* Cart */}
-          <Button variant="cta" size="sm" className="relative gap-1.5" onClick={onCartClick}>
+          <Button size="sm" className="relative gap-1.5 bg-terracotta-500 text-white shadow-sm hover:bg-terracotta-600" onClick={onCartClick}>
             <ShoppingBag className="h-4 w-4" />
             <span className="hidden sm:inline">{t("cart")}</span>
             {cartCount > 0 && (
@@ -187,7 +187,7 @@ export function Navbar({ user, cartCount = 0, notificationCount = 0, onCartClick
             </DropdownMenu>
           ) : (
             <Link href="/login">
-              <Button variant="secondary" size="sm">
+              <Button size="sm" className="border border-cream-400/30 bg-transparent text-cream-200 hover:bg-cream-200/10">
                 {t("login")}
               </Button>
             </Link>
