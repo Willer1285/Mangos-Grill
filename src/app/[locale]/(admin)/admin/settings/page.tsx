@@ -52,6 +52,7 @@ export default function SettingsPage() {
   const [brandName, setBrandName] = useState("Mango's Grill");
   const [logoUrl, setLogoUrl] = useState("");
   const [displayMode, setDisplayMode] = useState<"logo" | "text" | "both">("both");
+  const [homepageReviewsCount, setHomepageReviewsCount] = useState(6);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [savingBrand, setSavingBrand] = useState(false);
 
@@ -62,6 +63,7 @@ export default function SettingsPage() {
         if (res.ok) {
           const data = await res.json();
           setBrandName(data.brandName || "Mango's Grill");
+          setHomepageReviewsCount(data.homepageReviewsCount || 6);
           setLogoUrl(data.logo || "");
           setDisplayMode(data.displayMode || "both");
         }
@@ -96,7 +98,7 @@ export default function SettingsPage() {
       const res = await fetch("/api/admin/site-config", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ brandName, logo: logoUrl, displayMode }),
+        body: JSON.stringify({ brandName, logo: logoUrl, displayMode, homepageReviewsCount }),
       });
       if (!res.ok) throw new Error("Save failed");
       toast.success("Brand settings saved");
@@ -262,6 +264,18 @@ export default function SettingsPage() {
                       </button>
                     ))}
                   </div>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-brown-700">Homepage Reviews Count</label>
+                  <p className="mb-2 text-xs text-brown-500">Number of reviews displayed on the homepage carousel (1-20)</p>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={homepageReviewsCount}
+                    onChange={(e) => setHomepageReviewsCount(Math.max(1, Math.min(20, Number(e.target.value))))}
+                    className="max-w-[120px]"
+                  />
                 </div>
                 {/* Preview */}
                 <div>

@@ -18,6 +18,8 @@ import {
   LogOut,
   Menu,
   X,
+  ImageIcon,
+  HelpCircle,
 } from "lucide-react";
 import { Avatar, getInitials } from "@/components/ui";
 import { cn } from "@/lib/utils";
@@ -44,6 +46,8 @@ const allNavItems = [
   { href: "/admin/reservations", label: "Reservations", icon: CalendarDays, roles: ["SuperAdmin", "Manager"] },
   { href: "/admin/locations", label: "Locations", icon: MapPin, roles: ["SuperAdmin"] },
   { href: "/admin/jobs", label: "Jobs", icon: Briefcase, roles: ["SuperAdmin"] },
+  { href: "/admin/gallery", label: "Gallery", icon: ImageIcon, roles: ["SuperAdmin"] },
+  { href: "/admin/faqs", label: "FAQs", icon: HelpCircle, roles: ["SuperAdmin"] },
 ];
 
 const allBottomItems = [

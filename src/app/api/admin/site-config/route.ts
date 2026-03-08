@@ -27,7 +27,7 @@ export async function PUT(req: NextRequest) {
     await connectDB();
 
     const body = sanitize(await req.json());
-    const { brandName, logo, displayMode } = body;
+    const { brandName, logo, displayMode, homepageReviewsCount } = body;
 
     let config = await SiteConfig.findOne();
     if (!config) {
@@ -37,6 +37,7 @@ export async function PUT(req: NextRequest) {
     if (brandName !== undefined) config.brandName = brandName;
     if (logo !== undefined) config.logo = logo;
     if (displayMode !== undefined) config.displayMode = displayMode;
+    if (homepageReviewsCount !== undefined) config.homepageReviewsCount = homepageReviewsCount;
 
     await config.save();
 

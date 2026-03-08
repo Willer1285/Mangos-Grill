@@ -4,6 +4,7 @@ export interface ISiteConfig extends Document {
   brandName: string;
   logo?: string;
   displayMode: "logo" | "text" | "both";
+  homepageReviewsCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -17,6 +18,7 @@ const siteConfigSchema = new Schema<ISiteConfig>(
       enum: ["logo", "text", "both"],
       default: "both",
     },
+    homepageReviewsCount: { type: Number, default: 6, min: 1, max: 20 },
   },
   { timestamps: true }
 );

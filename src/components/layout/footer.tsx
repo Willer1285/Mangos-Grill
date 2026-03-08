@@ -115,7 +115,6 @@ export function Footer() {
                 { href: "/about", label: t("aboutUs") },
                 { href: "/jobs", label: tNav("jobs") },
                 { href: "/contact", label: tNav("contact") },
-                { href: "#", label: t("press") },
               ].map((item) => (
                 <li key={item.label}>
                   <Link

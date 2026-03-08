@@ -33,3 +33,9 @@ export type { ISiteConfig } from "./site-config";
 
 export { default as Review } from "./review";
 export type { IReview } from "./review";
+
+export { default as Gallery } from "./gallery";
+export type { IGallery } from "./gallery";
+
+export { default as FAQ } from "./faq";
+export type { IFAQ } from "./faq";
