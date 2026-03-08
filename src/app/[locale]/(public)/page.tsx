@@ -147,7 +147,7 @@ export default function HomePage() {
             ].map((item, i) => (
               <div
                 key={i}
-                className={`overflow-hidden rounded-xl bg-brown-800 ${item.span || ""}`}
+                className={`overflow-hidden rounded-xl bg-brown-700 ${item.span || ""}`}
               >
                 <div className="flex aspect-square h-full items-center justify-center text-sm text-cream-400">
                   {item.label}

@@ -123,7 +123,7 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
       </nav>
 
       {/* Bottom section */}
-      <div className="border-t border-brown-800 px-3 py-4">
+      <div className="border-t border-brown-700 px-3 py-4">
         {bottomItems.map((item) => (
           <Link
             key={item.href}
@@ -150,7 +150,7 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
       </div>
 
       {/* User info */}
-      <div className="border-t border-brown-800 px-4 py-3">
+      <div className="border-t border-brown-700 px-4 py-3">
         <div className="flex items-center gap-3">
           <Avatar
             initials={getInitials(user.firstName, user.lastName)}
@@ -172,7 +172,7 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
     <>
       {/* Mobile toggle */}
       <button
-        className="fixed left-4 top-4 z-50 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-brown-900 text-white shadow-lg lg:hidden"
+        className="fixed left-4 top-4 z-50 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-brown-800 text-white shadow-lg lg:hidden"
         onClick={() => setMobileOpen(!mobileOpen)}
         aria-label="Toggle admin sidebar"
       >
@@ -190,7 +190,7 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 h-full w-64 bg-brown-900 transition-transform duration-300 lg:translate-x-0",
+          "fixed left-0 top-0 z-40 h-full w-64 bg-brown-800 transition-transform duration-300 lg:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

@@ -8,10 +8,10 @@ import { Loader2 } from "lucide-react";
 const buttonVariants = {
   variant: {
     primary:
-      "bg-terracotta-500 text-white hover:bg-terracotta-600 active:bg-terracotta-700 shadow-sm",
+      "bg-brown-900 text-white hover:bg-brown-800 active:bg-brown-700 shadow-sm",
     secondary:
-      "border border-brown-600 text-brown-700 bg-transparent hover:bg-cream-200 active:bg-cream-300",
-    cta: "bg-gold-500 text-white hover:bg-gold-600 active:bg-gold-600 shadow-sm",
+      "border border-brown-900 text-brown-900 bg-transparent hover:bg-cream-200 active:bg-cream-300",
+    cta: "bg-gold-400 text-white hover:bg-gold-500 active:bg-gold-600 shadow-sm",
     ghost: "text-brown-700 hover:bg-cream-200 active:bg-cream-300",
     destructive: "bg-error-500 text-white hover:bg-error-600 active:bg-error-600 shadow-sm",
     link: "text-terracotta-500 underline-offset-4 hover:underline",

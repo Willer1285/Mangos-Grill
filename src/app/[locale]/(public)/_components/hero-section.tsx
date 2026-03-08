@@ -10,8 +10,8 @@ export function HeroSection() {
   const t = useTranslations("home");
 
   return (
-    <section className="relative flex min-h-[520px] items-center overflow-hidden bg-brown-900 lg:min-h-[600px]">
-      <div className="absolute inset-0 bg-gradient-to-r from-brown-900/95 via-brown-900/80 to-brown-900/40" />
+    <section className="relative flex min-h-[520px] items-center overflow-hidden bg-brown-800 lg:min-h-[600px]">
+      <div className="absolute inset-0 bg-gradient-to-r from-brown-800/95 via-brown-800/80 to-brown-800/40" />
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <motion.div
@@ -32,7 +32,7 @@ export function HeroSection() {
 
           <div className="mt-8 flex flex-wrap gap-4">
             <Link href="/reservations">
-              <Button variant="primary" size="lg" className="gap-2 bg-terracotta-500 hover:bg-terracotta-600">
+              <Button variant="cta" size="lg" className="gap-2">
                 {t("reserveTable")}
               </Button>
             </Link>

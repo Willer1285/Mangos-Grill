@@ -60,7 +60,7 @@ export function Navbar({ user, cartCount = 0, notificationCount = 0, onCartClick
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-brown-800/10 bg-brown-900/95 backdrop-blur-md">
+    <header className="sticky top-0 z-40 w-full border-b border-brown-700/10 bg-brown-800/95 backdrop-blur-md">
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
@@ -115,7 +115,7 @@ export function Navbar({ user, cartCount = 0, notificationCount = 0, onCartClick
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 rounded-full p-1 transition-colors hover:bg-brown-800">
+                <button className="flex items-center gap-2 rounded-full p-1 transition-colors hover:bg-brown-700">
                   <Avatar
                     initials={getInitials(user.firstName, user.lastName)}
                     src={user.avatar}
@@ -195,7 +195,7 @@ export function Navbar({ user, cartCount = 0, notificationCount = 0, onCartClick
 
           {/* Mobile hamburger */}
           <button
-            className="inline-flex h-10 w-10 items-center justify-center rounded-md text-cream-300 hover:bg-brown-800 md:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-md text-cream-300 hover:bg-brown-700 md:hidden"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
           >
@@ -206,13 +206,13 @@ export function Navbar({ user, cartCount = 0, notificationCount = 0, onCartClick
 
       {/* Mobile navigation */}
       {mobileOpen && (
-        <div className="border-t border-brown-800 bg-brown-900 md:hidden">
+        <div className="border-t border-brown-700 bg-brown-800 md:hidden">
           <div className="space-y-1 px-4 py-3">
             {navLinks.map((link) => (
               <Link
                 key={link.labelKey}
                 href={link.href}
-                className="block rounded-md px-3 py-2 text-sm font-medium text-cream-300 hover:bg-brown-800 hover:text-terracotta-400"
+                className="block rounded-md px-3 py-2 text-sm font-medium text-cream-300 hover:bg-brown-700 hover:text-terracotta-400"
                 onClick={() => setMobileOpen(false)}
               >
                 {t(link.labelKey)}

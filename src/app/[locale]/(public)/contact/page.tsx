@@ -11,7 +11,7 @@ export default function ContactPage() {
   return (
     <>
       {/* Header */}
-      <section className="bg-brown-900 py-16 text-center">
+      <section className="bg-brown-800 py-16 text-center">
         <p className="text-xs font-semibold uppercase tracking-widest text-terracotta-400">
           We&apos;d love to hear from you
         </p>
@@ -159,7 +159,7 @@ export default function ContactPage() {
       </section>
 
       {/* Newsletter Banner */}
-      <section className="bg-brown-900 py-12">
+      <section className="bg-brown-800 py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center gap-6 text-center md:flex-row md:justify-between md:text-left">
             <div>

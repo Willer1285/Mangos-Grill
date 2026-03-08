@@ -96,7 +96,7 @@ export default function JobsPage() {
   return (
     <>
       {/* Header */}
-      <section className="bg-brown-900 py-16 text-center">
+      <section className="bg-brown-800 py-16 text-center">
         <Badge variant="olive" className="mb-4">
           We&apos;re hiring
         </Badge>

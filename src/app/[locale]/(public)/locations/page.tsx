@@ -41,7 +41,7 @@ export default function LocationsPage() {
   return (
     <>
       {/* Header */}
-      <section className="bg-brown-900 py-16 text-center">
+      <section className="bg-brown-800 py-16 text-center">
         <p className="text-xs font-semibold uppercase tracking-widest text-terracotta-400">
           Find Us in Texas
         </p>

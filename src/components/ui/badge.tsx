@@ -10,6 +10,14 @@ const badgeVariants = {
   info: "bg-info-500/10 text-info-600",
   olive: "bg-olive-500/10 text-olive-600",
 
+  // Solid product tag variants (from branding kit)
+  popular: "bg-brown-900 text-white",
+  available: "bg-success-500 text-white",
+  "sold-out": "bg-error-500 text-white",
+  "new-tag": "bg-gold-400 text-white",
+  spicy: "bg-terracotta-500 text-white",
+  vegan: "bg-olive-500 text-white",
+
   // Order / Reservation status specific
   new: "bg-info-500/10 text-info-600",
   preparing: "bg-warning-500/10 text-warning-600",

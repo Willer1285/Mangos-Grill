@@ -118,7 +118,7 @@ export default function ReservationsPage() {
   return (
     <>
       {/* Header */}
-      <section className="bg-brown-900 py-12 text-center">
+      <section className="bg-brown-800 py-12 text-center">
         <h1 className="text-4xl font-semibold text-white">{t("title")}</h1>
         <p className="mt-2 text-cream-400">{t("subtitle")}</p>
       </section>

@@ -59,7 +59,7 @@ export default function AboutPage() {
   return (
     <>
       {/* Header */}
-      <section className="bg-brown-900 py-16 text-center">
+      <section className="bg-brown-800 py-16 text-center">
         <p className="text-xs font-semibold uppercase tracking-widest text-terracotta-400">
           About Mango&apos;s Grill
         </p>
@@ -158,7 +158,7 @@ export default function AboutPage() {
       </section>
 
       {/* Stats Counter */}
-      <section className="bg-brown-900 py-14">
+      <section className="bg-brown-800 py-14">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 gap-8 text-center md:grid-cols-4">
             {stats.map((stat, i) => (

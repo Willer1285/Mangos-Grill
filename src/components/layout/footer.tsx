@@ -54,7 +54,7 @@ export function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="bg-brown-900 text-cream-200">
+    <footer className="bg-brown-800 text-cream-200">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
@@ -137,7 +137,7 @@ export function Footer() {
               <input
                 type="email"
                 placeholder={tHome("emailPlaceholder")}
-                className="h-10 flex-1 rounded-l-md border-0 bg-brown-800 px-3 text-sm text-white placeholder:text-cream-400/50 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
+                className="h-10 flex-1 rounded-l-md border-0 bg-brown-700 px-3 text-sm text-white placeholder:text-cream-400/50 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
               />
               <Button variant="cta" size="sm" className="rounded-l-none">
                 {tHome("subscribe")}
@@ -147,7 +147,7 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-10 border-t border-brown-800 pt-6">
+        <div className="mt-10 border-t border-brown-700 pt-6">
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <p className="text-xs text-cream-400">
               &copy; {year} {t("rights")}

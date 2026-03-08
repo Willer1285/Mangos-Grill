@@ -33,7 +33,7 @@ export default function OrderSuccessPage() {
   return (
     <>
       {/* Header */}
-      <section className="bg-brown-900 py-16 text-center">
+      <section className="bg-brown-800 py-16 text-center">
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}

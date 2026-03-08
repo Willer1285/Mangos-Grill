@@ -1,43 +1,43 @@
 @import "tailwindcss";
 
 @theme {
-  /* ===== Color Palette (from Kit Interface) ===== */
+  /* ===== Color Palette (from Branding Kit) ===== */
 
   /* Cream / Background tones */
-  --color-cream-50: #FAF8F4;
-  --color-cream-100: #F5F0E8;
-  --color-cream-200: #EDE5D8;
-  --color-cream-300: #E0D8CC;
+  --color-cream-50: #FFFDF9;
+  --color-cream-100: #F9E6D3;    /* Light Wood */
+  --color-cream-200: #F3F0E0;    /* Warm Surface */
+  --color-cream-300: #E8DFD0;
   --color-cream-400: #D4C8B8;
 
   /* Brown / Primary dark tones */
-  --color-brown-900: #2C1810;
-  --color-brown-800: #3B2314;
+  --color-brown-900: #1A1210;    /* Dark Brown */
+  --color-brown-800: #2C1F1A;    /* Dark Section */
   --color-brown-700: #5C3D2E;
   --color-brown-600: #8B6F47;
-  --color-brown-500: #A68B5B;
+  --color-brown-500: #C9A87C;    /* Wood Accent */
 
   /* Terracotta / Primary accent */
-  --color-terracotta-400: #D4A574;
-  --color-terracotta-500: #C4956A;
-  --color-terracotta-600: #B07D52;
-  --color-terracotta-700: #96653E;
+  --color-terracotta-400: #D48F6A;
+  --color-terracotta-500: #C67A52;  /* Terracotta */
+  --color-terracotta-600: #B06842;
+  --color-terracotta-700: #965838;
 
-  /* Gold / CTA accent */
-  --color-gold-300: #E0C56A;
-  --color-gold-400: #D4B85A;
-  --color-gold-500: #C9A94E;
-  --color-gold-600: #B89640;
+  /* Gold / CTA accent (Mustard) */
+  --color-gold-300: #E0C86A;
+  --color-gold-400: #D4A843;      /* Mustard */
+  --color-gold-500: #C49A3A;
+  --color-gold-600: #B08830;
 
   /* Semantic status colors */
-  --color-success-500: #5B8C5A;
-  --color-success-600: #4A7349;
-  --color-warning-500: #D4A043;
-  --color-warning-600: #B88A35;
-  --color-error-500: #C75C3A;
-  --color-error-600: #A84A2E;
-  --color-info-500: #5A7FB5;
-  --color-info-600: #4A6A9A;
+  --color-success-500: #5A8E5F;
+  --color-success-600: #4A7A4E;
+  --color-warning-500: #C4A843;
+  --color-warning-600: #A89035;
+  --color-error-500: #C8574C;
+  --color-error-600: #A84540;
+  --color-info-500: #5B8FA8;
+  --color-info-600: #4A7A90;
 
   /* Olive (tags, badges) */
   --color-olive-500: #6B7F3A;
@@ -124,7 +124,7 @@ body {
 /* Dark scrollbar for sidebar and dark containers */
 .scrollbar-dark {
   scrollbar-width: thin;
-  scrollbar-color: rgba(196, 149, 106, 0.2) #2C1810;
+  scrollbar-color: rgba(196, 149, 106, 0.2) #2C1F1A;
 }
 
 .scrollbar-dark::-webkit-scrollbar {
@@ -132,7 +132,7 @@ body {
 }
 
 .scrollbar-dark::-webkit-scrollbar-track {
-  background: #2C1810;
+  background: #2C1F1A;
   border-radius: var(--radius-full);
 }
 

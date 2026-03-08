@@ -10,7 +10,7 @@ export function ReservationCta() {
   const t = useTranslations("home");
 
   return (
-    <section className="bg-brown-900 py-16">
+    <section className="bg-brown-800 py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -23,7 +23,7 @@ export function ReservationCta() {
           <p className="mt-3 text-cream-400">{t("reserveDesc")}</p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
             <Link href="/reservations">
-              <Button variant="primary" size="lg" className="gap-2 bg-terracotta-500 hover:bg-terracotta-600">
+              <Button variant="cta" size="lg" className="gap-2">
                 <CalendarDays className="h-5 w-5" />
                 Book Now
               </Button>

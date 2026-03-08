@@ -125,7 +125,7 @@ export default function CheckoutPage() {
   return (
     <>
       {/* Header */}
-      <section className="bg-brown-900 py-8 text-center">
+      <section className="bg-brown-800 py-8 text-center">
         <h1 className="text-3xl font-semibold text-white">{t("shipping")}</h1>
       </section>
 

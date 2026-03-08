@@ -66,7 +66,7 @@ export default function MenuPage() {
   return (
     <>
       {/* Header */}
-      <section className="bg-brown-900 py-12 text-center">
+      <section className="bg-brown-800 py-12 text-center">
         <p className="text-xs font-semibold uppercase tracking-widest text-terracotta-400">
           {t("exploreTitle")}
         </p>
