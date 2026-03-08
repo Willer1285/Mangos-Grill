@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     await connectDB();
 
     // Delete all data except the current SuperAdmin user
-    const currentUserId = result.user!._id;
+    const currentUserId = (result.user! as unknown as { _id: string })._id;
 
     await Promise.all([
       Order.deleteMany({}),

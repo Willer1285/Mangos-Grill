@@ -2,7 +2,9 @@
 
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import Image from "next/image";
 import { Button, Input } from "@/components/ui";
+import { useBrand } from "@/lib/brand/brand-context";
 
 const socialLinks = [
   {
@@ -47,6 +49,7 @@ export function Footer() {
   const t = useTranslations("footer");
   const tNav = useTranslations("nav");
   const tHome = useTranslations("home");
+  const brand = useBrand();
 
   const year = new Date().getFullYear();
 
@@ -57,12 +60,20 @@ export function Footer() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-terracotta-500 text-white">
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
-                  <path d="M12 2C10 6 7 8 7 12c0 2.8 2.2 5 5 5s5-2.2 5-5c0-4-3-6-5-10zm0 13c-1.7 0-3-1.3-3-3 0-1.5.8-2.8 2-4.4.4.5.7 1 1 1.5.3-.5.6-1 1-1.5 1.2 1.6 2 2.9 2 4.4 0 1.7-1.3 3-3 3z" />
-                </svg>
-              </div>
-              <span className="text-lg font-semibold text-white">Mango&apos;s Grill</span>
+              {(brand.displayMode === "logo" || brand.displayMode === "both") && brand.logo ? (
+                <div className="relative h-8 w-8 shrink-0">
+                  <Image src={brand.logo} alt={brand.brandName} fill className="object-contain" />
+                </div>
+              ) : (brand.displayMode === "logo" || brand.displayMode === "both") && !brand.logo ? (
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-terracotta-500 text-white">
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
+                    <path d="M12 2C10 6 7 8 7 12c0 2.8 2.2 5 5 5s5-2.2 5-5c0-4-3-6-5-10zm0 13c-1.7 0-3-1.3-3-3 0-1.5.8-2.8 2-4.4.4.5.7 1 1 1.5.3-.5.6-1 1-1.5 1.2 1.6 2 2.9 2 4.4 0 1.7-1.3 3-3 3z" />
+                  </svg>
+                </div>
+              ) : null}
+              {(brand.displayMode === "text" || brand.displayMode === "both") && (
+                <span className="text-lg font-semibold text-white">{brand.brandName}</span>
+              )}
             </div>
             <p className="mt-4 text-sm leading-relaxed text-cream-400">{t("description")}</p>
             <div className="mt-4 flex gap-3">

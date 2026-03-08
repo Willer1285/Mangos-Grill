@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Card, CardContent, Button, Input, Switch } from "@/components/ui";
 import {
   Settings,
@@ -13,6 +14,7 @@ import {
   Download,
   Upload,
   AlertTriangle,
+  ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -45,6 +47,65 @@ export default function SettingsPage() {
   const [resetting, setResetting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
+
+  // Brand settings
+  const [brandName, setBrandName] = useState("Mango's Grill");
+  const [logoUrl, setLogoUrl] = useState("");
+  const [displayMode, setDisplayMode] = useState<"logo" | "text" | "both">("both");
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [savingBrand, setSavingBrand] = useState(false);
+
+  useEffect(() => {
+    async function loadBrandConfig() {
+      try {
+        const res = await fetch("/api/admin/site-config");
+        if (res.ok) {
+          const data = await res.json();
+          setBrandName(data.brandName || "Mango's Grill");
+          setLogoUrl(data.logo || "");
+          setDisplayMode(data.displayMode || "both");
+        }
+      } catch { /* empty */ }
+    }
+    loadBrandConfig();
+  }, []);
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingLogo(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      setLogoUrl(data.url);
+      toast.success("Logo uploaded");
+    } catch {
+      toast.error("Failed to upload logo");
+    } finally {
+      setUploadingLogo(false);
+      e.target.value = "";
+    }
+  }
+
+  async function handleSaveBrand() {
+    setSavingBrand(true);
+    try {
+      const res = await fetch("/api/admin/site-config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brandName, logo: logoUrl, displayMode }),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      toast.success("Brand settings saved");
+    } catch {
+      toast.error("Failed to save brand settings");
+    } finally {
+      setSavingBrand(false);
+    }
+  }
 
   async function handleExport() {
     setExporting(true);
@@ -142,6 +203,94 @@ export default function SettingsPage() {
         initial="hidden"
         animate="visible"
       >
+        {/* Brand Settings */}
+        <motion.div variants={itemVariants}>
+          <Card className="border border-cream-200">
+            <CardContent className="p-6">
+              <div className="mb-6 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-terracotta-500/10">
+                  <ImageIcon className="h-5 w-5 text-terracotta-500" />
+                </div>
+                <h2 className="text-xl font-bold text-brown-900">Brand</h2>
+              </div>
+              <div className="space-y-5">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-brown-700">Brand Name</label>
+                  <Input value={brandName} onChange={(e) => setBrandName(e.target.value)} placeholder="Restaurant name" />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-brown-700">Logo</label>
+                  <div className="flex items-center gap-4">
+                    {logoUrl ? (
+                      <div className="relative h-16 w-16 overflow-hidden rounded-lg border border-cream-300">
+                        <Image src={logoUrl} alt="Logo" fill className="object-contain" />
+                      </div>
+                    ) : (
+                      <div className="flex h-16 w-16 items-center justify-center rounded-lg border-2 border-dashed border-cream-300 text-brown-400">
+                        <ImageIcon className="h-6 w-6" />
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-2">
+                      <input id="logo-file" type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploadingLogo} />
+                      <Button variant="secondary" size="sm" onClick={() => document.getElementById("logo-file")?.click()} disabled={uploadingLogo}>
+                        <Upload className="h-4 w-4" />
+                        {uploadingLogo ? "Uploading..." : "Upload Logo"}
+                      </Button>
+                      {logoUrl && (
+                        <Button variant="ghost" size="sm" onClick={() => setLogoUrl("")} className="text-error-500">
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-brown-700">Display Mode</label>
+                  <p className="mb-2 text-xs text-brown-500">Choose how the brand is displayed in the navbar and footer</p>
+                  <div className="flex gap-2">
+                    {(["logo", "text", "both"] as const).map((mode) => (
+                      <button
+                        key={mode}
+                        onClick={() => setDisplayMode(mode)}
+                        className={`rounded-lg border px-4 py-2 text-sm font-medium capitalize transition-colors ${
+                          displayMode === mode
+                            ? "border-terracotta-500 bg-terracotta-500 text-white"
+                            : "border-cream-300 bg-white text-brown-700 hover:border-terracotta-300"
+                        }`}
+                      >
+                        {mode === "both" ? "Logo + Text" : mode === "logo" ? "Logo Only" : "Text Only"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {/* Preview */}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-brown-700">Preview</label>
+                  <div className="flex items-center gap-2 rounded-lg border border-cream-200 bg-cream-50 px-4 py-3">
+                    {(displayMode === "logo" || displayMode === "both") && logoUrl && (
+                      <div className="relative h-8 w-8 shrink-0">
+                        <Image src={logoUrl} alt="Logo" fill className="object-contain" />
+                      </div>
+                    )}
+                    {(displayMode === "text" || displayMode === "both") && (
+                      <span className="text-lg font-semibold text-brown-900">{brandName}</span>
+                    )}
+                    {displayMode === "logo" && !logoUrl && (
+                      <span className="text-sm text-brown-400">Upload a logo to preview</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={handleSaveBrand} loading={savingBrand}>
+                    <Save className="h-4 w-4" />
+                    Save Brand Settings
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
         {/* General Settings */}
         <motion.div variants={itemVariants}>
           <Card className="border border-cream-200">

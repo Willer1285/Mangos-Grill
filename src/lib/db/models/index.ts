@@ -27,3 +27,6 @@ export type { INotification } from "./notification";
 
 export { default as Location } from "./location";
 export type { ILocation, IBusinessHours } from "./location";
+
+export { default as SiteConfig } from "./site-config";
+export type { ISiteConfig } from "./site-config";

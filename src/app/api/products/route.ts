@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get("search");
     const featured = searchParams.get("featured");
 
-    const filter: Record<string, unknown> = {};
+    const filter: Record<string, unknown> = { status: "Available" };
 
     if (category) {
       filter.category = category;

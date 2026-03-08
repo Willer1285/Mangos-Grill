@@ -28,6 +28,8 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { useBrand } from "@/lib/brand/brand-context";
+import Image from "next/image";
 import { NotificationsPopover } from "./notifications-popover";
 import { LanguageSwitcher } from "./language-switcher";
 
@@ -54,19 +56,28 @@ const navLinks = [
 
 export function Navbar({ user, cartCount = 0, notificationCount = 0, onCartClick }: NavbarProps) {
   const t = useTranslations("nav");
+  const brand = useBrand();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-brown-800/10 bg-cream-100/95 backdrop-blur-md">
+    <header className="sticky top-0 z-40 w-full border-b border-brown-800/10 bg-brown-900/95 backdrop-blur-md">
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-terracotta-500 text-white">
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
-              <path d="M12 2C10 6 7 8 7 12c0 2.8 2.2 5 5 5s5-2.2 5-5c0-4-3-6-5-10zm0 13c-1.7 0-3-1.3-3-3 0-1.5.8-2.8 2-4.4.4.5.7 1 1 1.5.3-.5.6-1 1-1.5 1.2 1.6 2 2.9 2 4.4 0 1.7-1.3 3-3 3z" />
-            </svg>
-          </div>
-          <span className="text-lg font-semibold text-brown-900">Mango&apos;s Grill</span>
+          {(brand.displayMode === "logo" || brand.displayMode === "both") && brand.logo ? (
+            <div className="relative h-8 w-8 shrink-0">
+              <Image src={brand.logo} alt={brand.brandName} fill className="object-contain" />
+            </div>
+          ) : (brand.displayMode === "logo" || brand.displayMode === "both") && !brand.logo ? (
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-terracotta-500 text-white">
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
+                <path d="M12 2C10 6 7 8 7 12c0 2.8 2.2 5 5 5s5-2.2 5-5c0-4-3-6-5-10zm0 13c-1.7 0-3-1.3-3-3 0-1.5.8-2.8 2-4.4.4.5.7 1 1 1.5.3-.5.6-1 1-1.5 1.2 1.6 2 2.9 2 4.4 0 1.7-1.3 3-3 3z" />
+              </svg>
+            </div>
+          ) : null}
+          {(brand.displayMode === "text" || brand.displayMode === "both") && (
+            <span className="text-lg font-semibold text-cream-100">{brand.brandName}</span>
+          )}
         </Link>
 
         {/* Desktop Navigation */}
@@ -75,7 +86,7 @@ export function Navbar({ user, cartCount = 0, notificationCount = 0, onCartClick
             <Link
               key={link.labelKey}
               href={link.href}
-              className="text-sm font-medium text-brown-700 transition-colors hover:text-terracotta-500"
+              className="text-sm font-medium text-cream-300 transition-colors hover:text-terracotta-400"
             >
               {t(link.labelKey)}
             </Link>
@@ -104,17 +115,17 @@ export function Navbar({ user, cartCount = 0, notificationCount = 0, onCartClick
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 rounded-full p-1 transition-colors hover:bg-cream-200">
+                <button className="flex items-center gap-2 rounded-full p-1 transition-colors hover:bg-brown-800">
                   <Avatar
                     initials={getInitials(user.firstName, user.lastName)}
                     src={user.avatar}
                     alt={`${user.firstName} ${user.lastName}`}
                     size="sm"
                   />
-                  <span className="hidden text-sm font-medium text-brown-900 md:inline">
+                  <span className="hidden text-sm font-medium text-cream-200 md:inline">
                     {user.firstName}
                   </span>
-                  <ChevronDown className="hidden h-4 w-4 text-brown-500 md:block" />
+                  <ChevronDown className="hidden h-4 w-4 text-cream-400 md:block" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -184,7 +195,7 @@ export function Navbar({ user, cartCount = 0, notificationCount = 0, onCartClick
 
           {/* Mobile hamburger */}
           <button
-            className="inline-flex h-10 w-10 items-center justify-center rounded-md text-brown-700 hover:bg-cream-200 md:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-md text-cream-300 hover:bg-brown-800 md:hidden"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
           >
@@ -195,13 +206,13 @@ export function Navbar({ user, cartCount = 0, notificationCount = 0, onCartClick
 
       {/* Mobile navigation */}
       {mobileOpen && (
-        <div className="border-t border-cream-300 bg-cream-100 md:hidden">
+        <div className="border-t border-brown-800 bg-brown-900 md:hidden">
           <div className="space-y-1 px-4 py-3">
             {navLinks.map((link) => (
               <Link
                 key={link.labelKey}
                 href={link.href}
-                className="block rounded-md px-3 py-2 text-sm font-medium text-brown-700 hover:bg-cream-200 hover:text-terracotta-500"
+                className="block rounded-md px-3 py-2 text-sm font-medium text-cream-300 hover:bg-brown-800 hover:text-terracotta-400"
                 onClick={() => setMobileOpen(false)}
               >
                 {t(link.labelKey)}

@@ -5,6 +5,7 @@ import { routing } from "@/i18n/routing";
 import { Toaster } from "sonner";
 import { CartProvider } from "@/lib/cart/cart-context";
 import { AuthProvider } from "@/lib/auth/auth-provider";
+import { BrandProvider } from "@/lib/brand/brand-context";
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
@@ -68,9 +69,11 @@ export default async function LocaleLayout({
       <body className="min-h-screen bg-cream-100 font-sans text-brown-900 antialiased" suppressHydrationWarning>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AuthProvider>
-            <CartProvider>
-              {children}
-            </CartProvider>
+            <BrandProvider>
+              <CartProvider>
+                {children}
+              </CartProvider>
+            </BrandProvider>
           </AuthProvider>
           <Toaster
             position="top-right"
