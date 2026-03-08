@@ -590,7 +590,7 @@ export default function OrdersManagementPage() {
             </Select>
             {form.deliveryType === "Dine-in" && (
               <Input
-                label="Table Number"
+                label={t("tableNumber")}
                 placeholder="e.g. 5"
                 value={form.tableNumber}
                 onChange={(e) =>
@@ -600,8 +600,8 @@ export default function OrdersManagementPage() {
             )}
           </div>
           <Textarea
-            label="Notes"
-            placeholder="Special instructions..."
+            label={tc("notes")}
+            placeholder={t("specialInstructions")}
             value={form.notes}
             onChange={(e) =>
               setForm((f) => ({ ...f, notes: e.target.value }))
@@ -613,13 +613,13 @@ export default function OrdersManagementPage() {
         <hr className="my-4 border-cream-200" />
 
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-brown-500">Payment</h3>
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-brown-500">{t("payment")}</h3>
           <div className="grid gap-3 sm:grid-cols-2">
             <Select
               value={form.paymentMethod}
               onValueChange={(v) => setForm((f) => ({ ...f, paymentMethod: v }))}
             >
-              <SelectTrigger label="Payment Method">
+              <SelectTrigger label={t("paymentMethod")}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -635,7 +635,7 @@ export default function OrdersManagementPage() {
               value={form.paymentStatus}
               onValueChange={(v) => setForm((f) => ({ ...f, paymentStatus: v }))}
             >
-              <SelectTrigger label="Payment Status">
+              <SelectTrigger label={t("paymentStatus")}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -657,15 +657,15 @@ export default function OrdersManagementPage() {
         <hr className="my-4 border-cream-200" />
         <div className="rounded-lg bg-cream-50 px-4 py-3 text-sm">
           <div className="flex justify-between text-brown-700">
-            <span>Subtotal</span>
+            <span>{tc("subtotal")}</span>
             <span>${subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-brown-700">
-            <span>Tax (10%)</span>
+            <span>{t("tax")}</span>
             <span>${tax.toFixed(2)}</span>
           </div>
           <div className="mt-1 flex justify-between border-t border-cream-200 pt-1 font-semibold text-brown-900">
-            <span>Total</span>
+            <span>{tc("total")}</span>
             <span>${totalAmount.toFixed(2)}</span>
           </div>
         </div>
@@ -868,10 +868,10 @@ export default function OrdersManagementPage() {
 
           <ModalFooter>
             <Button variant="secondary" onClick={() => setCreateOpen(false)} disabled={submitting}>
-              Cancel
+              {tc("cancel")}
             </Button>
             <Button onClick={handleCreateOrder} loading={submitting} disabled={orderItems.length === 0}>
-              Create Order
+              {t("createOrder")}
             </Button>
           </ModalFooter>
         </ModalContent>
