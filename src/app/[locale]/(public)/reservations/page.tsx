@@ -39,6 +39,7 @@ const defaultOpeningHours = [
 
 export default function ReservationsPage() {
   const t = useTranslations("reservations");
+  const tc = useTranslations("common");
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedPartySize, setSelectedPartySize] = useState(2);
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
@@ -94,13 +95,13 @@ export default function ReservationsPage() {
         body: JSON.stringify(data),
       });
       if (res.ok) {
-        toast.success("Reservation confirmed! Check your email for details.");
+        toast.success(t("confirmed"));
       } else {
         const json = await res.json();
-        toast.error(json.error || "Failed to create reservation.");
+        toast.error(json.error || t("failedCreate"));
       }
     } catch {
-      toast.error("Something went wrong. Please try again.");
+      toast.error(t("somethingWrong"));
     } finally {
       setLoading(false);
     }
@@ -111,7 +112,7 @@ export default function ReservationsPage() {
   const openingHours = currentLocation?.hours?.length
     ? currentLocation.hours.map((h) => ({
         day: h.day,
-        hours: h.closed ? "Closed" : `${h.open} - ${h.close}`,
+        hours: h.closed ? tc("closed") : `${h.open} - ${h.close}`,
       }))
     : defaultOpeningHours;
 
@@ -133,7 +134,7 @@ export default function ReservationsPage() {
                 <div>
                   <label className="mb-2 flex items-center gap-2 text-sm font-medium text-brown-800">
                     <MapPin className="h-4 w-4 text-terracotta-500" />
-                    {t("selectLocation") || "Select Location"}
+                    {t("selectLocation")}
                   </label>
                   <div className="flex flex-wrap gap-3">
                     {locations.map((loc) => (

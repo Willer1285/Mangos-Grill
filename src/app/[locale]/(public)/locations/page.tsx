@@ -40,26 +40,19 @@ export default function LocationsPage() {
 
   return (
     <>
-      {/* Header */}
       <section className="bg-brown-800 py-16 text-center">
         <p className="text-xs font-semibold uppercase tracking-widest text-terracotta-400">
-          Find Us in Texas
+          {t("findUs")}
         </p>
-        <h1 className="mt-2 text-4xl font-semibold text-white">
-          {t("title")}
-        </h1>
+        <h1 className="mt-2 text-4xl font-semibold text-white">{t("title")}</h1>
       </section>
 
-      {/* Aerial image placeholder */}
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="h-64 rounded-lg bg-cream-300 flex items-center justify-center">
-          <span className="text-sm text-brown-500">
-            Aerial view of locations
-          </span>
+          <span className="text-sm text-brown-500">{t("aerialView")}</span>
         </div>
       </section>
 
-      {/* Location Cards */}
       <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {locations.map((loc, i) => (
@@ -72,18 +65,10 @@ export default function LocationsPage() {
               <Card className="h-full overflow-hidden transition-shadow hover:shadow-md">
                 <CardContent className="flex h-full flex-col gap-4 p-6 pt-6">
                   <div className="flex items-center gap-2">
-                    <Badge className="bg-terracotta-500/10 text-terracotta-600">
-                      {loc.city}
-                    </Badge>
-                    {loc.flagship && (
-                      <Badge variant="olive">Flagship</Badge>
-                    )}
+                    <Badge className="bg-terracotta-500/10 text-terracotta-600">{loc.city}</Badge>
+                    {loc.flagship && <Badge variant="olive">{t("flagship")}</Badge>}
                   </div>
-
-                  <h3 className="text-xl font-semibold text-brown-900">
-                    {loc.name}
-                  </h3>
-
+                  <h3 className="text-xl font-semibold text-brown-900">{loc.name}</h3>
                   <div className="space-y-3 text-sm text-brown-700">
                     <div className="flex items-start gap-2.5">
                       <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-terracotta-500" />
@@ -98,10 +83,9 @@ export default function LocationsPage() {
                       <span>{loc.phone}</span>
                     </div>
                   </div>
-
                   <Button variant="primary" className="mt-auto w-full">
                     <MapPin className="h-4 w-4" />
-                    Get Directions
+                    {t("getDirections")}
                   </Button>
                 </CardContent>
               </Card>

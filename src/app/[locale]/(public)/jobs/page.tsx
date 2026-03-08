@@ -14,98 +14,94 @@ import { Button, Card, CardContent, Badge } from "@/components/ui";
 
 type FilterType = "all" | "full-time" | "part-time";
 
-const jobs = [
-  {
-    id: "head-chef",
-    title: "Head Chef",
-    department: "Kitchen",
-    type: "Full-time" as const,
-    location: "Houston Montrose",
-    salary: "$55,000 - $70,000/yr",
-    description:
-      "Lead our kitchen team to deliver authentic Venezuelan dishes. You will oversee menu execution, ingredient sourcing, and train junior cooks.",
-  },
-  {
-    id: "server",
-    title: "Server / Waitstaff",
-    department: "Front of House",
-    type: "Part-time" as const,
-    location: "East Austin",
-    salary: "$15 - $20/hr + tips",
-    description:
-      "Provide warm, attentive service to our guests. Prior restaurant experience preferred but not required -- we train our familia.",
-  },
-  {
-    id: "line-cook",
-    title: "Line Cook",
-    department: "Kitchen",
-    type: "Full-time" as const,
-    location: "Deep Ellum Dallas",
-    salary: "$35,000 - $42,000/yr",
-    description:
-      "Prepare dishes to order with consistency and speed. A passion for Latin American cuisine is a plus.",
-  },
-  {
-    id: "delivery-driver",
-    title: "Delivery Driver",
-    department: "Operations",
-    type: "Contract" as const,
-    location: "All Locations",
-    salary: "$18 - $22/hr",
-    description:
-      "Deliver orders to customers across the city. Valid driver's license and reliable vehicle required.",
-  },
-];
-
-const perks = [
-  {
-    icon: Heart,
-    title: "Health & Benefits",
-    description:
-      "Full-time team members receive comprehensive health, dental, and vision coverage.",
-  },
-  {
-    icon: UtensilsCrossed,
-    title: "Free Meals",
-    description:
-      "Enjoy a complimentary meal every shift and 50% discount for family and friends.",
-  },
-  {
-    icon: TrendingUp,
-    title: "Growth Opportunities",
-    description:
-      "We promote from within. Many of our managers started as line cooks or servers.",
-  },
-];
-
-const filters: { label: string; value: FilterType }[] = [
-  { label: "All Locations", value: "all" },
-  { label: "Full-time", value: "full-time" },
-  { label: "Part-time", value: "part-time" },
-];
-
 export default function JobsPage() {
   const t = useTranslations("jobs");
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
 
+  const jobs = [
+    {
+      id: "head-chef",
+      title: t("headChef"),
+      department: t("kitchen"),
+      type: t("fullTime"),
+      typeFilter: "full-time",
+      location: "Houston Montrose",
+      salary: "$55,000 - $70,000/yr",
+      description: t("headChefDesc"),
+    },
+    {
+      id: "server",
+      title: t("server"),
+      department: t("frontOfHouse"),
+      type: t("partTime"),
+      typeFilter: "part-time",
+      location: "East Austin",
+      salary: "$15 - $20/hr + tips",
+      description: t("serverDesc"),
+    },
+    {
+      id: "line-cook",
+      title: t("lineCook"),
+      department: t("kitchen"),
+      type: t("fullTime"),
+      typeFilter: "full-time",
+      location: "Deep Ellum Dallas",
+      salary: "$35,000 - $42,000/yr",
+      description: t("lineCookDesc"),
+    },
+    {
+      id: "delivery-driver",
+      title: t("deliveryDriver"),
+      department: t("operations"),
+      type: "Contract",
+      typeFilter: "contract",
+      location: t("allLocations"),
+      salary: "$18 - $22/hr",
+      description: t("deliveryDriverDesc"),
+    },
+  ];
+
+  const perks = [
+    {
+      icon: Heart,
+      title: t("benefits"),
+      description: t("healthBenefitsDesc"),
+    },
+    {
+      icon: UtensilsCrossed,
+      title: t("meals"),
+      description: t("freeMealsDesc"),
+    },
+    {
+      icon: TrendingUp,
+      title: t("growth"),
+      description: t("growthDesc"),
+    },
+  ];
+
+  const filters: { label: string; value: FilterType }[] = [
+    { label: t("allLocations"), value: "all" },
+    { label: t("fullTime"), value: "full-time" },
+    { label: t("partTime"), value: "part-time" },
+  ];
+
   const filtered =
     activeFilter === "all"
       ? jobs
-      : jobs.filter((j) => j.type.toLowerCase() === activeFilter);
+      : jobs.filter((j) => j.typeFilter === activeFilter);
 
   return (
     <>
       {/* Header */}
       <section className="bg-brown-800 py-16 text-center">
         <Badge variant="olive" className="mb-4">
-          We&apos;re hiring
+          {t("hiring")}
         </Badge>
         <h1 className="mt-2 text-4xl font-semibold text-white">
           {t("title")}
         </h1>
         <p className="mx-auto mt-3 max-w-lg text-cream-400">
-          Become part of our growing family and help bring the flavors of
-          Venezuela to Texas.
+          {t("hiringDesc")}
         </p>
       </section>
 
@@ -160,7 +156,7 @@ export default function JobsPage() {
                       </p>
                     </div>
                     <Button variant="primary" size="md" className="shrink-0">
-                      Apply Now
+                      {t("applyNow")}
                     </Button>
                   </div>
                 </CardContent>
@@ -170,7 +166,7 @@ export default function JobsPage() {
 
           {filtered.length === 0 && (
             <p className="py-12 text-center text-brown-500">
-              No openings match this filter right now.
+              {t("noOpenings")}
             </p>
           )}
         </div>
@@ -180,7 +176,7 @@ export default function JobsPage() {
       <section className="bg-cream-200 py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <h2 className="text-center text-3xl font-semibold text-brown-900">
-            Why Work With Us
+            {t("whyWork")}
           </h2>
           <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {perks.map((perk, i) => {

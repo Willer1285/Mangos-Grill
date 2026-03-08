@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, Fragment } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import {
   Card,
   CardContent,
@@ -84,6 +85,19 @@ const badgeVariant: Record<string, string> = {
 };
 
 export default function OrdersManagementPage() {
+  const t = useTranslations("admin");
+  const tc = useTranslations("common");
+  const locale = useLocale() as "en" | "es";
+
+  const statusLabels: Record<string, string> = {
+    All: tc("all"),
+    New: t("statusNew"),
+    Preparing: t("statusPreparing"),
+    Ready: t("statusReady"),
+    Delivered: t("statusDelivered"),
+    Cancelled: t("statusCancelled"),
+  };
+
   const [orders, setOrders] = useState<Order[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -440,15 +454,15 @@ export default function OrdersManagementPage() {
   ) {
     return (
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-brown-500">Products</h3>
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-brown-500">{t("products")}</h3>
         <Select onValueChange={(v) => addProductTo(v, setItems)} value="">
-          <SelectTrigger label="Add a product">
-            <SelectValue placeholder="Select a product..." />
+          <SelectTrigger label={t("addProduct")}>
+            <SelectValue placeholder={t("selectProduct")} />
           </SelectTrigger>
           <SelectContent>
             {products.map((p) => (
               <SelectItem key={p._id} value={p._id}>
-                {p.name.en} &mdash; ${p.price.toFixed(2)}
+                {p.name[locale] || p.name.en} &mdash; ${p.price.toFixed(2)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -461,7 +475,7 @@ export default function OrdersManagementPage() {
                 <div key={item.productId} className="flex items-center gap-3 px-4 py-3">
                   <div className="flex-1">
                     <span className="text-sm font-medium text-brown-900">{item.name}</span>
-                    <span className="ml-2 text-xs text-brown-500">${item.price.toFixed(2)} each</span>
+                    <span className="ml-2 text-xs text-brown-500">${item.price.toFixed(2)} {t("each")}</span>
                   </div>
                   <input
                     type="number"
@@ -486,7 +500,7 @@ export default function OrdersManagementPage() {
               ))}
             </div>
             <div className="border-t border-cream-200 px-4 py-2 text-right text-sm font-semibold text-brown-900">
-              Subtotal: ${subtotal.toFixed(2)}
+              {tc("subtotal")}: ${subtotal.toFixed(2)}
             </div>
           </div>
         )}
@@ -504,13 +518,13 @@ export default function OrdersManagementPage() {
       <>
         <hr className="my-4 border-cream-200" />
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-brown-500">Order Details</h3>
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-brown-500">{t("orderDetails")}</h3>
           {options?.showCustomerIdNumber && (
             <div className="space-y-2">
               <div className="flex gap-2">
                 <div className="flex-1">
                   <Input
-                    label="Customer ID Number"
+                    label={t("customerIdNumber")}
                     placeholder="V-12345678"
                     value={customerIdNumber}
                     onChange={(e) => { setCustomerIdNumber(e.target.value); setCustomerFound(null); }}
@@ -531,13 +545,13 @@ export default function OrdersManagementPage() {
               {customerFound && (
                 <p className={`flex items-center gap-1 text-xs ${customerFound.isNew ? "text-warning-500" : "text-success-600"}`}>
                   <CheckCircle2 className="h-3.5 w-3.5" />
-                  {customerFound.isNew ? "New client (will be created)" : customerFound.name}
+                  {customerFound.isNew ? t("newClient") : customerFound.name}
                 </p>
               )}
               {customerFound && (
                 <Input
-                  label="Customer Name"
-                  placeholder="Full name"
+                  label={t("customerName")}
+                  placeholder={t("fullName")}
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                   disabled={!customerFound.isNew}
@@ -551,8 +565,8 @@ export default function OrdersManagementPage() {
                 value={options.location || ""}
                 onValueChange={(v) => options.onLocationChange?.(v)}
               >
-                <SelectTrigger label="Location *">
-                  <SelectValue placeholder="Select location" />
+                <SelectTrigger label={`${t("location")} *`}>
+                  <SelectValue placeholder={t("selectLocation")} />
                 </SelectTrigger>
                 <SelectContent>
                   {locations.map((loc) => (
@@ -565,13 +579,13 @@ export default function OrdersManagementPage() {
               value={form.deliveryType}
               onValueChange={(v) => setForm((f) => ({ ...f, deliveryType: v }))}
             >
-              <SelectTrigger label="Delivery Type">
+              <SelectTrigger label={t("deliveryType")}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Dine-in">Dine-in</SelectItem>
-                <SelectItem value="Delivery">Delivery</SelectItem>
-                <SelectItem value="Pickup">Pickup</SelectItem>
+                <SelectItem value="Dine-in">{t("dineIn")}</SelectItem>
+                <SelectItem value="Delivery">{t("delivery")}</SelectItem>
+                <SelectItem value="Pickup">{t("pickup")}</SelectItem>
               </SelectContent>
             </Select>
             {form.deliveryType === "Dine-in" && (
@@ -663,12 +677,12 @@ export default function OrdersManagementPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-semibold text-brown-900">Orders Management</h1>
-          <span className="text-sm text-brown-500">{total} total orders</span>
+          <h1 className="text-2xl font-semibold text-brown-900">{t("ordersManagement")}</h1>
+          <span className="text-sm text-brown-500">{t("totalOrders", { count: total })}</span>
         </div>
         <Button onClick={openCreateModal}>
           <Plus className="h-4 w-4" />
-          Create Order
+          {t("createOrder")}
         </Button>
       </div>
 
@@ -684,7 +698,7 @@ export default function OrdersManagementPage() {
                 : "border border-cream-200 bg-white text-brown-600 hover:bg-cream-100"
             }`}
           >
-            {sf.label}
+            {statusLabels[sf.key] || sf.label}
           </button>
         ))}
       </div>
@@ -697,20 +711,20 @@ export default function OrdersManagementPage() {
               <Spinner />
             </div>
           ) : orders.length === 0 ? (
-            <div className="py-20 text-center text-brown-500">No orders found</div>
+            <div className="py-20 text-center text-brown-500">{t("noOrdersFound")}</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-cream-200">
                     <th className="w-10 px-5 py-3 text-left text-xs font-medium text-brown-500" />
-                    <th className="px-5 py-3 text-left text-xs font-medium text-brown-500">Order #</th>
-                    <th className="px-5 py-3 text-left text-xs font-medium text-brown-500">Customer</th>
-                    <th className="px-5 py-3 text-left text-xs font-medium text-brown-500">Items</th>
-                    <th className="px-5 py-3 text-right text-xs font-medium text-brown-500">Total</th>
-                    <th className="px-5 py-3 text-center text-xs font-medium text-brown-500">Status</th>
-                    <th className="px-5 py-3 text-left text-xs font-medium text-brown-500">Date</th>
-                    <th className="px-5 py-3 text-right text-xs font-medium text-brown-500">Actions</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-brown-500">{t("orderNumber")}</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-brown-500">{t("customer")}</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-brown-500">{t("items")}</th>
+                    <th className="px-5 py-3 text-right text-xs font-medium text-brown-500">{tc("total")}</th>
+                    <th className="px-5 py-3 text-center text-xs font-medium text-brown-500">{t("status")}</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-brown-500">{t("date")}</th>
+                    <th className="px-5 py-3 text-right text-xs font-medium text-brown-500">{t("actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -718,7 +732,7 @@ export default function OrdersManagementPage() {
                     const isExpanded = expandedRows.has(order._id);
                     const customerName = order.customer
                       ? `${order.customer.firstName} ${order.customer.lastName}`
-                      : "Guest";
+                      : tc("guest");
                     const itemsSummary = order.items.map((i) => i.name).join(", ");
                     const isNew = order.status === "New";
                     return (
@@ -784,7 +798,7 @@ export default function OrdersManagementPage() {
                             <td colSpan={8} className="px-5 py-4">
                               <div className="grid gap-6 md:grid-cols-3">
                                 <div>
-                                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-brown-500">Order Details</h4>
+                                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-brown-500">{t("orderDetails")}</h4>
                                   <ul className="space-y-1">
                                     {order.items.map((item, idx) => (
                                       <li key={idx} className="flex justify-between text-sm">
@@ -795,7 +809,7 @@ export default function OrdersManagementPage() {
                                   </ul>
                                 </div>
                                 <div>
-                                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-brown-500">Delivery Info</h4>
+                                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-brown-500">{t("deliveryInfo")}</h4>
                                   <p className="text-sm text-brown-700"><span className="font-medium">Type:</span> {order.deliveryType}</p>
                                   {order.deliveryAddress && (
                                     <p className="text-sm text-brown-700"><span className="font-medium">Address:</span> {order.deliveryAddress.street}, {order.deliveryAddress.city}</p>
@@ -805,7 +819,7 @@ export default function OrdersManagementPage() {
                                   )}
                                 </div>
                                 <div>
-                                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-brown-500">Payment Info</h4>
+                                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-brown-500">{t("paymentInfo")}</h4>
                                   <p className="text-sm text-brown-700"><span className="font-medium">Method:</span> {order.paymentMethod}</p>
                                   <p className="text-sm text-brown-700"><span className="font-medium">Status:</span> {order.paymentStatus}</p>
                                 </div>
@@ -833,9 +847,9 @@ export default function OrdersManagementPage() {
       <Modal open={createOpen} onOpenChange={setCreateOpen}>
         <ModalContent className="max-w-2xl">
           <ModalHeader>
-            <ModalTitle>Create Order</ModalTitle>
+            <ModalTitle>{t("createOrder")}</ModalTitle>
             <ModalDescription>
-              Create a manual order with product selection and payment details.
+              {t("createOrderDesc")}
             </ModalDescription>
           </ModalHeader>
 
@@ -867,9 +881,9 @@ export default function OrdersManagementPage() {
       <Modal open={editOpen} onOpenChange={setEditOpen}>
         <ModalContent className="max-w-2xl">
           <ModalHeader>
-            <ModalTitle>Edit Order</ModalTitle>
+            <ModalTitle>{t("editOrder")}</ModalTitle>
             <ModalDescription>
-              Modify items, delivery, and payment details for this order.
+              {t("editOrderDesc")}
             </ModalDescription>
           </ModalHeader>
 

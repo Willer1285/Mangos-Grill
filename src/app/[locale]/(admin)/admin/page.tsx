@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 import { Card, CardContent, Badge, Button, Spinner } from "@/components/ui";
 import {
@@ -53,6 +54,8 @@ const badgeVariant: Record<string, string> = {
 
 export default function AdminDashboardPage() {
   const { data: session } = useSession();
+  const t = useTranslations("admin");
+  const tc = useTranslations("common");
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -84,41 +87,43 @@ export default function AdminDashboardPage() {
   }
 
   const kpis = [
-    { label: "Orders", value: data?.totalOrders ?? 0, icon: ClipboardList, color: "bg-terracotta-500/10 text-terracotta-500" },
-    { label: "Sales", value: `$${(data?.totalSales ?? 0).toFixed(2)}`, icon: DollarSign, color: "bg-success-500/10 text-success-500" },
-    { label: "Dishes Sold", value: data?.dishesSold ?? 0, icon: Package, color: "bg-info-500/10 text-info-500" },
-    { label: "Delivered", value: data?.deliveredOrders ?? 0, icon: TrendingUp, color: "bg-success-500/10 text-success-500" },
-    { label: "Cancelled", value: data?.cancelledOrders ?? 0, icon: XCircle, color: "bg-error-500/10 text-error-500" },
-    { label: "Reserv. Confirmed", value: data?.confirmedReservations ?? 0, icon: CheckCircle2, color: "bg-success-500/10 text-success-500" },
-    { label: "Reserv. Cancelled", value: data?.cancelledReservations ?? 0, icon: XCircle, color: "bg-error-500/10 text-error-500" },
-    { label: "Reserv. Pending", value: data?.pendingReservations ?? 0, icon: CalendarDays, color: "bg-warning-500/10 text-warning-500" },
+    { label: t("orders"), value: data?.totalOrders ?? 0, icon: ClipboardList, color: "bg-terracotta-500/10 text-terracotta-500" },
+    { label: t("sales"), value: `$${(data?.totalSales ?? 0).toFixed(2)}`, icon: DollarSign, color: "bg-success-500/10 text-success-500" },
+    { label: t("dishesSold"), value: data?.dishesSold ?? 0, icon: Package, color: "bg-info-500/10 text-info-500" },
+    { label: t("delivered"), value: data?.deliveredOrders ?? 0, icon: TrendingUp, color: "bg-success-500/10 text-success-500" },
+    { label: t("cancelled"), value: data?.cancelledOrders ?? 0, icon: XCircle, color: "bg-error-500/10 text-error-500" },
+    { label: t("reservConfirmed"), value: data?.confirmedReservations ?? 0, icon: CheckCircle2, color: "bg-success-500/10 text-success-500" },
+    { label: t("reservCancelled"), value: data?.cancelledReservations ?? 0, icon: XCircle, color: "bg-error-500/10 text-error-500" },
+    { label: t("reservPending"), value: data?.pendingReservations ?? 0, icon: CalendarDays, color: "bg-warning-500/10 text-warning-500" },
     ...(isSuperAdmin
-      ? [{ label: "Users", value: data?.totalUsers ?? 0, icon: Users, color: "bg-info-500/10 text-info-500" }]
+      ? [{ label: t("users"), value: data?.totalUsers ?? 0, icon: Users, color: "bg-info-500/10 text-info-500" }]
       : []),
   ];
 
   const managerQuickActions = [
-    { href: "/admin/orders", label: "Orders", icon: Plus, iconBg: "bg-terracotta-500/10", iconColor: "text-terracotta-500" },
-    { href: "/admin/reservations", label: "Reservations", icon: CalendarDays, iconBg: "bg-info-500/10", iconColor: "text-info-500" },
+    { href: "/admin/orders", label: t("orders"), icon: Plus, iconBg: "bg-terracotta-500/10", iconColor: "text-terracotta-500" },
+    { href: "/admin/reservations", label: tc("viewAll"), icon: CalendarDays, iconBg: "bg-info-500/10", iconColor: "text-info-500" },
   ];
 
   const superAdminQuickActions = [
-    { href: "/admin/orders", label: "Orders", icon: Plus, iconBg: "bg-terracotta-500/10", iconColor: "text-terracotta-500" },
+    { href: "/admin/orders", label: t("orders"), icon: Plus, iconBg: "bg-terracotta-500/10", iconColor: "text-terracotta-500" },
     { href: "/admin/menu", label: "Menu", icon: UtensilsCrossed, iconBg: "bg-success-500/10", iconColor: "text-success-500" },
-    { href: "/admin/reservations", label: "Reservations", icon: CalendarDays, iconBg: "bg-info-500/10", iconColor: "text-info-500" },
-    { href: "/admin/payments", label: "Payments", icon: DollarSign, iconBg: "bg-warning-500/10", iconColor: "text-warning-500" },
+    { href: "/admin/reservations", label: tc("viewAll"), icon: CalendarDays, iconBg: "bg-info-500/10", iconColor: "text-info-500" },
+    { href: "/admin/payments", label: t("payments"), icon: DollarSign, iconBg: "bg-warning-500/10", iconColor: "text-warning-500" },
   ];
 
   const quickActions = isSuperAdmin ? superAdminQuickActions : managerQuickActions;
+
+  const namePrefix = session?.user?.firstName ? `, ${session.user.firstName}` : "";
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-brown-900">Dashboard</h1>
+          <h1 className="text-2xl font-semibold text-brown-900">{t("dashboard")}</h1>
           <p className="text-sm text-brown-500">
-            Welcome back{session?.user?.firstName ? `, ${session.user.firstName}` : ""}. Here&apos;s what&apos;s happening today.
+            {t("welcomeBack", { name: namePrefix })}
           </p>
           {!isSuperAdmin && session?.user?.location && (
             <p className="mt-1 flex items-center gap-1 text-xs text-terracotta-500">
@@ -156,30 +161,30 @@ export default function AdminDashboardPage() {
         <Card className="lg:col-span-2">
           <CardContent className="p-5">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-brown-900">Recent Orders</h2>
+              <h2 className="text-lg font-semibold text-brown-900">{t("recentOrders")}</h2>
               <Link href="/admin/orders">
-                <Button variant="secondary" size="sm">View All</Button>
+                <Button variant="secondary" size="sm">{tc("viewAll")}</Button>
               </Link>
             </div>
             {data?.recentOrders.length === 0 ? (
-              <div className="py-10 text-center text-brown-500">No orders yet</div>
+              <div className="py-10 text-center text-brown-500">{t("noOrdersYet")}</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-cream-200">
-                      <th className="py-2 text-left text-xs font-medium text-brown-500">Order #</th>
-                      <th className="py-2 text-left text-xs font-medium text-brown-500">Customer</th>
-                      <th className="py-2 text-left text-xs font-medium text-brown-500">Items</th>
-                      <th className="py-2 text-right text-xs font-medium text-brown-500">Total</th>
-                      <th className="py-2 text-right text-xs font-medium text-brown-500">Status</th>
+                      <th className="py-2 text-left text-xs font-medium text-brown-500">{t("orderNumber")}</th>
+                      <th className="py-2 text-left text-xs font-medium text-brown-500">{t("customer")}</th>
+                      <th className="py-2 text-left text-xs font-medium text-brown-500">{t("items")}</th>
+                      <th className="py-2 text-right text-xs font-medium text-brown-500">{tc("total")}</th>
+                      <th className="py-2 text-right text-xs font-medium text-brown-500">{t("status")}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data?.recentOrders.map((order) => {
                       const customerName = order.customer
                         ? `${order.customer.firstName} ${order.customer.lastName}`
-                        : "Guest";
+                        : tc("guest");
                       const itemsSummary = order.items.map((i) => i.name).join(", ");
                       return (
                         <tr key={order._id} className="border-b border-cream-100 last:border-0">
@@ -205,7 +210,7 @@ export default function AdminDashboardPage() {
         {/* Quick Actions */}
         <Card>
           <CardContent className="p-5">
-            <h2 className="mb-4 text-lg font-semibold text-brown-900">Quick Actions</h2>
+            <h2 className="mb-4 text-lg font-semibold text-brown-900">{t("quickActions")}</h2>
             <div className="grid grid-cols-2 gap-3">
               {quickActions.map((action) => (
                 <Link key={action.href} href={action.href} className="flex flex-col items-center gap-2 rounded-lg border border-cream-200 p-4 transition-colors hover:bg-cream-100">

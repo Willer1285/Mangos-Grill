@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import Image from "next/image";
@@ -43,6 +43,8 @@ type RatingsMap = Record<string, { avgRating: number; count: number }>;
 
 export default function MenuPage() {
   const t = useTranslations("menu");
+  const tc = useTranslations("common");
+  const locale = useLocale() as "en" | "es";
   const { addItem } = useCart();
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get("category") || "all";
@@ -103,7 +105,7 @@ export default function MenuPage() {
           {/* Categories sidebar */}
           <aside className="w-full shrink-0 lg:w-56">
             <Card className="p-4">
-              <h2 className="mb-3 text-sm font-semibold text-brown-900">Categories</h2>
+              <h2 className="mb-3 text-sm font-semibold text-brown-900">{t("categories")}</h2>
               <nav className="space-y-1">
                 <button
                   onClick={() => setActiveCategory("all")}
@@ -133,7 +135,7 @@ export default function MenuPage() {
                     ) : (
                       <UtensilsCrossed className="h-4 w-4" />
                     )}
-                    {cat.name.en}
+                    {cat.name[locale] || cat.name.en}
                   </button>
                 ))}
               </nav>
@@ -148,12 +150,14 @@ export default function MenuPage() {
               </div>
             ) : filtered.length === 0 ? (
               <div className="py-20 text-center text-brown-500">
-                No products available in this category.
+                {t("noProducts")}
               </div>
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {filtered.map((item, i) => {
-                  const catName = typeof item.category === "object" ? item.category.name.en : "";
+                  const catName = typeof item.category === "object" ? (item.category.name[locale] || item.category.name.en) : "";
+                  const itemName = item.name[locale] || item.name.en;
+                  const itemDesc = item.description[locale] || item.description.en;
                   const r = ratings[item._id];
                   return (
                     <motion.div
@@ -165,10 +169,10 @@ export default function MenuPage() {
                       <Card className="group flex h-full flex-col overflow-hidden transition-shadow hover:shadow-md">
                         <div className="relative aspect-[4/3] bg-cream-200">
                           {item.image ? (
-                            <Image src={item.image} alt={item.name.en} fill className="object-cover transition-transform group-hover:scale-105" />
+                            <Image src={item.image} alt={itemName} fill className="object-cover transition-transform group-hover:scale-105" />
                           ) : (
                             <div className="flex h-full items-center justify-center text-sm text-brown-400">
-                              {item.name.en}
+                              {itemName}
                             </div>
                           )}
                           {item.tags && item.tags.length > 0 && (
@@ -192,12 +196,11 @@ export default function MenuPage() {
                             </span>
                           )}
                           <h3 className="mt-1 line-clamp-1 text-sm font-semibold text-brown-900">
-                            {item.name.en}
+                            {itemName}
                           </h3>
                           <p className="mt-0.5 line-clamp-2 text-xs text-brown-600">
-                            {item.description.en}
+                            {itemDesc}
                           </p>
-                          {/* Star rating */}
                           {r && r.count > 0 && (
                             <div className="mt-1.5 flex items-center gap-1">
                               <div className="flex gap-0.5">
@@ -227,14 +230,14 @@ export default function MenuPage() {
                                 onClick={() => {
                                   addItem({
                                     productId: item._id,
-                                    name: item.name.en,
+                                    name: itemName,
                                     image: item.image,
                                     price: item.price,
                                     quantity: 1,
                                     modifiers: [],
                                     extras: [],
                                   });
-                                  toast.success(`${item.name.en} added to cart`);
+                                  toast.success(tc("addedToCart", { name: itemName }));
                                 }}
                                 className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-brown-900 text-white transition-colors hover:bg-brown-800"
                                 aria-label="Add to cart"

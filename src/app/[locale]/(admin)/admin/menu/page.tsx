@@ -26,6 +26,7 @@ import {
 import { UtensilsCrossed, Plus, Edit2, Trash2, MapPin, Package } from "lucide-react";
 import { motion } from "framer-motion";
 import { autoTranslate } from "@/lib/utils/translate";
+import { useTranslations, useLocale } from "next-intl";
 
 interface Category {
   _id: string;
@@ -81,6 +82,10 @@ const itemVariants = {
 };
 
 export default function MenuPage() {
+  const t = useTranslations("admin");
+  const tc = useTranslations("common");
+  const locale = useLocale() as "en" | "es";
+
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -220,17 +225,17 @@ export default function MenuPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Are you sure you want to delete this dish?")) return;
+    if (!confirm(t("confirmDeleteDish"))) return;
     try {
       const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.error || "Failed to delete");
+        alert(data.error || t("failedDelete"));
         return;
       }
       fetchData();
     } catch {
-      alert("Failed to delete product");
+      alert(t("failedDeleteProduct"));
     }
   }
 
@@ -249,10 +254,10 @@ export default function MenuPage() {
   return (
     <div className="min-h-screen bg-cream-50 p-6 lg:p-8">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-3xl font-bold text-brown-900">Menu Management</h1>
+        <h1 className="text-3xl font-bold text-brown-900">{t("menuManagement")}</h1>
         <Button onClick={openCreate}>
           <Plus className="h-4 w-4" />
-          Add Dish
+          {t("addDish")}
         </Button>
       </div>
 
@@ -266,7 +271,7 @@ export default function MenuPage() {
               : "border border-cream-200 bg-white text-brown-700 hover:bg-cream-200"
           }`}
         >
-          All
+          {tc("all")}
         </button>
         {categories.map((cat) => (
           <button
@@ -278,7 +283,7 @@ export default function MenuPage() {
                 : "border border-cream-200 bg-white text-brown-700 hover:bg-cream-200"
             }`}
           >
-            {cat.name.en}
+            {cat.name[locale] || cat.name.en}
           </button>
         ))}
       </div>
@@ -288,7 +293,7 @@ export default function MenuPage() {
           <Spinner />
         </div>
       ) : products.length === 0 ? (
-        <div className="py-20 text-center text-brown-500">No menu items yet. Add your first dish.</div>
+        <div className="py-20 text-center text-brown-500">{t("noMenuItems")}</div>
       ) : (
         <motion.div
           className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
@@ -302,7 +307,7 @@ export default function MenuPage() {
               <Card className="overflow-hidden border border-cream-200">
                 <div className="flex h-40 items-center justify-center bg-cream-200">
                   {item.image ? (
-                    <img src={item.image} alt={item.name.es || item.name.en} className="h-full w-full object-cover" />
+                    <img src={item.image} alt={item.name[locale] || item.name.en} className="h-full w-full object-cover" />
                   ) : (
                     <UtensilsCrossed className="h-10 w-10 text-brown-400" />
                   )}
@@ -310,13 +315,13 @@ export default function MenuPage() {
                 <CardContent className="p-4">
                   <div className="mb-2">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-brown-900">{item.name.es || item.name.en}</h3>
+                      <h3 className="font-semibold text-brown-900">{item.name[locale] || item.name.en}</h3>
                       {item.featured && (
-                        <Badge variant="warning" className="text-[10px]">Homepage</Badge>
+                        <Badge variant="warning" className="text-[10px]">{t("homepage")}</Badge>
                       )}
                     </div>
                     <p className="text-xs text-brown-500">{item.name.en}</p>
-                    <p className="mt-1 text-sm text-brown-600 line-clamp-2">{item.description.en}</p>
+                    <p className="mt-1 text-sm text-brown-600 line-clamp-2">{item.description[locale] || item.description.en}</p>
                   </div>
                   {item.tags && item.tags.length > 0 && (
                     <div className="mb-2 flex flex-wrap gap-1">
@@ -334,12 +339,12 @@ export default function MenuPage() {
                         </Badge>
                       ))
                     ) : (
-                      <Badge variant="default" className="text-[10px]">All Locations</Badge>
+                      <Badge variant="default" className="text-[10px]">{t("allLocations")}</Badge>
                     )}
                     {item.hasStock && (
                       <Badge variant={item.stock > 0 ? "active" : "disabled"} className="text-[10px]">
                         <Package className="mr-0.5 h-2.5 w-2.5" />
-                        {item.stock > 0 ? `${item.stock} in stock` : "Out of stock"}
+                        {item.stock > 0 ? t("inStock", { count: item.stock }) : t("outOfStock")}
                       </Badge>
                     )}
                   </div>
@@ -350,7 +355,7 @@ export default function MenuPage() {
                     <Switch
                       checked={item.status === "Available"}
                       onCheckedChange={() => handleToggle(item)}
-                      label={item.status === "Available" ? "Available" : "Unavailable"}
+                      label={item.status === "Available" ? t("available") : t("unavailable")}
                     />
                     <div className="flex items-center gap-1">
                       <Button variant="ghost" size="icon-sm" aria-label="Edit dish" onClick={() => openEdit(item)}>
@@ -372,9 +377,9 @@ export default function MenuPage() {
       <Modal open={modalOpen} onOpenChange={setModalOpen}>
         <ModalContent>
           <ModalHeader>
-            <ModalTitle>{editingId ? "Edit Dish" : "Add New Dish"}</ModalTitle>
+            <ModalTitle>{editingId ? t("editDish") : t("addNewDish")}</ModalTitle>
             <ModalDescription>
-              {editingId ? "Update the dish details, pricing, and category." : "Add a new dish to your menu."}
+              {editingId ? t("editDishDesc") : t("addDishDesc")}
             </ModalDescription>
           </ModalHeader>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -385,13 +390,13 @@ export default function MenuPage() {
             )}
 
             <ImageUpload
-              label="Dish Photo"
+              label={t("dishPhoto")}
               value={formData.image}
               onChange={(url) => setFormData((p) => ({ ...p, image: url }))}
             />
 
             <div className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Dish Name</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">{t("dishName")}</p>
               <Input
                 label="Name"
                 required
@@ -403,7 +408,7 @@ export default function MenuPage() {
             <div className="border-t border-cream-200" />
 
             <div className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Description</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">{t("description")}</p>
               <Textarea
                 label="Description"
                 value={formData.description}
@@ -414,28 +419,28 @@ export default function MenuPage() {
             <div className="border-t border-cream-200" />
 
             <div className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Ingredients</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">{t("ingredients")}</p>
               <Input
                 label="Ingredients"
                 value={formData.ingredients}
                 onChange={(e) => setFormData((p) => ({ ...p, ingredients: e.target.value }))}
               />
-              <p className="text-xs text-brown-400">Separate with commas</p>
+              <p className="text-xs text-brown-400">{t("separateCommas")}</p>
             </div>
 
             <div className="border-t border-cream-200" />
 
             <div className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Pricing & Category</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">{t("pricingCategory")}</p>
               <div className="grid grid-cols-2 gap-4">
                 <Input label="Price ($)" required type="number" step="0.01" min="0" value={formData.price} onChange={(e) => setFormData((p) => ({ ...p, price: e.target.value }))} />
                 <Select value={formData.category || undefined} onValueChange={(v) => setFormData((p) => ({ ...p, category: v }))}>
                   <SelectTrigger label="Category">
-                    <SelectValue placeholder="Select category" />
+                    <SelectValue placeholder={t("selectCategory")} />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((cat) => (
-                      <SelectItem key={cat._id} value={cat._id}>{cat.name.en}</SelectItem>
+                      <SelectItem key={cat._id} value={cat._id}>{cat.name[locale] || cat.name.en}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -446,11 +451,11 @@ export default function MenuPage() {
 
             {/* Locations */}
             <div className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Availability by Location</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">{t("availabilityByLocation")}</p>
               <Switch
                 checked={formData.allLocations}
                 onCheckedChange={(checked) => setFormData((p) => ({ ...p, allLocations: checked, locations: [] }))}
-                label="Available at all locations"
+                label={t("availableAllLocations")}
               />
               {!formData.allLocations && locations.length > 0 && (
                 <div className="flex flex-wrap gap-2">
@@ -476,11 +481,11 @@ export default function MenuPage() {
 
             {/* Stock */}
             <div className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Stock Management</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">{t("stockManagement")}</p>
               <Switch
                 checked={formData.hasStock}
                 onCheckedChange={(checked) => setFormData((p) => ({ ...p, hasStock: checked, stock: "" }))}
-                label="Track stock for this item"
+                label={t("trackStock")}
               />
               {formData.hasStock && (
                 <Input
@@ -498,14 +503,14 @@ export default function MenuPage() {
 
             {/* Homepage & Tags */}
             <div className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Visibility & Tags</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">{t("visibilityTags")}</p>
               <Switch
                 checked={formData.featured}
                 onCheckedChange={(checked) => setFormData((p) => ({ ...p, featured: checked }))}
-                label="Show on Homepage"
+                label={t("showOnHomepage")}
               />
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-brown-700">Tags</label>
+                <label className="mb-1.5 block text-sm font-medium text-brown-700">{t("tags")}</label>
                 <div className="flex flex-wrap gap-2">
                   {AVAILABLE_TAGS.map((tag) => (
                     <button
@@ -533,9 +538,9 @@ export default function MenuPage() {
             </div>
 
             <ModalFooter>
-              <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>
+              <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>{tc("cancel")}</Button>
               <Button type="submit" loading={submitting}>
-                {editingId ? "Save Changes" : "Create Dish"}
+                {editingId ? t("saveChanges") : t("createDish")}
               </Button>
             </ModalFooter>
           </form>

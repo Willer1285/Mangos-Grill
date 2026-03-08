@@ -19,16 +19,21 @@ interface Location {
   address: string;
 }
 
-const checkoutSteps = [
-  { label: "Shipping" },
-  { label: "Payment" },
-  { label: "Review" },
-];
+function useCheckoutSteps() {
+  const t = useTranslations("checkout");
+  return [
+    { label: t("shipping") },
+    { label: t("payment") },
+    { label: t("review") },
+  ];
+}
 
 export default function CheckoutPage() {
   const t = useTranslations("checkout");
+  const tc = useTranslations("cart");
   const router = useRouter();
   const { state, clearCart, subtotal } = useCart();
+  const checkoutSteps = useCheckoutSteps();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [shippingData, setShippingData] = useState<ShippingAddressInput | null>(null);
@@ -59,13 +64,13 @@ export default function CheckoutPage() {
   if (state.items.length === 0) {
     return (
       <section className="mx-auto max-w-7xl px-4 py-24 text-center sm:px-6 lg:px-8">
-        <h1 className="text-2xl font-semibold text-brown-900">Your cart is empty</h1>
-        <p className="mt-2 text-brown-600">Add some items before checking out.</p>
+        <h1 className="text-2xl font-semibold text-brown-900">{tc("empty")}</h1>
+        <p className="mt-2 text-brown-600">{tc("emptyDesc")}</p>
         <button
           onClick={() => router.push("/menu")}
           className="mt-6 text-sm font-medium text-terracotta-500 hover:text-terracotta-600"
         >
-          Browse Menu
+          {tc("browseMenu")}
         </button>
       </section>
     );
@@ -135,7 +140,7 @@ export default function CheckoutPage() {
           <div className="mb-8">
             <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-brown-900">
               <MapPin className="h-4 w-4 text-terracotta-500" />
-              Select Location
+              {t("selectLocation")}
             </label>
             <div className="flex flex-wrap gap-3">
               {locations.map((loc) => (
@@ -155,7 +160,7 @@ export default function CheckoutPage() {
               ))}
             </div>
             {!selectedLocation && (
-              <p className="mt-2 text-xs text-error-500">Please select a location to continue</p>
+              <p className="mt-2 text-xs text-error-500">{t("selectLocationRequired")}</p>
             )}
           </div>
         )}
