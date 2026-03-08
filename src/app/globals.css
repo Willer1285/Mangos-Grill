@@ -144,3 +144,13 @@ body {
 .scrollbar-dark::-webkit-scrollbar-thumb:hover {
   background: rgba(196, 149, 106, 0.35);
 }
+
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

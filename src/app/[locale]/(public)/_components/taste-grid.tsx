@@ -18,7 +18,7 @@ export function TasteGrid({ categories }: TasteGridProps) {
   if (categories.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap justify-center gap-6 sm:gap-8">
+    <div className="scrollbar-hide flex gap-6 overflow-x-auto pb-2 sm:gap-8">
       {categories.map((cat, i) => (
         <motion.div
           key={cat._id}
@@ -26,9 +26,10 @@ export function TasteGrid({ categories }: TasteGridProps) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.3, delay: i * 0.08 }}
+          className="flex-shrink-0 flex-grow basis-0 min-w-[100px]"
         >
           <Link href={`/menu?category=${cat._id}`} className="group block text-center">
-            <div className="relative mx-auto h-20 w-20 overflow-hidden rounded-full sm:h-24 sm:w-24">
+            <div className="relative mx-auto h-28 w-28 overflow-hidden rounded-full sm:h-32 sm:w-32 lg:h-36 lg:w-36">
               {cat.image ? (
                 <Image
                   src={cat.image}
@@ -37,12 +38,12 @@ export function TasteGrid({ categories }: TasteGridProps) {
                   className="object-cover transition-transform duration-300 group-hover:scale-110"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-cream-200 text-xs text-brown-400">
+                <div className="flex h-full w-full items-center justify-center bg-cream-200 text-lg text-brown-400">
                   {cat.name.en.charAt(0)}
                 </div>
               )}
             </div>
-            <p className="mt-2.5 text-sm font-semibold text-brown-900 transition-colors group-hover:text-terracotta-500">
+            <p className="mt-3 text-sm font-semibold text-brown-900 transition-colors group-hover:text-terracotta-500 sm:text-base">
               {cat.name.en}
             </p>
           </Link>
