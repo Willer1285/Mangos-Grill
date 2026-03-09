@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { useForm } from "react-hook-form";
@@ -10,10 +10,14 @@ import { Button, Input, Card, CardContent } from "@/components/ui";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
+const RESEND_COOLDOWN = 60; // seconds
+
 export default function ForgotPasswordPage() {
   const t = useTranslations("auth");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const [lastEmail, setLastEmail] = useState("");
 
   const {
     register,
@@ -23,27 +27,48 @@ export default function ForgotPasswordPage() {
     resolver: zodResolver(forgotPasswordSchema),
   });
 
-  async function onSubmit(data: ForgotPasswordInput) {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/auth/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
 
-      if (res.ok) {
-        setSent(true);
-        toast.success("Check your email for a reset link.");
-      } else {
-        const json = await res.json();
-        toast.error(json.error || "Something went wrong.");
+  const sendEmail = useCallback(
+    async (email: string) => {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/auth/forgot-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+
+        if (res.ok) {
+          setSent(true);
+          setLastEmail(email);
+          setCountdown(RESEND_COOLDOWN);
+          toast.success(t("checkEmailForReset"));
+        } else {
+          const json = await res.json();
+          toast.error(json.error || "Something went wrong.");
+        }
+      } catch {
+        toast.error("Something went wrong. Please try again.");
+      } finally {
+        setLoading(false);
       }
-    } catch {
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    },
+    [t]
+  );
+
+  async function onSubmit(data: ForgotPasswordInput) {
+    await sendEmail(data.email);
+  }
+
+  async function handleResend() {
+    if (countdown > 0 || !lastEmail) return;
+    await sendEmail(lastEmail);
+    toast.success(t("resetLinkResent"));
   }
 
   return (
@@ -62,14 +87,29 @@ export default function ForgotPasswordPage() {
               </svg>
             </div>
             <p className="text-sm text-brown-600">
-              We&apos;ve sent a password reset link to your email. Check your inbox and follow the instructions.
+              {t("resetEmailSent")}
             </p>
-            <Link href="/login" className="mt-4 inline-block">
-              <Button variant="secondary" className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                {t("backToLogin")}
+
+            <div className="mt-6 space-y-3">
+              <Button
+                variant="secondary"
+                className="w-full"
+                disabled={countdown > 0 || loading}
+                loading={loading}
+                onClick={handleResend}
+              >
+                {countdown > 0
+                  ? t("resendIn", { seconds: countdown })
+                  : t("resendEmail")}
               </Button>
-            </Link>
+
+              <Link href="/login" className="inline-block">
+                <Button variant="ghost" className="gap-2">
+                  <ArrowLeft className="h-4 w-4" />
+                  {t("backToLogin")}
+                </Button>
+              </Link>
+            </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
