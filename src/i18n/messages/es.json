@@ -314,6 +314,7 @@
     "resetTitle": "Restablecer Contrasena",
     "resetDesc": "Ingresa tu nueva contrasena.",
     "resetPassword": "Restablecer Contrasena",
+    "passwordResetSuccess": "Tu contrasena ha sido restablecida exitosamente. Ya puedes iniciar sesion con tu nueva contrasena.",
     "backToLogin": "Volver al Inicio de Sesion",
     "idNumber": "Numero de Cedula"
   },
