@@ -308,6 +308,7 @@
     "lastName": "Apellido",
     "phone": "Numero de Telefono",
     "confirmPassword": "Confirmar Contrasena",
+    "newPassword": "Nueva Contrasena",
     "forgotTitle": "Recuperar Contrasena",
     "forgotDesc": "Ingresa tu correo y te enviaremos un enlace de restablecimiento.",
     "sendResetLink": "Enviar Enlace",
