@@ -60,9 +60,9 @@ export function Footer() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2">
-              {(brand.displayMode === "logo" || brand.displayMode === "both") && brand.logo ? (
-                <div className="relative h-8 w-8 shrink-0">
-                  <Image src={brand.logo} alt={brand.brandName} fill className="object-contain" />
+              {(brand.displayMode === "logo" || brand.displayMode === "both") && (brand.logoDark || brand.logo) ? (
+                <div className="relative shrink-0" style={{ height: brand.logoSize, width: brand.logoSize }}>
+                  <Image src={brand.logoDark || brand.logo!} alt={brand.brandName} fill className="object-contain" />
                 </div>
               ) : (brand.displayMode === "logo" || brand.displayMode === "both") && !brand.logo ? (
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-terracotta-500 text-white">

@@ -64,9 +64,9 @@ export function Navbar({ user, cartCount = 0, notificationCount = 0, onCartClick
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          {(brand.displayMode === "logo" || brand.displayMode === "both") && brand.logo ? (
-            <div className="relative h-8 w-8 shrink-0">
-              <Image src={brand.logo} alt={brand.brandName} fill className="object-contain" />
+          {(brand.displayMode === "logo" || brand.displayMode === "both") && (brand.logoDark || brand.logo) ? (
+            <div className="relative shrink-0" style={{ height: brand.logoSize, width: brand.logoSize }}>
+              <Image src={brand.logoDark || brand.logo!} alt={brand.brandName} fill className="object-contain" />
             </div>
           ) : (brand.displayMode === "logo" || brand.displayMode === "both") && !brand.logo ? (
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-terracotta-500 text-white">

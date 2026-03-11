@@ -27,7 +27,10 @@ export async function PUT(req: NextRequest) {
     await connectDB();
 
     const body = sanitize(await req.json());
-    const { brandName, logo, displayMode, homepageReviewsCount } = body;
+    const {
+      brandName, logo, logoDark, logoSize, displayMode, homepageReviewsCount,
+      contactEmail, contactPhone, whatsapp, address, mapCoordinates, businessHours,
+    } = body;
 
     let config = await SiteConfig.findOne();
     if (!config) {
@@ -36,8 +39,16 @@ export async function PUT(req: NextRequest) {
 
     if (brandName !== undefined) config.brandName = brandName;
     if (logo !== undefined) config.logo = logo;
+    if (logoDark !== undefined) config.logoDark = logoDark;
+    if (logoSize !== undefined) config.logoSize = logoSize;
     if (displayMode !== undefined) config.displayMode = displayMode;
     if (homepageReviewsCount !== undefined) config.homepageReviewsCount = homepageReviewsCount;
+    if (contactEmail !== undefined) config.contactEmail = contactEmail;
+    if (contactPhone !== undefined) config.contactPhone = contactPhone;
+    if (whatsapp !== undefined) config.whatsapp = whatsapp;
+    if (address !== undefined) config.address = address;
+    if (mapCoordinates !== undefined) config.mapCoordinates = mapCoordinates;
+    if (businessHours !== undefined) config.businessHours = businessHours;
 
     await config.save();
 

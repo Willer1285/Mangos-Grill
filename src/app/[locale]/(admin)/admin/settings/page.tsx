@@ -15,6 +15,10 @@ import {
   Upload,
   AlertTriangle,
   ImageIcon,
+  Phone,
+  Mail,
+  MapPin,
+  MessageCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -32,11 +36,17 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 },
 };
 
+const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+interface BusinessHoursRow {
+  day: string;
+  open: string;
+  close: string;
+  closed: boolean;
+}
+
 export default function SettingsPage() {
   const [restaurantName, setRestaurantName] = useState("Mango's Grill");
-  const [email, setEmail] = useState("info@mangosgrill.com");
-  const [phone, setPhone] = useState("+1 (305) 555-0123");
-  const [address, setAddress] = useState("123 Calle Principal, Miami, FL");
   const [currency, setCurrency] = useState("USD");
   const [timezone, setTimezone] = useState("America/New_York");
   const [orderNotifications, setOrderNotifications] = useState(true);
@@ -51,10 +61,25 @@ export default function SettingsPage() {
   // Brand settings
   const [brandName, setBrandName] = useState("Mango's Grill");
   const [logoUrl, setLogoUrl] = useState("");
+  const [logoDarkUrl, setLogoDarkUrl] = useState("");
+  const [logoSize, setLogoSize] = useState(32);
   const [displayMode, setDisplayMode] = useState<"logo" | "text" | "both">("both");
   const [homepageReviewsCount, setHomepageReviewsCount] = useState(6);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingLogoDark, setUploadingLogoDark] = useState(false);
   const [savingBrand, setSavingBrand] = useState(false);
+
+  // Contact / Business info
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [address, setAddress] = useState("");
+  const [mapLat, setMapLat] = useState("");
+  const [mapLng, setMapLng] = useState("");
+  const [businessHours, setBusinessHours] = useState<BusinessHoursRow[]>(
+    DAYS.map((day) => ({ day, open: "11:00 AM", close: "10:00 PM", closed: false }))
+  );
+  const [savingContact, setSavingContact] = useState(false);
 
   useEffect(() => {
     async function loadBrandConfig() {
@@ -65,29 +90,44 @@ export default function SettingsPage() {
           setBrandName(data.brandName || "Mango's Grill");
           setHomepageReviewsCount(data.homepageReviewsCount || 6);
           setLogoUrl(data.logo || "");
+          setLogoDarkUrl(data.logoDark || "");
+          setLogoSize(data.logoSize ?? 32);
           setDisplayMode(data.displayMode || "both");
+          setContactEmail(data.contactEmail || "");
+          setContactPhone(data.contactPhone || "");
+          setWhatsapp(data.whatsapp || "");
+          setAddress(data.address || "");
+          if (data.mapCoordinates) {
+            setMapLat(String(data.mapCoordinates.lat || ""));
+            setMapLng(String(data.mapCoordinates.lng || ""));
+          }
+          if (data.businessHours?.length) {
+            setBusinessHours(data.businessHours);
+          }
         }
       } catch { /* empty */ }
     }
     loadBrandConfig();
   }, []);
 
-  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>, variant: "light" | "dark") {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploadingLogo(true);
+    const setUploading = variant === "light" ? setUploadingLogo : setUploadingLogoDark;
+    setUploading(true);
     try {
       const formData = new FormData();
       formData.append("file", file);
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       if (!res.ok) throw new Error("Upload failed");
       const data = await res.json();
-      setLogoUrl(data.url);
+      if (variant === "light") setLogoUrl(data.url);
+      else setLogoDarkUrl(data.url);
       toast.success("Logo uploaded");
     } catch {
       toast.error("Failed to upload logo");
     } finally {
-      setUploadingLogo(false);
+      setUploading(false);
       e.target.value = "";
     }
   }
@@ -98,7 +138,7 @@ export default function SettingsPage() {
       const res = await fetch("/api/admin/site-config", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ brandName, logo: logoUrl, displayMode, homepageReviewsCount }),
+        body: JSON.stringify({ brandName, logo: logoUrl, logoDark: logoDarkUrl, logoSize, displayMode, homepageReviewsCount }),
       });
       if (!res.ok) throw new Error("Save failed");
       toast.success("Brand settings saved");
@@ -107,6 +147,28 @@ export default function SettingsPage() {
     } finally {
       setSavingBrand(false);
     }
+  }
+
+  async function handleSaveContact() {
+    setSavingContact(true);
+    try {
+      const mapCoordinates = mapLat && mapLng ? { lat: Number(mapLat), lng: Number(mapLng) } : undefined;
+      const res = await fetch("/api/admin/site-config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contactEmail, contactPhone, whatsapp, address, mapCoordinates, businessHours }),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      toast.success("Contact & hours saved");
+    } catch {
+      toast.error("Failed to save contact settings");
+    } finally {
+      setSavingContact(false);
+    }
+  }
+
+  function updateHours(index: number, field: keyof BusinessHoursRow, value: string | boolean) {
+    setBusinessHours((prev) => prev.map((h, i) => (i === index ? { ...h, [field]: value } : h)));
   }
 
   async function handleExport() {
@@ -193,10 +255,6 @@ export default function SettingsPage() {
           <h1 className="text-3xl font-bold text-brown-900">Settings</h1>
           <p className="mt-1 text-brown-600">Manage your restaurant configuration</p>
         </div>
-        <Button>
-          <Save className="h-4 w-4" />
-          Save Changes
-        </Button>
       </div>
 
       <motion.div
@@ -220,11 +278,14 @@ export default function SettingsPage() {
                   <label className="mb-1.5 block text-sm font-medium text-brown-700">Brand Name</label>
                   <Input value={brandName} onChange={(e) => setBrandName(e.target.value)} placeholder="Restaurant name" />
                 </div>
+
+                {/* Logo for light backgrounds */}
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-brown-700">Logo</label>
+                  <label className="mb-1.5 block text-sm font-medium text-brown-700">Logo (Light Background)</label>
+                  <p className="mb-2 text-xs text-brown-500">Used on pages with light/cream backgrounds (auth pages, etc.)</p>
                   <div className="flex items-center gap-4">
                     {logoUrl ? (
-                      <div className="relative h-16 w-16 overflow-hidden rounded-lg border border-cream-300">
+                      <div className="relative h-16 w-16 overflow-hidden rounded-lg border border-cream-300 bg-cream-50">
                         <Image src={logoUrl} alt="Logo" fill className="object-contain" />
                       </div>
                     ) : (
@@ -233,10 +294,10 @@ export default function SettingsPage() {
                       </div>
                     )}
                     <div className="flex flex-col gap-2">
-                      <input id="logo-file" type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploadingLogo} />
+                      <input id="logo-file" type="file" accept="image/*" className="hidden" onChange={(e) => handleLogoUpload(e, "light")} disabled={uploadingLogo} />
                       <Button variant="secondary" size="sm" onClick={() => document.getElementById("logo-file")?.click()} disabled={uploadingLogo}>
                         <Upload className="h-4 w-4" />
-                        {uploadingLogo ? "Uploading..." : "Upload Logo"}
+                        {uploadingLogo ? "Uploading..." : "Upload"}
                       </Button>
                       {logoUrl && (
                         <Button variant="ghost" size="sm" onClick={() => setLogoUrl("")} className="text-error-500">
@@ -246,6 +307,53 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Logo for dark backgrounds */}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-brown-700">Logo (Dark Background)</label>
+                  <p className="mb-2 text-xs text-brown-500">Used in navbar, footer, and admin sidebar. Falls back to light logo if not set.</p>
+                  <div className="flex items-center gap-4">
+                    {logoDarkUrl ? (
+                      <div className="relative h-16 w-16 overflow-hidden rounded-lg border border-cream-300 bg-brown-800">
+                        <Image src={logoDarkUrl} alt="Logo dark" fill className="object-contain" />
+                      </div>
+                    ) : (
+                      <div className="flex h-16 w-16 items-center justify-center rounded-lg border-2 border-dashed border-cream-300 bg-brown-800 text-cream-400">
+                        <ImageIcon className="h-6 w-6" />
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-2">
+                      <input id="logo-dark-file" type="file" accept="image/*" className="hidden" onChange={(e) => handleLogoUpload(e, "dark")} disabled={uploadingLogoDark} />
+                      <Button variant="secondary" size="sm" onClick={() => document.getElementById("logo-dark-file")?.click()} disabled={uploadingLogoDark}>
+                        <Upload className="h-4 w-4" />
+                        {uploadingLogoDark ? "Uploading..." : "Upload"}
+                      </Button>
+                      {logoDarkUrl && (
+                        <Button variant="ghost" size="sm" onClick={() => setLogoDarkUrl("")} className="text-error-500">
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Logo Size */}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-brown-700">Logo Size (px)</label>
+                  <p className="mb-2 text-xs text-brown-500">Controls the width and height of the logo across the app (16-128px)</p>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      type="number"
+                      min={16}
+                      max={128}
+                      value={logoSize}
+                      onChange={(e) => setLogoSize(Math.max(16, Math.min(128, Number(e.target.value))))}
+                      className="max-w-[120px]"
+                    />
+                    <span className="text-sm text-brown-500">{logoSize}px</span>
+                  </div>
+                </div>
+
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-brown-700">Display Mode</label>
                   <p className="mb-2 text-xs text-brown-500">Choose how the brand is displayed in the navbar and footer</p>
@@ -280,24 +388,130 @@ export default function SettingsPage() {
                 {/* Preview */}
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-brown-700">Preview</label>
-                  <div className="flex items-center gap-2 rounded-lg border border-cream-200 bg-cream-50 px-4 py-3">
-                    {(displayMode === "logo" || displayMode === "both") && logoUrl && (
-                      <div className="relative h-8 w-8 shrink-0">
-                        <Image src={logoUrl} alt="Logo" fill className="object-contain" />
-                      </div>
-                    )}
-                    {(displayMode === "text" || displayMode === "both") && (
-                      <span className="text-lg font-semibold text-brown-900">{brandName}</span>
-                    )}
-                    {displayMode === "logo" && !logoUrl && (
-                      <span className="text-sm text-brown-400">Upload a logo to preview</span>
-                    )}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-center gap-2 rounded-lg border border-cream-200 bg-cream-50 px-4 py-3">
+                      <span className="mr-2 text-xs text-brown-400">Light:</span>
+                      {(displayMode === "logo" || displayMode === "both") && logoUrl && (
+                        <div className="relative shrink-0" style={{ height: logoSize, width: logoSize }}>
+                          <Image src={logoUrl} alt="Logo" fill className="object-contain" />
+                        </div>
+                      )}
+                      {(displayMode === "text" || displayMode === "both") && (
+                        <span className="text-lg font-semibold text-brown-900">{brandName}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 rounded-lg border border-brown-700 bg-brown-800 px-4 py-3">
+                      <span className="mr-2 text-xs text-cream-400">Dark:</span>
+                      {(displayMode === "logo" || displayMode === "both") && (logoDarkUrl || logoUrl) && (
+                        <div className="relative shrink-0" style={{ height: logoSize, width: logoSize }}>
+                          <Image src={logoDarkUrl || logoUrl} alt="Logo" fill className="object-contain" />
+                        </div>
+                      )}
+                      {(displayMode === "text" || displayMode === "both") && (
+                        <span className="text-lg font-semibold text-cream-100">{brandName}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex justify-end">
                   <Button onClick={handleSaveBrand} loading={savingBrand}>
                     <Save className="h-4 w-4" />
                     Save Brand Settings
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Contact & Business Info */}
+        <motion.div variants={itemVariants}>
+          <Card className="border border-cream-200">
+            <CardContent className="p-6">
+              <div className="mb-6 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-terracotta-500/10">
+                  <Phone className="h-5 w-5 text-terracotta-500" />
+                </div>
+                <h2 className="text-xl font-bold text-brown-900">Contact & Business Info</h2>
+              </div>
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-brown-700">
+                      <Mail className="h-3.5 w-3.5" /> Contact Email
+                    </label>
+                    <Input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="info@restaurant.com" />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-brown-700">
+                      <Phone className="h-3.5 w-3.5" /> Phone
+                    </label>
+                    <Input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="+1 (555) 123-4567" />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-brown-700">
+                      <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+                    </label>
+                    <Input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="+15551234567" />
+                    <p className="mt-1 text-xs text-brown-500">Full number with country code, no spaces</p>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-brown-700">
+                      <MapPin className="h-3.5 w-3.5" /> Address
+                    </label>
+                    <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123 Main St, City, State" />
+                  </div>
+                </div>
+
+                {/* Map coordinates */}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-brown-700">Map Coordinates</label>
+                  <p className="mb-2 text-xs text-brown-500">Used to display an interactive map on the contact page</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input value={mapLat} onChange={(e) => setMapLat(e.target.value)} placeholder="Latitude (e.g. 29.7604)" />
+                    <Input value={mapLng} onChange={(e) => setMapLng(e.target.value)} placeholder="Longitude (e.g. -95.3698)" />
+                  </div>
+                </div>
+
+                {/* Business Hours */}
+                <div>
+                  <label className="mb-2 flex items-center gap-1.5 text-sm font-medium text-brown-700">
+                    <Clock className="h-3.5 w-3.5" /> Business Hours
+                  </label>
+                  <p className="mb-3 text-xs text-brown-500">Default hours used for the contact page, reservations, and operations</p>
+                  <div className="space-y-2">
+                    {businessHours.map((h, i) => (
+                      <div key={h.day} className="flex items-center gap-3">
+                        <span className="w-24 text-sm font-medium text-brown-700">{h.day}</span>
+                        <Switch checked={!h.closed} onCheckedChange={(val) => updateHours(i, "closed", !val)} />
+                        {h.closed ? (
+                          <span className="text-sm text-brown-400">Closed</span>
+                        ) : (
+                          <>
+                            <Input
+                              value={h.open}
+                              onChange={(e) => updateHours(i, "open", e.target.value)}
+                              className="max-w-[130px]"
+                              placeholder="11:00 AM"
+                            />
+                            <span className="text-brown-500">-</span>
+                            <Input
+                              value={h.close}
+                              onChange={(e) => updateHours(i, "close", e.target.value)}
+                              className="max-w-[130px]"
+                              placeholder="10:00 PM"
+                            />
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button onClick={handleSaveContact} loading={savingContact}>
+                    <Save className="h-4 w-4" />
+                    Save Contact & Hours
                   </Button>
                 </div>
               </div>
@@ -323,34 +537,6 @@ export default function SettingsPage() {
                   <Input
                     value={restaurantName}
                     onChange={(e) => setRestaurantName(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-brown-700">
-                    Contact Email
-                  </label>
-                  <Input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-brown-700">
-                    Phone
-                  </label>
-                  <Input
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-brown-700">
-                    Address
-                  </label>
-                  <Input
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
                   />
                 </div>
               </div>
@@ -464,6 +650,7 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </motion.div>
+
         {/* Backup & Restore */}
         <motion.div variants={itemVariants}>
           <Card className="border border-cream-200">
