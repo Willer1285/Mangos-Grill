@@ -8,12 +8,6 @@ const DEFAULT_CONFIG = {
   logo: null,
   logoDark: null,
   logoSize: 32,
-  contactEmail: null,
-  contactPhone: null,
-  whatsapp: null,
-  address: null,
-  mapCoordinates: null,
-  businessHours: [],
 };
 
 export async function GET() {
@@ -29,12 +23,6 @@ export async function GET() {
       logoDark: config.logoDark || null,
       logoSize: config.logoSize ?? 32,
       displayMode: config.displayMode || "both",
-      contactEmail: config.contactEmail || null,
-      contactPhone: config.contactPhone || null,
-      whatsapp: config.whatsapp || null,
-      address: config.address || null,
-      mapCoordinates: config.mapCoordinates || null,
-      businessHours: config.businessHours || [],
     });
   } catch {
     return NextResponse.json(DEFAULT_CONFIG);

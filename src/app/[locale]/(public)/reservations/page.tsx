@@ -10,7 +10,7 @@ import { Button, Input, Textarea, Card, CardContent } from "@/components/ui";
 import { CalendarDays, Clock, Phone, Mail, MapPin } from "lucide-react";
 import { InteractiveTableMap } from "./_components/interactive-table-map";
 import { toast } from "sonner";
-import { useBrand } from "@/lib/brand/brand-context";
+
 
 interface LocationData {
   _id: string;
@@ -53,7 +53,7 @@ function generateTimeSlots(openTime?: string, closeTime?: string): string[] {
 export default function ReservationsPage() {
   const t = useTranslations("reservations");
   const tc = useTranslations("common");
-  const brand = useBrand();
+
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedPartySize, setSelectedPartySize] = useState(2);
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
@@ -146,12 +146,7 @@ export default function ReservationsPage() {
         day: h.day,
         hours: h.closed ? tc("closed") : `${h.open} - ${h.close}`,
       }))
-    : brand.businessHours.length
-      ? brand.businessHours.map((h) => ({
-          day: h.day,
-          hours: h.closed ? tc("closed") : `${h.open} - ${h.close}`,
-        }))
-      : [];
+    : [];
 
   return (
     <>
@@ -384,25 +379,25 @@ export default function ReservationsPage() {
                   <div className="flex items-start gap-2">
                     <Phone className="mt-0.5 h-4 w-4 text-terracotta-500" />
                     <a
-                      href={`tel:${currentLocation?.phone || brand.contactPhone || ""}`}
+                      href={`tel:${currentLocation?.phone || ""}`}
                       className="text-xs text-brown-700 hover:text-terracotta-500"
                     >
-                      {currentLocation?.phone || brand.contactPhone || "—"}
+                      {currentLocation?.phone || "—"}
                     </a>
                   </div>
                   <div className="flex items-start gap-2">
                     <Mail className="mt-0.5 h-4 w-4 text-terracotta-500" />
                     <a
-                      href={`mailto:${currentLocation?.email || brand.contactEmail || ""}`}
+                      href={`mailto:${currentLocation?.email || ""}`}
                       className="text-xs text-brown-700 hover:text-terracotta-500"
                     >
-                      {currentLocation?.email || brand.contactEmail || "—"}
+                      {currentLocation?.email || "—"}
                     </a>
                   </div>
                   <div className="flex items-start gap-2">
                     <MapPin className="mt-0.5 h-4 w-4 text-terracotta-500" />
                     <span className="text-xs text-brown-700">
-                      {currentLocation?.address || brand.address || "—"}
+                      {currentLocation?.address || "—"}
                     </span>
                   </div>
                 </div>

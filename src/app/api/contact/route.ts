@@ -3,6 +3,8 @@ import { sanitize } from "@/lib/db/sanitize";
 import { contactSchema } from "@/lib/validators/contact";
 import { checkRateLimit } from "@/lib/auth/rate-limit";
 import { sendContactEmail } from "@/lib/email/resend";
+import { connectDB } from "@/lib/db/connection";
+import Location from "@/lib/db/models/location";
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,11 +30,22 @@ export async function POST(req: NextRequest) {
 
     const data = sanitize(parsed.data);
 
+    // Look up location email if a locationId was provided
+    let recipientEmail: string | undefined;
+    if (body.locationId) {
+      await connectDB();
+      const location = await Location.findById(body.locationId).select("email name").lean();
+      if (location?.email) {
+        recipientEmail = location.email;
+      }
+    }
+
     await sendContactEmail(
       data.email,
       data.phone,
       data.subject,
-      data.message
+      data.message,
+      recipientEmail
     );
 
     return NextResponse.json(

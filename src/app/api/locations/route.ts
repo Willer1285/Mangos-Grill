@@ -7,7 +7,7 @@ export async function GET() {
     await connectDB();
 
     const locations = await Location.find({})
-      .select("name city address phone email image hours isFlagship mapCoordinates")
+      .select("name city address phone email whatsapp image hours isFlagship mapCoordinates")
       .sort({ isFlagship: -1, name: 1 })
       .lean();
 

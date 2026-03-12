@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     await connectDB();
 
     const body = sanitize(await req.json());
-    const { name, address, phone, image } = body;
+    const { name, address, phone, image, email, whatsapp, hours, isFlagship, mapCoordinates } = body;
 
     if (!name || !address || !phone) {
       return NextResponse.json(
@@ -53,6 +53,11 @@ export async function POST(req: NextRequest) {
       address,
       phone,
       image,
+      email,
+      whatsapp,
+      hours,
+      isFlagship,
+      mapCoordinates,
     });
 
     return NextResponse.json(location, { status: 201 });

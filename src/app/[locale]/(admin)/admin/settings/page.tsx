@@ -15,10 +15,6 @@ import {
   Upload,
   AlertTriangle,
   ImageIcon,
-  Phone,
-  Mail,
-  MapPin,
-  MessageCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -35,15 +31,6 @@ const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0 },
 };
-
-const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-
-interface BusinessHoursRow {
-  day: string;
-  open: string;
-  close: string;
-  closed: boolean;
-}
 
 export default function SettingsPage() {
   const [restaurantName, setRestaurantName] = useState("Mango's Grill");
@@ -69,17 +56,7 @@ export default function SettingsPage() {
   const [uploadingLogoDark, setUploadingLogoDark] = useState(false);
   const [savingBrand, setSavingBrand] = useState(false);
 
-  // Contact / Business info
-  const [contactEmail, setContactEmail] = useState("");
-  const [contactPhone, setContactPhone] = useState("");
-  const [whatsapp, setWhatsapp] = useState("");
-  const [address, setAddress] = useState("");
-  const [mapLat, setMapLat] = useState("");
-  const [mapLng, setMapLng] = useState("");
-  const [businessHours, setBusinessHours] = useState<BusinessHoursRow[]>(
-    DAYS.map((day) => ({ day, open: "11:00 AM", close: "10:00 PM", closed: false }))
-  );
-  const [savingContact, setSavingContact] = useState(false);
+
 
   useEffect(() => {
     async function loadBrandConfig() {
@@ -93,17 +70,6 @@ export default function SettingsPage() {
           setLogoDarkUrl(data.logoDark || "");
           setLogoSize(data.logoSize ?? 32);
           setDisplayMode(data.displayMode || "both");
-          setContactEmail(data.contactEmail || "");
-          setContactPhone(data.contactPhone || "");
-          setWhatsapp(data.whatsapp || "");
-          setAddress(data.address || "");
-          if (data.mapCoordinates) {
-            setMapLat(String(data.mapCoordinates.lat || ""));
-            setMapLng(String(data.mapCoordinates.lng || ""));
-          }
-          if (data.businessHours?.length) {
-            setBusinessHours(data.businessHours);
-          }
         }
       } catch { /* empty */ }
     }
@@ -149,27 +115,7 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleSaveContact() {
-    setSavingContact(true);
-    try {
-      const mapCoordinates = mapLat && mapLng ? { lat: Number(mapLat), lng: Number(mapLng) } : undefined;
-      const res = await fetch("/api/admin/site-config", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contactEmail, contactPhone, whatsapp, address, mapCoordinates, businessHours }),
-      });
-      if (!res.ok) throw new Error("Save failed");
-      toast.success("Contact & hours saved");
-    } catch {
-      toast.error("Failed to save contact settings");
-    } finally {
-      setSavingContact(false);
-    }
-  }
 
-  function updateHours(index: number, field: keyof BusinessHoursRow, value: string | boolean) {
-    setBusinessHours((prev) => prev.map((h, i) => (i === index ? { ...h, [field]: value } : h)));
-  }
 
   async function handleExport() {
     setExporting(true);
@@ -417,101 +363,6 @@ export default function SettingsPage() {
                   <Button onClick={handleSaveBrand} loading={savingBrand}>
                     <Save className="h-4 w-4" />
                     Save Brand Settings
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Contact & Business Info */}
-        <motion.div variants={itemVariants}>
-          <Card className="border border-cream-200">
-            <CardContent className="p-6">
-              <div className="mb-6 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-terracotta-500/10">
-                  <Phone className="h-5 w-5 text-terracotta-500" />
-                </div>
-                <h2 className="text-xl font-bold text-brown-900">Contact & Business Info</h2>
-              </div>
-              <div className="space-y-5">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-brown-700">
-                      <Mail className="h-3.5 w-3.5" /> Contact Email
-                    </label>
-                    <Input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="info@restaurant.com" />
-                  </div>
-                  <div>
-                    <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-brown-700">
-                      <Phone className="h-3.5 w-3.5" /> Phone
-                    </label>
-                    <Input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="+1 (555) 123-4567" />
-                  </div>
-                  <div>
-                    <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-brown-700">
-                      <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
-                    </label>
-                    <Input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="+15551234567" />
-                    <p className="mt-1 text-xs text-brown-500">Full number with country code, no spaces</p>
-                  </div>
-                  <div>
-                    <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-brown-700">
-                      <MapPin className="h-3.5 w-3.5" /> Address
-                    </label>
-                    <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123 Main St, City, State" />
-                  </div>
-                </div>
-
-                {/* Map coordinates */}
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-brown-700">Map Coordinates</label>
-                  <p className="mb-2 text-xs text-brown-500">Used to display an interactive map on the contact page</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Input value={mapLat} onChange={(e) => setMapLat(e.target.value)} placeholder="Latitude (e.g. 29.7604)" />
-                    <Input value={mapLng} onChange={(e) => setMapLng(e.target.value)} placeholder="Longitude (e.g. -95.3698)" />
-                  </div>
-                </div>
-
-                {/* Business Hours */}
-                <div>
-                  <label className="mb-2 flex items-center gap-1.5 text-sm font-medium text-brown-700">
-                    <Clock className="h-3.5 w-3.5" /> Business Hours
-                  </label>
-                  <p className="mb-3 text-xs text-brown-500">Default hours used for the contact page, reservations, and operations</p>
-                  <div className="space-y-2">
-                    {businessHours.map((h, i) => (
-                      <div key={h.day} className="flex items-center gap-3">
-                        <span className="w-24 text-sm font-medium text-brown-700">{h.day}</span>
-                        <Switch checked={!h.closed} onCheckedChange={(val) => updateHours(i, "closed", !val)} />
-                        {h.closed ? (
-                          <span className="text-sm text-brown-400">Closed</span>
-                        ) : (
-                          <>
-                            <Input
-                              value={h.open}
-                              onChange={(e) => updateHours(i, "open", e.target.value)}
-                              className="max-w-[130px]"
-                              placeholder="11:00 AM"
-                            />
-                            <span className="text-brown-500">-</span>
-                            <Input
-                              value={h.close}
-                              onChange={(e) => updateHours(i, "close", e.target.value)}
-                              className="max-w-[130px]"
-                              placeholder="10:00 PM"
-                            />
-                          </>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex justify-end">
-                  <Button onClick={handleSaveContact} loading={savingContact}>
-                    <Save className="h-4 w-4" />
-                    Save Contact & Hours
                   </Button>
                 </div>
               </div>

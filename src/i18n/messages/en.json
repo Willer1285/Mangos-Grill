@@ -87,7 +87,9 @@
     "findUs": "Find Us in Texas",
     "getDirections": "Get Directions",
     "flagship": "Flagship",
-    "aerialView": "Aerial view of locations"
+    "aerialView": "Aerial view of locations",
+    "noLocations": "No locations available yet.",
+    "hoursTitle": "Business Hours"
   },
   "reservations": {
     "title": "Reserve Your Table",
@@ -177,6 +179,10 @@
     "visitUs": "Visit Us",
     "visitUsDesc": "Find us on the map and get directions to our location.",
     "noAddress": "Address not configured yet.",
+    "ourLocations": "Our Locations",
+    "locationsDesc": "Select a location to see its details, hours, and map.",
+    "selectLocation": "Send message to",
+    "noLocations": "No locations configured yet.",
     "messageSent": "Message sent successfully!",
     "messageFailed": "Failed to send message. Please try again.",
     "newsletterTitle": "Stay in the Loop",

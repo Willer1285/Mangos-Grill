@@ -87,7 +87,9 @@
     "findUs": "Encuentranos en Texas",
     "getDirections": "Como Llegar",
     "flagship": "Principal",
-    "aerialView": "Vista aerea de ubicaciones"
+    "aerialView": "Vista aerea de ubicaciones",
+    "noLocations": "No hay ubicaciones disponibles aun.",
+    "hoursTitle": "Horario de Atencion"
   },
   "reservations": {
     "title": "Reserva Tu Mesa",
@@ -177,6 +179,10 @@
     "visitUs": "Visitanos",
     "visitUsDesc": "Encuentranos en el mapa y obtén indicaciones para llegar.",
     "noAddress": "Direccion aun no configurada.",
+    "ourLocations": "Nuestras Ubicaciones",
+    "locationsDesc": "Selecciona una ubicacion para ver sus detalles, horarios y mapa.",
+    "selectLocation": "Enviar mensaje a",
+    "noLocations": "No hay ubicaciones configuradas aun.",
     "messageSent": "Mensaje enviado exitosamente!",
     "messageFailed": "No se pudo enviar el mensaje. Intenta de nuevo.",
     "newsletterTitle": "Mantente al Dia",

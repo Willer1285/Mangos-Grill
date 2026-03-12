@@ -173,10 +173,11 @@ export async function sendContactEmail(
   email: string,
   phone: string | undefined,
   subject: string,
-  message: string
+  message: string,
+  recipientEmail?: string
 ) {
   return sendMail(
-    FROM,
+    recipientEmail || FROM,
     `Contact Form: ${subject}`,
     `
       <div style="font-family: 'Inter', sans-serif; max-width: 600px; margin: 0 auto;">
