@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Card, CardContent, Button, Input, Switch } from "@/components/ui";
 import {
-  Settings,
   Globe,
   Bell,
   Clock,
@@ -15,6 +14,7 @@ import {
   Upload,
   AlertTriangle,
   ImageIcon,
+  Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -32,10 +32,86 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 },
 };
 
+/* ── Currency & Timezone lists ── */
+
+const CURRENCIES = [
+  { code: "USD", name: "US Dollar", symbol: "$" },
+  { code: "EUR", name: "Euro", symbol: "\u20AC" },
+  { code: "GBP", name: "British Pound", symbol: "\u00A3" },
+  { code: "CAD", name: "Canadian Dollar", symbol: "CA$" },
+  { code: "AUD", name: "Australian Dollar", symbol: "A$" },
+  { code: "JPY", name: "Japanese Yen", symbol: "\u00A5" },
+  { code: "CNY", name: "Chinese Yuan", symbol: "\u00A5" },
+  { code: "KRW", name: "South Korean Won", symbol: "\u20A9" },
+  { code: "INR", name: "Indian Rupee", symbol: "\u20B9" },
+  { code: "CHF", name: "Swiss Franc", symbol: "CHF" },
+  { code: "BRL", name: "Brazilian Real", symbol: "R$" },
+  { code: "MXN", name: "Mexican Peso", symbol: "MX$" },
+  { code: "ARS", name: "Argentine Peso", symbol: "AR$" },
+  { code: "COP", name: "Colombian Peso", symbol: "CO$" },
+  { code: "CLP", name: "Chilean Peso", symbol: "CL$" },
+  { code: "PEN", name: "Peruvian Sol", symbol: "S/" },
+  { code: "VES", name: "Venezuelan Bol\u00EDvar", symbol: "Bs." },
+  { code: "DOP", name: "Dominican Peso", symbol: "RD$" },
+  { code: "GTQ", name: "Guatemalan Quetzal", symbol: "Q" },
+  { code: "HNL", name: "Honduran Lempira", symbol: "L" },
+  { code: "NIO", name: "Nicaraguan C\u00F3rdoba", symbol: "C$" },
+  { code: "CRC", name: "Costa Rican Col\u00F3n", symbol: "\u20A1" },
+  { code: "PAB", name: "Panamanian Balboa", symbol: "B/." },
+  { code: "UYU", name: "Uruguayan Peso", symbol: "$U" },
+  { code: "BOB", name: "Bolivian Boliviano", symbol: "Bs" },
+  { code: "PYG", name: "Paraguayan Guarani", symbol: "\u20B2" },
+  { code: "SEK", name: "Swedish Krona", symbol: "kr" },
+  { code: "NOK", name: "Norwegian Krone", symbol: "kr" },
+  { code: "DKK", name: "Danish Krone", symbol: "kr" },
+  { code: "PLN", name: "Polish Zloty", symbol: "z\u0142" },
+  { code: "CZK", name: "Czech Koruna", symbol: "K\u010D" },
+  { code: "HUF", name: "Hungarian Forint", symbol: "Ft" },
+  { code: "RON", name: "Romanian Leu", symbol: "lei" },
+  { code: "TRY", name: "Turkish Lira", symbol: "\u20BA" },
+  { code: "ZAR", name: "South African Rand", symbol: "R" },
+  { code: "NGN", name: "Nigerian Naira", symbol: "\u20A6" },
+  { code: "EGP", name: "Egyptian Pound", symbol: "E\u00A3" },
+  { code: "KES", name: "Kenyan Shilling", symbol: "KSh" },
+  { code: "GHS", name: "Ghanaian Cedi", symbol: "GH\u20B5" },
+  { code: "AED", name: "UAE Dirham", symbol: "AED" },
+  { code: "SAR", name: "Saudi Riyal", symbol: "SAR" },
+  { code: "QAR", name: "Qatari Riyal", symbol: "QAR" },
+  { code: "ILS", name: "Israeli Shekel", symbol: "\u20AA" },
+  { code: "PHP", name: "Philippine Peso", symbol: "\u20B1" },
+  { code: "THB", name: "Thai Baht", symbol: "\u0E3F" },
+  { code: "MYR", name: "Malaysian Ringgit", symbol: "RM" },
+  { code: "SGD", name: "Singapore Dollar", symbol: "S$" },
+  { code: "IDR", name: "Indonesian Rupiah", symbol: "Rp" },
+  { code: "VND", name: "Vietnamese Dong", symbol: "\u20AB" },
+  { code: "TWD", name: "New Taiwan Dollar", symbol: "NT$" },
+  { code: "HKD", name: "Hong Kong Dollar", symbol: "HK$" },
+  { code: "NZD", name: "New Zealand Dollar", symbol: "NZ$" },
+  { code: "RUB", name: "Russian Ruble", symbol: "\u20BD" },
+  { code: "UAH", name: "Ukrainian Hryvnia", symbol: "\u20B4" },
+];
+
+const TIMEZONES = (() => {
+  try {
+    return Intl.supportedValuesOf("timeZone");
+  } catch {
+    return [
+      "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles",
+      "America/Anchorage", "Pacific/Honolulu", "America/Caracas", "America/Bogota",
+      "America/Lima", "America/Santiago", "America/Argentina/Buenos_Aires", "America/Sao_Paulo",
+      "America/Mexico_City", "America/Toronto", "Europe/London", "Europe/Paris",
+      "Europe/Berlin", "Europe/Madrid", "Europe/Rome", "Europe/Moscow",
+      "Asia/Tokyo", "Asia/Shanghai", "Asia/Kolkata", "Asia/Dubai",
+      "Australia/Sydney", "Pacific/Auckland",
+    ];
+  }
+})();
+
 export default function SettingsPage() {
-  const [restaurantName, setRestaurantName] = useState("Mango's Grill");
   const [currency, setCurrency] = useState("USD");
   const [timezone, setTimezone] = useState("America/New_York");
+  const [currencySearch, setCurrencySearch] = useState("");
+  const [timezoneSearch, setTimezoneSearch] = useState("");
   const [orderNotifications, setOrderNotifications] = useState(true);
   const [reservationNotifications, setReservationNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(false);
@@ -44,6 +120,7 @@ export default function SettingsPage() {
   const [resetting, setResetting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [savingRegional, setSavingRegional] = useState(false);
 
   // Brand settings
   const [brandName, setBrandName] = useState("Mango's Grill");
@@ -56,10 +133,8 @@ export default function SettingsPage() {
   const [uploadingLogoDark, setUploadingLogoDark] = useState(false);
   const [savingBrand, setSavingBrand] = useState(false);
 
-
-
   useEffect(() => {
-    async function loadBrandConfig() {
+    async function loadConfig() {
       try {
         const res = await fetch("/api/admin/site-config");
         if (res.ok) {
@@ -70,10 +145,12 @@ export default function SettingsPage() {
           setLogoDarkUrl(data.logoDark || "");
           setLogoSize(data.logoSize ?? 32);
           setDisplayMode(data.displayMode || "both");
+          setCurrency(data.currency || "USD");
+          setTimezone(data.timezone || "America/New_York");
         }
       } catch { /* empty */ }
     }
-    loadBrandConfig();
+    loadConfig();
   }, []);
 
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>, variant: "light" | "dark") {
@@ -115,7 +192,22 @@ export default function SettingsPage() {
     }
   }
 
-
+  async function handleSaveRegional() {
+    setSavingRegional(true);
+    try {
+      const res = await fetch("/api/admin/site-config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currency, timezone }),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      toast.success("Regional settings saved");
+    } catch {
+      toast.error("Failed to save regional settings");
+    } finally {
+      setSavingRegional(false);
+    }
+  }
 
   async function handleExport() {
     setExporting(true);
@@ -193,9 +285,42 @@ export default function SettingsPage() {
     }
   }
 
+  const filteredCurrencies = currencySearch
+    ? CURRENCIES.filter(
+        (c) =>
+          c.code.toLowerCase().includes(currencySearch.toLowerCase()) ||
+          c.name.toLowerCase().includes(currencySearch.toLowerCase())
+      )
+    : CURRENCIES;
+
+  const filteredTimezones = timezoneSearch
+    ? TIMEZONES.filter((tz) => tz.toLowerCase().includes(timezoneSearch.toLowerCase()))
+    : TIMEZONES;
+
+  const currentCurrency = CURRENCIES.find((c) => c.code === currency);
+
+  const pricePreview = (() => {
+    try {
+      return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(29.99);
+    } catch {
+      return "$29.99";
+    }
+  })();
+
+  const datePreview = (() => {
+    try {
+      return new Date().toLocaleString("en-US", {
+        timeZone: timezone,
+        dateStyle: "medium",
+        timeStyle: "short",
+      });
+    } catch {
+      return new Date().toLocaleString();
+    }
+  })();
+
   return (
     <div className="min-h-screen bg-cream-50 p-6 lg:p-8">
-      {/* Header */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-brown-900">Settings</h1>
@@ -222,10 +347,10 @@ export default function SettingsPage() {
               <div className="space-y-5">
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-brown-700">Brand Name</label>
+                  <p className="mb-2 text-xs text-brown-500">This name appears in the navbar, footer, and throughout the app</p>
                   <Input value={brandName} onChange={(e) => setBrandName(e.target.value)} placeholder="Restaurant name" />
                 </div>
 
-                {/* Logo for light backgrounds */}
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-brown-700">Logo (Light Background)</label>
                   <p className="mb-2 text-xs text-brown-500">Used on pages with light/cream backgrounds (auth pages, etc.)</p>
@@ -254,7 +379,6 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                {/* Logo for dark backgrounds */}
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-brown-700">Logo (Dark Background)</label>
                   <p className="mb-2 text-xs text-brown-500">Used in navbar, footer, and admin sidebar. Falls back to light logo if not set.</p>
@@ -283,7 +407,6 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                {/* Logo Size */}
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-brown-700">Logo Size (px)</label>
                   <p className="mb-2 text-xs text-brown-500">Controls the width and height of the logo across the app (16-128px)</p>
@@ -331,7 +454,6 @@ export default function SettingsPage() {
                     className="max-w-[120px]"
                   />
                 </div>
-                {/* Preview */}
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-brown-700">Preview</label>
                   <div className="grid grid-cols-2 gap-3">
@@ -370,31 +492,6 @@ export default function SettingsPage() {
           </Card>
         </motion.div>
 
-        {/* General Settings */}
-        <motion.div variants={itemVariants}>
-          <Card className="border border-cream-200">
-            <CardContent className="p-6">
-              <div className="mb-6 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-terracotta-500/10">
-                  <Settings className="h-5 w-5 text-terracotta-500" />
-                </div>
-                <h2 className="text-xl font-bold text-brown-900">General</h2>
-              </div>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-brown-700">
-                    Restaurant Name
-                  </label>
-                  <Input
-                    value={restaurantName}
-                    onChange={(e) => setRestaurantName(e.target.value)}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
         {/* Regional Settings */}
         <motion.div variants={itemVariants}>
           <Card className="border border-cream-200">
@@ -405,37 +502,79 @@ export default function SettingsPage() {
                 </div>
                 <h2 className="text-xl font-bold text-brown-900">Regional</h2>
               </div>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-5">
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-brown-700">
-                    Currency
-                  </label>
+                  <label className="mb-1.5 block text-sm font-medium text-brown-700">Currency</label>
+                  <p className="mb-2 text-xs text-brown-500">Used to format all prices across the application</p>
+                  <div className="mb-2 flex items-center gap-2 rounded-md border border-cream-300 bg-white px-3">
+                    <Search className="h-4 w-4 text-brown-400" />
+                    <input
+                      type="text"
+                      placeholder="Search currencies..."
+                      value={currencySearch}
+                      onChange={(e) => setCurrencySearch(e.target.value)}
+                      className="h-9 flex-1 bg-transparent text-sm text-brown-900 placeholder:text-brown-400 focus:outline-none"
+                    />
+                  </div>
                   <select
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value)}
-                    className="h-10 w-full rounded-md border border-cream-300 bg-white px-3 text-sm text-brown-900 focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
+                    size={6}
+                    className="w-full rounded-md border border-cream-300 bg-white text-sm text-brown-900 focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
                   >
-                    <option value="USD">USD ($)</option>
-                    <option value="VES">VES (Bs.)</option>
-                    <option value="EUR">EUR (&euro;)</option>
+                    {filteredCurrencies.map((c) => (
+                      <option key={c.code} value={c.code} className="px-3 py-1.5">
+                        {c.code} — {c.symbol} — {c.name}
+                      </option>
+                    ))}
                   </select>
+                  {currentCurrency && (
+                    <p className="mt-2 text-sm text-brown-700">
+                      Selected: <strong>{currentCurrency.code}</strong> ({currentCurrency.symbol}) — Preview: <strong>{pricePreview}</strong>
+                    </p>
+                  )}
                 </div>
+
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-brown-700">
-                    Timezone
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-brown-500" />
-                    <select
-                      value={timezone}
-                      onChange={(e) => setTimezone(e.target.value)}
-                      className="h-10 flex-1 rounded-md border border-cream-300 bg-white px-3 text-sm text-brown-900 focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
-                    >
-                      <option value="America/New_York">Eastern (ET)</option>
-                      <option value="America/Caracas">Venezuela (VET)</option>
-                      <option value="America/Los_Angeles">Pacific (PT)</option>
-                    </select>
+                  <label className="mb-1.5 block text-sm font-medium text-brown-700">Timezone</label>
+                  <p className="mb-2 text-xs text-brown-500">Used for dates, times, reservations, and order timestamps</p>
+                  <div className="flex items-start gap-2">
+                    <Clock className="mt-2 h-4 w-4 shrink-0 text-brown-500" />
+                    <div className="flex-1">
+                      <div className="mb-2 flex items-center gap-2 rounded-md border border-cream-300 bg-white px-3">
+                        <Search className="h-4 w-4 text-brown-400" />
+                        <input
+                          type="text"
+                          placeholder="Search timezones..."
+                          value={timezoneSearch}
+                          onChange={(e) => setTimezoneSearch(e.target.value)}
+                          className="h-9 flex-1 bg-transparent text-sm text-brown-900 placeholder:text-brown-400 focus:outline-none"
+                        />
+                      </div>
+                      <select
+                        value={timezone}
+                        onChange={(e) => setTimezone(e.target.value)}
+                        size={6}
+                        className="w-full rounded-md border border-cream-300 bg-white text-sm text-brown-900 focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
+                      >
+                        {filteredTimezones.map((tz) => (
+                          <option key={tz} value={tz} className="px-3 py-1.5">
+                            {tz.replace(/_/g, " ")}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
+                  <p className="mt-2 text-sm text-brown-700">
+                    Current time: <strong>{datePreview}</strong>
+                  </p>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button onClick={handleSaveRegional} loading={savingRegional}>
+                    <Save className="h-4 w-4" />
+                    Save Regional Settings
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -529,14 +668,7 @@ export default function SettingsPage() {
                     <p className="text-xs text-brown-600">Restore data from a previously exported backup file</p>
                   </div>
                   <div>
-                    <input
-                      id="import-file"
-                      type="file"
-                      accept=".json"
-                      className="hidden"
-                      onChange={handleImport}
-                      disabled={importing}
-                    />
+                    <input id="import-file" type="file" accept=".json" className="hidden" onChange={handleImport} disabled={importing} />
                     <Button variant="secondary" onClick={() => document.getElementById("import-file")?.click()} disabled={importing}>
                       <Upload className="h-4 w-4" />
                       {importing ? "Importing..." : "Import"}

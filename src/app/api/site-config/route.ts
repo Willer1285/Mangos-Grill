@@ -8,6 +8,8 @@ const DEFAULT_CONFIG = {
   logo: null,
   logoDark: null,
   logoSize: 32,
+  currency: "USD",
+  timezone: "America/New_York",
 };
 
 export async function GET() {
@@ -23,6 +25,8 @@ export async function GET() {
       logoDark: config.logoDark || null,
       logoSize: config.logoSize ?? 32,
       displayMode: config.displayMode || "both",
+      currency: config.currency || "USD",
+      timezone: config.timezone || "America/New_York",
     });
   } catch {
     return NextResponse.json(DEFAULT_CONFIG);

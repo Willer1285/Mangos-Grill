@@ -79,21 +79,19 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
     <div className="flex h-full flex-col">
       {/* Logo */}
       <div className="flex h-16 items-center gap-2 px-4">
-        {(brand.displayMode === "logo" || brand.displayMode === "both") && (brand.logoDark || brand.logo) ? (
+        {brand.loaded && (brand.displayMode === "logo" || brand.displayMode === "both") && (brand.logoDark || brand.logo) && (
           <div className="relative shrink-0" style={{ height: brand.logoSize, width: brand.logoSize }}>
             <Image src={brand.logoDark || brand.logo!} alt={brand.brandName} fill className="object-contain" />
           </div>
-        ) : (
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-terracotta-500 text-white">
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
-              <path d="M12 2C10 6 7 8 7 12c0 2.8 2.2 5 5 5s5-2.2 5-5c0-4-3-6-5-10zm0 13c-1.7 0-3-1.3-3-3 0-1.5.8-2.8 2-4.4.4.5.7 1 1 1.5.3-.5.6-1 1-1.5 1.2 1.6 2 2.9 2 4.4 0 1.7-1.3 3-3 3z" />
-            </svg>
+        )}
+        {brand.loaded && (
+          <div>
+            {(brand.displayMode === "text" || brand.displayMode === "both") && (
+              <span className="text-sm font-semibold text-white">{brand.brandName}</span>
+            )}
+            <p className="text-xs text-cream-400">Admin Panel</p>
           </div>
         )}
-        <div>
-          <span className="text-sm font-semibold text-white">{brand.brandName}</span>
-          <p className="text-xs text-cream-400">Admin Panel</p>
-        </div>
       </div>
 
       {/* Location indicator for Manager */}

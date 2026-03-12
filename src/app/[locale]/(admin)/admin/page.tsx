@@ -19,6 +19,7 @@ import {
   Package,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import { useBrand, formatPrice } from "@/lib/brand/brand-context";
 
 interface Order {
   _id: string;
@@ -55,6 +56,7 @@ const badgeVariant: Record<string, string> = {
 export default function AdminDashboardPage() {
   const { data: session } = useSession();
   const t = useTranslations("admin");
+  const { currency } = useBrand();
   const tc = useTranslations("common");
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -88,7 +90,7 @@ export default function AdminDashboardPage() {
 
   const kpis = [
     { label: t("orders"), value: data?.totalOrders ?? 0, icon: ClipboardList, color: "bg-terracotta-500/10 text-terracotta-500" },
-    { label: t("sales"), value: `$${(data?.totalSales ?? 0).toFixed(2)}`, icon: DollarSign, color: "bg-success-500/10 text-success-500" },
+    { label: t("sales"), value: formatPrice(data?.totalSales ?? 0, currency), icon: DollarSign, color: "bg-success-500/10 text-success-500" },
     { label: t("dishesSold"), value: data?.dishesSold ?? 0, icon: Package, color: "bg-info-500/10 text-info-500" },
     { label: t("delivered"), value: data?.deliveredOrders ?? 0, icon: TrendingUp, color: "bg-success-500/10 text-success-500" },
     { label: t("cancelled"), value: data?.cancelledOrders ?? 0, icon: XCircle, color: "bg-error-500/10 text-error-500" },
@@ -191,7 +193,7 @@ export default function AdminDashboardPage() {
                           <td className="py-3 font-medium text-brown-900">{order.orderNumber}</td>
                           <td className="py-3 text-brown-600">{customerName}</td>
                           <td className="max-w-[200px] truncate py-3 text-brown-600">{itemsSummary}</td>
-                          <td className="py-3 text-right font-medium text-brown-900">${order.total.toFixed(2)}</td>
+                          <td className="py-3 text-right font-medium text-brown-900">{formatPrice(order.total, currency)}</td>
                           <td className="py-3 text-right">
                             <Badge variant={badgeVariant[order.status] as "new" | "preparing" | "ready" | "delivered" | "cancelled"}>
                               {order.status}

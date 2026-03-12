@@ -25,6 +25,7 @@ import {
   ImageUpload,
 } from "@/components/ui";
 import { Search, Plus, Edit2, Trash2, MapPin, Eye, Phone } from "lucide-react";
+import { useBrand, formatDate } from "@/lib/brand/brand-context";
 
 type Role = "All" | "SuperAdmin" | "Manager" | "Client";
 type Status = "All" | "Active" | "Disabled";
@@ -75,6 +76,7 @@ const EMPTY_FORM: FormData = {
 };
 
 export default function UsersPage() {
+  const brand = useBrand();
   const [users, setUsers] = useState<User[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -483,7 +485,7 @@ export default function UsersPage() {
                 )}
                 <div>
                   <p className="text-xs font-medium uppercase text-brown-400">Registered</p>
-                  <p className="text-sm text-brown-900">{new Date(viewUser.createdAt).toLocaleDateString()}</p>
+                  <p className="text-sm text-brown-900">{formatDate(viewUser.createdAt, brand.timezone)}</p>
                 </div>
               </div>
               <ModalFooter>

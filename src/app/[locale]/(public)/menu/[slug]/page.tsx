@@ -8,6 +8,7 @@ import { Link } from "@/i18n/navigation";
 import { Button, Card, Badge, Spinner } from "@/components/ui";
 import { ArrowLeft, Plus, Minus, ShoppingBag, Star, ArrowRight } from "lucide-react";
 import { useCart } from "@/lib/cart/cart-context";
+import { useBrand, formatPrice, formatDate } from "@/lib/brand/brand-context";
 import { toast } from "sonner";
 
 interface Product {
@@ -46,6 +47,7 @@ export default function ProductDetailPage() {
   const params = useParams();
   const t = useTranslations("menu");
   const { addItem } = useCart();
+  const { currency, timezone } = useBrand();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
@@ -228,7 +230,7 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          <p className="mt-6 text-3xl font-bold text-terracotta-600">${product.price.toFixed(2)}</p>
+          <p className="mt-6 text-3xl font-bold text-terracotta-600">{formatPrice(product.price, currency)}</p>
 
           {/* Quantity + Add to Cart */}
           <div className="mt-6 flex items-center gap-4">
@@ -362,7 +364,7 @@ export default function ProductDetailPage() {
                     </div>
                   </div>
                   <span className="text-xs text-brown-500">
-                    {new Date(review.createdAt).toLocaleDateString()}
+                    {formatDate(review.createdAt, timezone)}
                   </span>
                 </div>
                 {review.comment && (
@@ -397,7 +399,7 @@ export default function ProductDetailPage() {
                   <p className="mt-0.5 line-clamp-2 text-xs text-brown-600">{item.description.en}</p>
                   <div className="mt-auto flex items-center justify-between pt-3">
                     <span className="text-base font-bold text-terracotta-600">
-                      ${item.price.toFixed(2)}
+                      {formatPrice(item.price, currency)}
                     </span>
                     <div className="flex items-center gap-1.5">
                       <Link

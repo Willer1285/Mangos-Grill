@@ -24,6 +24,7 @@ import {
   Textarea,
 } from "@/components/ui";
 import { ChevronDown, ChevronUp, Package, Plus, X, Pencil, Ban, Search, CheckCircle2 } from "lucide-react";
+import { useBrand, formatPrice, formatDate } from "@/lib/brand/brand-context";
 
 interface OrderItem {
   name: string;
@@ -87,6 +88,7 @@ const badgeVariant: Record<string, string> = {
 export default function OrdersManagementPage() {
   const t = useTranslations("admin");
   const tc = useTranslations("common");
+  const { currency, timezone } = useBrand();
   const locale = useLocale() as "en" | "es";
 
   const statusLabels: Record<string, string> = {
@@ -462,7 +464,7 @@ export default function OrdersManagementPage() {
           <SelectContent>
             {products.map((p) => (
               <SelectItem key={p._id} value={p._id}>
-                {p.name[locale] || p.name.en} &mdash; ${p.price.toFixed(2)}
+                {p.name[locale] || p.name.en} &mdash; {formatPrice(p.price, currency)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -475,7 +477,7 @@ export default function OrdersManagementPage() {
                 <div key={item.productId} className="flex items-center gap-3 px-4 py-3">
                   <div className="flex-1">
                     <span className="text-sm font-medium text-brown-900">{item.name}</span>
-                    <span className="ml-2 text-xs text-brown-500">${item.price.toFixed(2)} {t("each")}</span>
+                    <span className="ml-2 text-xs text-brown-500">{formatPrice(item.price, currency)} {t("each")}</span>
                   </div>
                   <input
                     type="number"
@@ -487,7 +489,7 @@ export default function OrdersManagementPage() {
                     className="h-8 w-16 rounded-md border border-cream-300 bg-white px-2 text-center text-sm text-brown-900 focus:border-terracotta-500 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
                   />
                   <span className="w-20 text-right text-sm font-medium text-brown-900">
-                    ${(item.price * item.quantity).toFixed(2)}
+                    {formatPrice(item.price * item.quantity, currency)}
                   </span>
                   <button
                     type="button"
@@ -500,7 +502,7 @@ export default function OrdersManagementPage() {
               ))}
             </div>
             <div className="border-t border-cream-200 px-4 py-2 text-right text-sm font-semibold text-brown-900">
-              {tc("subtotal")}: ${subtotal.toFixed(2)}
+              {tc("subtotal")}: {formatPrice(subtotal, currency)}
             </div>
           </div>
         )}
@@ -658,15 +660,15 @@ export default function OrdersManagementPage() {
         <div className="rounded-lg bg-cream-50 px-4 py-3 text-sm">
           <div className="flex justify-between text-brown-700">
             <span>{tc("subtotal")}</span>
-            <span>${subtotal.toFixed(2)}</span>
+            <span>{formatPrice(subtotal, currency)}</span>
           </div>
           <div className="flex justify-between text-brown-700">
             <span>{t("tax")}</span>
-            <span>${tax.toFixed(2)}</span>
+            <span>{formatPrice(tax, currency)}</span>
           </div>
           <div className="mt-1 flex justify-between border-t border-cream-200 pt-1 font-semibold text-brown-900">
             <span>{tc("total")}</span>
-            <span>${totalAmount.toFixed(2)}</span>
+            <span>{formatPrice(totalAmount, currency)}</span>
           </div>
         </div>
       </>
@@ -747,14 +749,14 @@ export default function OrdersManagementPage() {
                           <td className="px-5 py-3 font-medium text-brown-900">{order.orderNumber}</td>
                           <td className="px-5 py-3 text-brown-700">{customerName}</td>
                           <td className="max-w-[200px] truncate px-5 py-3 text-brown-600">{itemsSummary}</td>
-                          <td className="px-5 py-3 text-right font-medium text-brown-900">${order.total.toFixed(2)}</td>
+                          <td className="px-5 py-3 text-right font-medium text-brown-900">{formatPrice(order.total, currency)}</td>
                           <td className="px-5 py-3 text-center">
                             <Badge variant={badgeVariant[order.status] as "new" | "preparing" | "ready" | "delivered" | "cancelled"}>
                               {order.status}
                             </Badge>
                           </td>
                           <td className="px-5 py-3 text-brown-600">
-                            {new Date(order.createdAt).toLocaleDateString()}
+                            {formatDate(order.createdAt, timezone)}
                           </td>
                           <td className="px-5 py-3 text-right">
                             <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
@@ -803,7 +805,7 @@ export default function OrdersManagementPage() {
                                     {order.items.map((item, idx) => (
                                       <li key={idx} className="flex justify-between text-sm">
                                         <span className="text-brown-700">{item.quantity}x {item.name}</span>
-                                        <span className="font-medium text-brown-900">${item.subtotal.toFixed(2)}</span>
+                                        <span className="font-medium text-brown-900">{formatPrice(item.subtotal, currency)}</span>
                                       </li>
                                     ))}
                                   </ul>

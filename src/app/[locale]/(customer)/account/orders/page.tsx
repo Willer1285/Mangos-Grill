@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   XCircle,
 } from "lucide-react";
+import { useBrand, formatPrice } from "@/lib/brand/brand-context";
 
 /* ── Types ───────────────────────────────────────────────── */
 type OrderStatus = "new" | "preparing" | "delivered" | "cancelled";
@@ -106,6 +107,7 @@ const statusIcon: Record<OrderStatus, React.ElementType> = {
 
 export default function OrdersPage() {
   const t = useTranslations("customer");
+  const { currency } = useBrand();
   const [activeFilter, setActiveFilter] = useState<OrderStatus | "all">("all");
 
   const filteredOrders =
@@ -206,7 +208,7 @@ export default function OrdersPage() {
                           <span className="text-brown-500">x{item.qty}</span>
                         </span>
                         <span className="font-medium text-brown-900">
-                          ${(item.price * item.qty).toFixed(2)}
+                          {formatPrice(item.price * item.qty, currency)}
                         </span>
                       </div>
                     ))}
@@ -217,7 +219,7 @@ export default function OrdersPage() {
                     <p className="text-sm text-brown-600">
                       Total:{" "}
                       <span className="text-base font-semibold text-brown-900">
-                        ${order.total.toFixed(2)}
+                        {formatPrice(order.total, currency)}
                       </span>
                     </p>
 

@@ -11,6 +11,7 @@ import {
   Spinner,
 } from "@/components/ui";
 import { FileDown, CheckCircle, XCircle, Search, DollarSign } from "lucide-react";
+import { useBrand, formatPrice, formatDate } from "@/lib/brand/brand-context";
 
 interface Payment {
   _id: string;
@@ -41,6 +42,7 @@ const badgeVariant: Record<string, string> = {
 };
 
 export default function PaymentProcessingPage() {
+  const { currency, timezone } = useBrand();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -174,11 +176,11 @@ export default function PaymentProcessingPage() {
                     <tr key={txn._id} className="border-b border-cream-100 last:border-0 transition-colors hover:bg-cream-50">
                       <td className="px-5 py-3 font-medium text-brown-900">{txn.transactionId}</td>
                       <td className="px-5 py-3 text-brown-700">{txn.order?.orderNumber || "—"}</td>
-                      <td className="px-5 py-3 text-right font-medium text-brown-900">${txn.amount.toFixed(2)}</td>
+                      <td className="px-5 py-3 text-right font-medium text-brown-900">{formatPrice(txn.amount, currency)}</td>
                       <td className="px-5 py-3 text-center">
                         <Badge variant={badgeVariant[txn.status] as "pending" | "completed" | "failed"}>{txn.status}</Badge>
                       </td>
-                      <td className="px-5 py-3 text-brown-600">{new Date(txn.createdAt).toLocaleDateString()}</td>
+                      <td className="px-5 py-3 text-brown-600">{formatDate(txn.createdAt, timezone)}</td>
                       <td className="px-5 py-3 text-brown-600">{txn.method}</td>
                     </tr>
                   ))}
@@ -212,7 +214,7 @@ export default function PaymentProcessingPage() {
                 <div key={txn._id} className="flex flex-col gap-3 rounded-lg border border-cream-200 p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="space-y-0.5">
                     <p className="font-medium text-brown-900">{txn.transactionId} &mdash; {txn.order?.orderNumber || ""}</p>
-                    <p className="text-sm text-brown-500">{txn.method} &middot; ${txn.amount.toFixed(2)} &middot; {new Date(txn.createdAt).toLocaleDateString()}</p>
+                    <p className="text-sm text-brown-500">{txn.method} &middot; {formatPrice(txn.amount, currency)} &middot; {formatDate(txn.createdAt, timezone)}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button

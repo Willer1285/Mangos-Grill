@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 import { Card, CardContent, Button } from "@/components/ui";
 import { Heart, ShoppingBag } from "lucide-react";
+import { useBrand, formatPrice } from "@/lib/brand/brand-context";
 
 /* Mock data — will be fetched from API in production */
 const mockFavorites = [
@@ -60,6 +61,7 @@ const item = {
 
 export default function FavoritesPage() {
   const t = useTranslations("customer");
+  const { currency } = useBrand();
 
   return (
     <div className="space-y-8">
@@ -103,7 +105,7 @@ export default function FavoritesPage() {
                   </p>
                   <div className="mt-3 flex items-center justify-between">
                     <span className="text-sm font-semibold text-terracotta-500">
-                      ${dish.price.toFixed(2)}
+                      {formatPrice(dish.price, currency)}
                     </span>
                     <Button variant="secondary" size="sm">
                       Add to Cart

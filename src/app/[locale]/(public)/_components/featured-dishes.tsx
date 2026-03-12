@@ -8,6 +8,7 @@ import { Card, Badge } from "@/components/ui";
 import type { BadgeVariant } from "@/components/ui/badge";
 import { Plus, ArrowRight, Star } from "lucide-react";
 import { useCart } from "@/lib/cart/cart-context";
+import { useBrand, formatPrice } from "@/lib/brand/brand-context";
 import { toast } from "sonner";
 
 interface FeaturedProduct {
@@ -38,6 +39,7 @@ type RatingsMap = Record<string, { avgRating: number; count: number }>;
 
 export function FeaturedDishes({ dishes }: FeaturedDishesProps) {
   const { addItem } = useCart();
+  const { currency } = useBrand();
   const [ratings, setRatings] = useState<RatingsMap>({});
 
   useEffect(() => {
@@ -108,7 +110,7 @@ export function FeaturedDishes({ dishes }: FeaturedDishesProps) {
                 )}
                 <div className="mt-auto flex items-center justify-between pt-3">
                   <span className="text-base font-bold text-terracotta-600">
-                    ${dish.price.toFixed(2)}
+                    {formatPrice(dish.price, currency)}
                   </span>
                   <div className="flex items-center gap-1.5">
                     <Link

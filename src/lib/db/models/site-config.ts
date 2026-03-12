@@ -7,6 +7,8 @@ export interface ISiteConfig extends Document {
   logoSize: number;
   displayMode: "logo" | "text" | "both";
   homepageReviewsCount: number;
+  currency: string;
+  timezone: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,6 +25,8 @@ const siteConfigSchema = new Schema<ISiteConfig>(
       default: "both",
     },
     homepageReviewsCount: { type: Number, default: 6, min: 1, max: 20 },
+    currency: { type: String, default: "USD", trim: true },
+    timezone: { type: String, default: "America/New_York", trim: true },
   },
   { timestamps: true }
 );

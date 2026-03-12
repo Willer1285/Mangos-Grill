@@ -14,6 +14,7 @@ import {
   MapPin,
   Users,
 } from "lucide-react";
+import { useBrand, formatPrice } from "@/lib/brand/brand-context";
 
 /* Mock data — will be fetched from API in production */
 const stats = [
@@ -46,6 +47,7 @@ const favoriteDishes = [
 
 export default function CustomerDashboardPage() {
   const t = useTranslations("customer");
+  const { currency } = useBrand();
 
   return (
     <div className="space-y-8">
@@ -109,7 +111,7 @@ export default function CustomerDashboardPage() {
                     <td className="py-3 font-medium text-brown-900">{order.id}</td>
                     <td className="py-3 text-brown-600">{order.date}</td>
                     <td className="max-w-[200px] truncate py-3 text-brown-600">{order.items}</td>
-                    <td className="py-3 text-right font-medium text-brown-900">${order.total.toFixed(2)}</td>
+                    <td className="py-3 text-right font-medium text-brown-900">{formatPrice(order.total, currency)}</td>
                     <td className="py-3 text-right">
                       <Badge variant={order.status === "Delivered" ? "delivered" : "cancelled"}>
                         {order.status}
@@ -175,7 +177,7 @@ export default function CustomerDashboardPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-brown-900">{dish.name}</p>
-                    <p className="text-xs font-medium text-terracotta-500">${dish.price}</p>
+                    <p className="text-xs font-medium text-terracotta-500">{formatPrice(dish.price, currency)}</p>
                   </div>
                   <Button variant="secondary" size="sm">{t("reorder")}</Button>
                 </div>

@@ -26,6 +26,7 @@ import {
 import { UtensilsCrossed, Plus, Edit2, Trash2, MapPin, Package } from "lucide-react";
 import { motion } from "framer-motion";
 import { autoTranslate } from "@/lib/utils/translate";
+import { useBrand, formatPrice } from "@/lib/brand/brand-context";
 import { useTranslations, useLocale } from "next-intl";
 
 interface Category {
@@ -84,6 +85,7 @@ const itemVariants = {
 export default function MenuPage() {
   const t = useTranslations("admin");
   const tc = useTranslations("common");
+  const { currency } = useBrand();
   const locale = useLocale() as "en" | "es";
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -349,7 +351,7 @@ export default function MenuPage() {
                     )}
                   </div>
                   <p className="mb-4 text-lg font-bold text-terracotta-500">
-                    ${item.price.toFixed(2)}
+                    {formatPrice(item.price, currency)}
                   </p>
                   <div className="flex items-center justify-between">
                     <Switch

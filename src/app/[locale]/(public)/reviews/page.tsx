@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Star } from "lucide-react";
 import { Spinner } from "@/components/ui";
+import { useBrand, formatDate } from "@/lib/brand/brand-context";
 
 interface ReviewItem {
   _id: string;
@@ -14,6 +15,7 @@ interface ReviewItem {
 }
 
 export default function AllReviewsPage() {
+  const brand = useBrand();
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -58,7 +60,7 @@ export default function AllReviewsPage() {
                     ))}
                   </div>
                   <span className="text-xs text-brown-400">
-                    {new Date(review.createdAt).toLocaleDateString()}
+                    {formatDate(review.createdAt, brand.timezone)}
                   </span>
                 </div>
                 <p className="mt-4 text-sm leading-relaxed text-brown-700">

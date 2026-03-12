@@ -10,6 +10,7 @@ import { Card, Spinner, Badge } from "@/components/ui";
 import { Plus, ArrowRight, UtensilsCrossed, Star } from "lucide-react";
 import type { BadgeVariant } from "@/components/ui/badge";
 import { useCart } from "@/lib/cart/cart-context";
+import { useBrand, formatPrice } from "@/lib/brand/brand-context";
 import { toast } from "sonner";
 
 interface Category {
@@ -46,6 +47,7 @@ export default function MenuPage() {
   const tc = useTranslations("common");
   const locale = useLocale() as "en" | "es";
   const { addItem } = useCart();
+  const { currency } = useBrand();
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get("category") || "all";
   const [activeCategory, setActiveCategory] = useState(initialCategory);
@@ -216,7 +218,7 @@ export default function MenuPage() {
                           )}
                           <div className="mt-auto flex items-center justify-between pt-3">
                             <span className="text-base font-bold text-terracotta-600">
-                              ${item.price.toFixed(2)}
+                              {formatPrice(item.price, currency)}
                             </span>
                             <div className="flex items-center gap-1.5">
                               <Link

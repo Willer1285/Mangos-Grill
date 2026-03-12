@@ -26,6 +26,7 @@ import {
 } from "@/components/ui";
 import { Briefcase, Users, UserCheck, Clock, Plus, Eye, Edit2 } from "lucide-react";
 import { autoTranslate } from "@/lib/utils/translate";
+import { useBrand, formatDate } from "@/lib/brand/brand-context";
 
 interface JobApplication {
   _id?: string;
@@ -85,6 +86,7 @@ const EMPTY_FORM = {
 };
 
 export default function JobsManagementPage() {
+  const brand = useBrand();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<JobTab>("All");
@@ -258,7 +260,7 @@ export default function JobsManagementPage() {
                       </td>
                       <td className="px-5 py-3 text-center font-medium text-brown-700">{job.applications.length}</td>
                       <td className="px-5 py-3 text-brown-600">
-                        {job.postedAt ? new Date(job.postedAt).toLocaleDateString() : "\u2014"}
+                        {job.postedAt ? formatDate(job.postedAt, brand.timezone) : "\u2014"}
                       </td>
                       <td className="px-5 py-3 text-center">
                         <Badge variant={badgeVariant[job.status] as "active" | "pending" | "disabled"}>
@@ -312,7 +314,7 @@ export default function JobsManagementPage() {
                           </div>
                         </td>
                         <td className="px-5 py-3 text-brown-700">{app.jobTitle}</td>
-                        <td className="px-5 py-3 text-brown-600">{new Date(app.appliedAt).toLocaleDateString()}</td>
+                        <td className="px-5 py-3 text-brown-600">{formatDate(app.appliedAt, brand.timezone)}</td>
                         <td className="px-5 py-3 text-brown-600">{app.experience || "\u2014"}</td>
                         <td className="px-5 py-3 text-center">
                           <Badge variant={appStatusVariant[app.status] as "pending" | "info" | "success" | "error"}>

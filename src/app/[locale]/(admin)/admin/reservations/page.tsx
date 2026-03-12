@@ -23,6 +23,7 @@ import {
   Textarea,
 } from "@/components/ui";
 import { CalendarDays, Users, Plus, Search, XCircle, Trash2, MapPin, Pencil, CheckCircle2, Clock, Eye } from "lucide-react";
+import { useBrand, formatDate } from "@/lib/brand/brand-context";
 
 interface Reservation {
   _id: string;
@@ -112,6 +113,7 @@ const EMPTY_FORM = {
 };
 
 export default function ReservationsManagementPage() {
+  const brand = useBrand();
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -556,7 +558,7 @@ export default function ReservationsManagementPage() {
                       <tr key={res._id} className="border-b border-cream-100 last:border-0 transition-colors hover:bg-cream-50">
                         <td className="px-5 py-3 font-medium text-brown-900">{guestName}</td>
                         <td className="px-5 py-3 text-center text-brown-700">{res.partySize}</td>
-                        <td className="px-5 py-3 text-brown-600">{new Date(res.date).toLocaleDateString()}</td>
+                        <td className="px-5 py-3 text-brown-600">{formatDate(res.date, brand.timezone)}</td>
                         <td className="px-5 py-3 text-brown-600">{res.time}</td>
                         <td className="px-5 py-3 text-center">
                           <Badge variant={badgeVariant[res.status] as "pending" | "confirmed" | "completed" | "cancelled"}>
@@ -682,7 +684,7 @@ export default function ReservationsManagementPage() {
                   </div>
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Date</p>
-                    <p className="mt-1 text-sm text-brown-700">{new Date(viewReservation.date).toLocaleDateString()}</p>
+                    <p className="mt-1 text-sm text-brown-700">{formatDate(viewReservation.date, brand.timezone)}</p>
                   </div>
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Time</p>

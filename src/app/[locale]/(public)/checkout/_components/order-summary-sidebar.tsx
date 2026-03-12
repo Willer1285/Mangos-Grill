@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui";
 import { ShoppingBag } from "lucide-react";
 import { useCart } from "@/lib/cart/cart-context";
+import { useBrand, formatPrice } from "@/lib/brand/brand-context";
 import { TX_TAX_RATE } from "@/lib/constants";
 
 interface OrderSummarySidebarProps {
@@ -14,6 +15,7 @@ const SHIPPING_COSTS = { standard: 0, express: 12.99 } as const;
 
 export function OrderSummarySidebar({ deliveryOption }: OrderSummarySidebarProps) {
   const t = useTranslations("checkout");
+  const { currency } = useBrand();
   const { state, subtotal } = useCart();
 
   const shippingCost = SHIPPING_COSTS[deliveryOption];
@@ -51,7 +53,7 @@ export function OrderSummarySidebar({ deliveryOption }: OrderSummarySidebarProps
                       <p className="text-xs text-brown-500">x{item.quantity}</p>
                     </div>
                     <span className="text-xs font-medium text-brown-900">
-                      ${lineTotal.toFixed(2)}
+                      {formatPrice(lineTotal, currency)}
                     </span>
                   </li>
                 );
@@ -61,25 +63,25 @@ export function OrderSummarySidebar({ deliveryOption }: OrderSummarySidebarProps
             <div className="mt-4 space-y-1.5 border-t border-cream-200 pt-3 text-xs">
               <div className="flex justify-between text-brown-600">
                 <span>Subtotal</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>{formatPrice(subtotal, currency)}</span>
               </div>
               <div className="flex justify-between text-brown-600">
                 <span>Tax (8.25%)</span>
-                <span>${tax.toFixed(2)}</span>
+                <span>{formatPrice(tax, currency)}</span>
               </div>
               <div className="flex justify-between text-brown-600">
                 <span>Shipping</span>
-                <span>{shippingCost === 0 ? "Free" : `$${shippingCost.toFixed(2)}`}</span>
+                <span>{shippingCost === 0 ? "Free" : formatPrice(shippingCost, currency)}</span>
               </div>
               {discount > 0 && (
                 <div className="flex justify-between text-success-500">
                   <span>Discount</span>
-                  <span>-${discount.toFixed(2)}</span>
+                  <span>-{formatPrice(discount, currency)}</span>
                 </div>
               )}
               <div className="flex justify-between border-t border-cream-200 pt-2 text-sm font-semibold text-brown-900">
                 <span>Total</span>
-                <span>${total.toFixed(2)}</span>
+                <span>{formatPrice(total, currency)}</span>
               </div>
             </div>
           </>

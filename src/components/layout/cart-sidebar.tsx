@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Minus, Trash2, ShoppingBag, Tag } from "lucide-react";
 import { Button, Input } from "@/components/ui";
 import { useCart } from "@/lib/cart/cart-context";
+import { useBrand, formatPrice } from "@/lib/brand/brand-context";
 import { TX_TAX_RATE } from "@/lib/constants";
 import { toast } from "sonner";
 
@@ -17,6 +18,7 @@ interface CartSidebarProps {
 
 export function CartSidebar({ open, onClose }: CartSidebarProps) {
   const t = useTranslations("cart");
+  const { currency } = useBrand();
   const {
     state,
     removeItem,
@@ -178,7 +180,7 @@ export function CartSidebar({ open, onClose }: CartSidebarProps) {
                             </div>
 
                             <span className="text-sm font-semibold text-terracotta-500">
-                              ${lineTotal.toFixed(2)}
+                              {formatPrice(lineTotal, currency)}
                             </span>
                           </div>
                         </div>
@@ -198,7 +200,7 @@ export function CartSidebar({ open, onClose }: CartSidebarProps) {
                     <div className="flex items-center gap-2 text-sm text-success-500">
                       <Tag className="h-4 w-4" />
                       <span className="font-medium">{state.promoCode}</span>
-                      <span>-${discount.toFixed(2)}</span>
+                      <span>-{formatPrice(discount, currency)}</span>
                     </div>
                     <button
                       onClick={removePromo}
@@ -230,21 +232,21 @@ export function CartSidebar({ open, onClose }: CartSidebarProps) {
                 <div className="space-y-1.5 text-sm">
                   <div className="flex justify-between text-brown-600">
                     <span>{t("subtotal")}</span>
-                    <span>${subtotal.toFixed(2)}</span>
+                    <span>{formatPrice(subtotal, currency)}</span>
                   </div>
                   <div className="flex justify-between text-brown-600">
                     <span>{t("tax")}</span>
-                    <span>${tax.toFixed(2)}</span>
+                    <span>{formatPrice(tax, currency)}</span>
                   </div>
                   {discount > 0 && (
                     <div className="flex justify-between text-success-500">
                       <span>Discount</span>
-                      <span>-${discount.toFixed(2)}</span>
+                      <span>-{formatPrice(discount, currency)}</span>
                     </div>
                   )}
                   <div className="flex justify-between border-t border-cream-200 pt-2 text-base font-semibold text-brown-900">
                     <span>{t("total")}</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>{formatPrice(total, currency)}</span>
                   </div>
                 </div>
 
