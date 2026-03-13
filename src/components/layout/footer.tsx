@@ -126,13 +126,13 @@ export function Footer() {
           <div>
             <h3 className="text-sm font-semibold text-white">{tHome("subscribeTitle")}</h3>
             <p className="mt-4 text-sm text-cream-400">{tHome("subscribeDesc")}</p>
-            <form className="mt-4 flex" onSubmit={(e) => e.preventDefault()}>
+            <form className="mt-4 flex flex-col gap-2 sm:flex-row sm:gap-0" onSubmit={(e) => e.preventDefault()}>
               <input
                 type="email"
                 placeholder={tHome("emailPlaceholder")}
-                className="h-10 flex-1 rounded-l-md border-0 bg-brown-700 px-3 text-sm text-white placeholder:text-cream-400/50 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
+                className="h-10 min-w-0 flex-1 rounded-md border-0 bg-brown-700 px-3 text-sm text-white placeholder:text-cream-400/50 focus:outline-none focus:ring-1 focus:ring-terracotta-500 sm:rounded-r-none"
               />
-              <Button size="md" className="rounded-l-none bg-terracotta-500 text-white shadow-sm hover:bg-terracotta-600">
+              <Button size="md" className="shrink-0 rounded-md bg-terracotta-500 text-white shadow-sm hover:bg-terracotta-600 sm:rounded-l-none">
                 {tHome("subscribe")}
               </Button>
             </form>
