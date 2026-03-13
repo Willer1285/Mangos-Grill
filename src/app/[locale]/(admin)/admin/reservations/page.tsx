@@ -27,10 +27,7 @@ import { useBrand, formatDate } from "@/lib/brand/brand-context";
 
 interface Reservation {
   _id: string;
-  customer?: { firstName: string; lastName: string };
-  guestName?: string;
-  guestEmail?: string;
-  guestPhone?: string;
+  customer?: { _id: string; firstName: string; lastName: string; email: string; phone?: string; idNumber?: string };
   date: string;
   time: string;
   partySize: number;
@@ -100,9 +97,7 @@ const badgeVariant: Record<string, string> = {
 };
 
 const EMPTY_FORM = {
-  guestName: "",
-  guestEmail: "",
-  guestPhone: "",
+  customerId: "",
   date: "",
   time: "",
   partySize: "2",
@@ -124,6 +119,16 @@ export default function ReservationsManagementPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [locations, setLocations] = useState<Location[]>([]);
+
+  // Customer search state for create modal
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [customerFound, setCustomerFound] = useState<{ id: string; name: string; email: string; isNew: boolean } | null>(null);
+  const [searchingCustomer, setSearchingCustomer] = useState(false);
+
+  // Customer search state for edit modal
+  const [editCustomerSearch, setEditCustomerSearch] = useState("");
+  const [editCustomerFound, setEditCustomerFound] = useState<{ id: string; name: string; email: string; isNew: boolean } | null>(null);
+  const [editSearchingCustomer, setEditSearchingCustomer] = useState(false);
 
   // View reservation modal
   const [viewReservation, setViewReservation] = useState<Reservation | null>(null);
@@ -180,15 +185,45 @@ export default function ReservationsManagementPage() {
     fetchLocations();
   }, []);
 
+  async function searchCustomerByIdNumber(idNumber: string, isEdit: boolean) {
+    if (!idNumber.trim()) return;
+    const setSearching = isEdit ? setEditSearchingCustomer : setSearchingCustomer;
+    const setFound = isEdit ? setEditCustomerFound : setCustomerFound;
+    const setData = isEdit ? setEditData : setFormData;
+
+    setSearching(true);
+    try {
+      const res = await fetch(`/api/admin/users?search=${encodeURIComponent(idNumber.trim())}&limit=5`);
+      if (res.ok) {
+        const data = await res.json();
+        const user = data.users?.find((u: { idNumber?: string }) => u.idNumber === idNumber.trim());
+        if (user) {
+          const fullName = `${user.firstName} ${user.lastName}`;
+          setFound({ id: user._id, name: fullName, email: user.email, isNew: false });
+          setData((p) => ({ ...p, customerId: user._id }));
+        } else {
+          setFound(null);
+          setData((p) => ({ ...p, customerId: "" }));
+        }
+      }
+    } catch {
+      setFound(null);
+    } finally {
+      setSearching(false);
+    }
+  }
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
+    if (!formData.customerId) {
+      setError("Please search and select a registered customer first");
+      return;
+    }
     setSubmitting(true);
     setError("");
     try {
       const body: Record<string, unknown> = {
-        guestName: formData.guestName,
-        guestEmail: formData.guestEmail,
-        guestPhone: formData.guestPhone,
+        customer: formData.customerId,
         date: formData.date,
         time: formData.time,
         partySize: parseInt(formData.partySize),
@@ -208,6 +243,8 @@ export default function ReservationsManagementPage() {
       }
       setModalOpen(false);
       setFormData(EMPTY_FORM);
+      setCustomerSearch("");
+      setCustomerFound(null);
       fetchReservations();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
@@ -218,13 +255,15 @@ export default function ReservationsManagementPage() {
 
   async function handleEdit(e: React.FormEvent) {
     e.preventDefault();
+    if (!editData.customerId) {
+      setEditError("Please search and select a registered customer first");
+      return;
+    }
     setEditSubmitting(true);
     setEditError("");
     try {
       const body: Record<string, unknown> = {
-        guestName: editData.guestName,
-        guestEmail: editData.guestEmail,
-        guestPhone: editData.guestPhone,
+        customer: editData.customerId,
         date: editData.date,
         time: editData.time,
         partySize: parseInt(editData.partySize),
@@ -246,6 +285,8 @@ export default function ReservationsManagementPage() {
       setEditModalOpen(false);
       setEditData(EMPTY_FORM);
       setEditId("");
+      setEditCustomerSearch("");
+      setEditCustomerFound(null);
       fetchReservations();
     } catch (err) {
       setEditError(err instanceof Error ? err.message : "Error");
@@ -259,9 +300,7 @@ export default function ReservationsManagementPage() {
       ? new Date(reservation.date).toISOString().split("T")[0]
       : "";
     setEditData({
-      guestName: reservation.guestName || (reservation.customer ? `${reservation.customer.firstName} ${reservation.customer.lastName}` : ""),
-      guestEmail: reservation.guestEmail || "",
-      guestPhone: reservation.guestPhone || "",
+      customerId: reservation.customer?._id || "",
       date: dateStr,
       time: reservation.time || "",
       partySize: String(reservation.partySize),
@@ -270,6 +309,14 @@ export default function ReservationsManagementPage() {
       occasion: reservation.occasion || "",
       specialRequests: reservation.specialRequests || "",
     });
+    if (reservation.customer) {
+      const fullName = `${reservation.customer.firstName} ${reservation.customer.lastName}`;
+      setEditCustomerFound({ id: reservation.customer._id, name: fullName, email: reservation.customer.email, isNew: false });
+      setEditCustomerSearch(reservation.customer.idNumber || "");
+    } else {
+      setEditCustomerFound(null);
+      setEditCustomerSearch("");
+    }
     setEditId(reservation._id);
     setEditError("");
     setEditModalOpen(true);
@@ -299,7 +346,6 @@ export default function ReservationsManagementPage() {
     }
   }
 
-  // Determine which tables at a location are reserved (active reservations today)
   function getReservedTableIds(locationName: string): Set<string> {
     const activeStatuses = new Set(["Pending", "Confirmed", "Seated"]);
     const reserved = new Set<string>();
@@ -311,7 +357,6 @@ export default function ReservationsManagementPage() {
     return reserved;
   }
 
-  // Get the reservation info for a reserved table
   function getTableReservation(tableId: string, locationName: string): Reservation | undefined {
     const activeStatuses = new Set(["Pending", "Confirmed", "Seated"]);
     return reservations.find(
@@ -325,16 +370,61 @@ export default function ReservationsManagementPage() {
   // Shared form fields renderer
   function renderFormFields(
     data: typeof EMPTY_FORM,
-    setData: React.Dispatch<React.SetStateAction<typeof EMPTY_FORM>>
+    setData: React.Dispatch<React.SetStateAction<typeof EMPTY_FORM>>,
+    options: {
+      customerSearchValue: string;
+      setCustomerSearchValue: (v: string) => void;
+      customerFoundValue: { id: string; name: string; email: string; isNew: boolean } | null;
+      searching: boolean;
+      onSearch: () => void;
+    }
   ) {
     return (
       <>
         <div className="space-y-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Guest Information</p>
-          <Input label="Guest Name" required value={data.guestName} onChange={(e) => setData((p) => ({ ...p, guestName: e.target.value }))} />
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="Email" type="email" value={data.guestEmail} onChange={(e) => setData((p) => ({ ...p, guestEmail: e.target.value }))} placeholder="Optional" />
-            <Input label="Phone" value={data.guestPhone} onChange={(e) => setData((p) => ({ ...p, guestPhone: e.target.value }))} placeholder="Optional" />
+          <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Customer</p>
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Input
+                  label="Customer ID Number"
+                  placeholder="V-12345678"
+                  value={options.customerSearchValue}
+                  onChange={(e) => {
+                    options.setCustomerSearchValue(e.target.value);
+                    if (options.customerFoundValue) {
+                      setData((p) => ({ ...p, customerId: "" }));
+                    }
+                  }}
+                  required
+                />
+              </div>
+              <div className="flex items-end">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={options.onSearch}
+                  disabled={options.searching || !options.customerSearchValue.trim()}
+                  className="h-10"
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            {options.customerFoundValue && !options.customerFoundValue.isNew && (
+              <div className="rounded-lg border border-success-200 bg-success-50 px-3 py-2">
+                <p className="flex items-center gap-1.5 text-xs font-medium text-success-700">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  {options.customerFoundValue.name}
+                </p>
+                <p className="mt-0.5 text-xs text-success-600">{options.customerFoundValue.email}</p>
+              </div>
+            )}
+            {options.customerSearchValue.trim() && !options.searching && !options.customerFoundValue && (
+              <p className="text-xs text-error-500">
+                No registered user found with this ID. Please register the user first in the Users section.
+              </p>
+            )}
           </div>
         </div>
 
@@ -428,7 +518,7 @@ export default function ReservationsManagementPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold text-brown-900">Reservations</h1>
-        <Button size="sm" onClick={() => setModalOpen(true)}>
+        <Button size="sm" onClick={() => { setFormData(EMPTY_FORM); setCustomerSearch(""); setCustomerFound(null); setError(""); setModalOpen(true); }}>
           <Plus className="h-4 w-4" />
           New Reservation
         </Button>
@@ -464,7 +554,7 @@ export default function ReservationsManagementPage() {
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brown-400" />
-                <Input placeholder="Search guests..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
+                <Input placeholder="Search customers..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
               </div>
             </div>
             <div className="flex gap-2">
@@ -540,7 +630,7 @@ export default function ReservationsManagementPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-cream-200">
-                    <th className="px-5 py-3 text-left text-xs font-medium text-brown-500">Guest Name</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-brown-500">Customer</th>
                     <th className="px-5 py-3 text-center text-xs font-medium text-brown-500">Party Size</th>
                     <th className="px-5 py-3 text-left text-xs font-medium text-brown-500">Date</th>
                     <th className="px-5 py-3 text-left text-xs font-medium text-brown-500">Time</th>
@@ -551,12 +641,17 @@ export default function ReservationsManagementPage() {
                 </thead>
                 <tbody>
                   {reservations.map((res) => {
-                    const guestName = res.customer
+                    const customerName = res.customer
                       ? `${res.customer.firstName} ${res.customer.lastName}`
-                      : res.guestName || "Unknown";
+                      : "Unknown";
                     return (
                       <tr key={res._id} className="border-b border-cream-100 last:border-0 transition-colors hover:bg-cream-50">
-                        <td className="px-5 py-3 font-medium text-brown-900">{guestName}</td>
+                        <td className="px-5 py-3">
+                          <p className="font-medium text-brown-900">{customerName}</p>
+                          {res.customer?.email && (
+                            <p className="text-xs text-brown-500">{res.customer.email}</p>
+                          )}
+                        </td>
                         <td className="px-5 py-3 text-center text-brown-700">{res.partySize}</td>
                         <td className="px-5 py-3 text-brown-600">{formatDate(res.date, brand.timezone)}</td>
                         <td className="px-5 py-3 text-brown-600">{res.time}</td>
@@ -566,7 +661,7 @@ export default function ReservationsManagementPage() {
                           </Badge>
                         </td>
                         <td className="px-5 py-3 text-center font-medium text-brown-700">
-                          {res.table ? `T-${res.table.number}` : "—"}
+                          {res.table ? `T-${res.table.number}` : "\u2014"}
                         </td>
                         <td className="px-5 py-3 text-right">
                           <div className="flex items-center justify-end gap-1">
@@ -609,7 +704,7 @@ export default function ReservationsManagementPage() {
         <ModalContent>
           <ModalHeader>
             <ModalTitle>New Reservation</ModalTitle>
-            <ModalDescription>Book a table for a walk-in or phone guest.</ModalDescription>
+            <ModalDescription>Create a reservation for a registered customer. Search by ID number.</ModalDescription>
           </ModalHeader>
           <form onSubmit={handleCreate} className="space-y-6">
             {error && (
@@ -617,10 +712,16 @@ export default function ReservationsManagementPage() {
                 {error}
               </div>
             )}
-            {renderFormFields(formData, setFormData)}
+            {renderFormFields(formData, setFormData, {
+              customerSearchValue: customerSearch,
+              setCustomerSearchValue: setCustomerSearch,
+              customerFoundValue: customerFound,
+              searching: searchingCustomer,
+              onSearch: () => searchCustomerByIdNumber(customerSearch, false),
+            })}
             <ModalFooter>
               <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button type="submit" loading={submitting}>Create Reservation</Button>
+              <Button type="submit" loading={submitting} disabled={!formData.customerId}>Create Reservation</Button>
             </ModalFooter>
           </form>
         </ModalContent>
@@ -639,10 +740,16 @@ export default function ReservationsManagementPage() {
                 {editError}
               </div>
             )}
-            {renderFormFields(editData, setEditData)}
+            {renderFormFields(editData, setEditData, {
+              customerSearchValue: editCustomerSearch,
+              setCustomerSearchValue: setEditCustomerSearch,
+              customerFoundValue: editCustomerFound,
+              searching: editSearchingCustomer,
+              onSearch: () => searchCustomerByIdNumber(editCustomerSearch, true),
+            })}
             <ModalFooter>
               <Button type="button" variant="secondary" onClick={() => setEditModalOpen(false)}>Cancel</Button>
-              <Button type="submit" loading={editSubmitting}>Save Changes</Button>
+              <Button type="submit" loading={editSubmitting} disabled={!editData.customerId}>Save Changes</Button>
             </ModalFooter>
           </form>
         </ModalContent>
@@ -656,15 +763,15 @@ export default function ReservationsManagementPage() {
             <ModalDescription>Full information for this reservation.</ModalDescription>
           </ModalHeader>
           {viewReservation && (() => {
-            const gName = viewReservation.customer
+            const customerName = viewReservation.customer
               ? `${viewReservation.customer.firstName} ${viewReservation.customer.lastName}`
-              : viewReservation.guestName || "Unknown";
+              : "Unknown";
             return (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Guest Name</p>
-                    <p className="mt-1 text-sm font-medium text-brown-900">{gName}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Customer</p>
+                    <p className="mt-1 text-sm font-medium text-brown-900">{customerName}</p>
                   </div>
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Status</p>
@@ -676,11 +783,11 @@ export default function ReservationsManagementPage() {
                   </div>
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Email</p>
-                    <p className="mt-1 text-sm text-brown-700">{viewReservation.guestEmail || "—"}</p>
+                    <p className="mt-1 text-sm text-brown-700">{viewReservation.customer?.email || "\u2014"}</p>
                   </div>
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Phone</p>
-                    <p className="mt-1 text-sm text-brown-700">{viewReservation.guestPhone || "—"}</p>
+                    <p className="mt-1 text-sm text-brown-700">{viewReservation.customer?.phone || "\u2014"}</p>
                   </div>
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Date</p>
@@ -700,11 +807,11 @@ export default function ReservationsManagementPage() {
                   </div>
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Table</p>
-                    <p className="mt-1 text-sm text-brown-700">{viewReservation.table ? `T-${viewReservation.table.number} (${viewReservation.table.name})` : "—"}</p>
+                    <p className="mt-1 text-sm text-brown-700">{viewReservation.table ? `T-${viewReservation.table.number} (${viewReservation.table.name})` : "\u2014"}</p>
                   </div>
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wider text-brown-400">Occasion</p>
-                    <p className="mt-1 text-sm text-brown-700">{viewReservation.occasion || "—"}</p>
+                    <p className="mt-1 text-sm text-brown-700">{viewReservation.occasion || "\u2014"}</p>
                   </div>
                 </div>
                 {viewReservation.specialRequests && (
@@ -750,7 +857,6 @@ export default function ReservationsManagementPage() {
 
             return (
               <div className="space-y-4">
-                {/* Legend */}
                 <div className="flex items-center gap-4 text-xs text-brown-500">
                   <span className="flex items-center gap-1.5">
                     <span className="inline-block h-3 w-3 rounded-full bg-emerald-500" />
@@ -762,17 +868,14 @@ export default function ReservationsManagementPage() {
                   </span>
                 </div>
 
-                {/* Table grid */}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                   {tables.map((table) => {
                     const isReserved = reservedIds.has(table._id);
                     const reservation = isReserved
                       ? getTableReservation(table._id, tableMapLocation.name)
                       : undefined;
-                    const guestName = reservation
-                      ? reservation.customer
-                        ? `${reservation.customer.firstName} ${reservation.customer.lastName}`
-                        : reservation.guestName || "Guest"
+                    const customerName = reservation?.customer
+                      ? `${reservation.customer.firstName} ${reservation.customer.lastName}`
                       : null;
 
                     return (
@@ -792,11 +895,11 @@ export default function ReservationsManagementPage() {
                           {table.capacity} {table.capacity === 1 ? "person" : "people"}
                         </p>
                         <p className="mt-0.5 text-[10px] capitalize text-brown-400">{table.shape}</p>
-                        {isReserved && guestName && (
+                        {isReserved && customerName && (
                           <div className="mt-2 rounded-md bg-red-100 px-2 py-1">
-                            <p className="truncate text-[11px] font-medium text-red-700">{guestName}</p>
+                            <p className="truncate text-[11px] font-medium text-red-700">{customerName}</p>
                             {reservation && (
-                              <p className="text-[10px] text-red-500">{reservation.time} · {reservation.partySize}p</p>
+                              <p className="text-[10px] text-red-500">{reservation.time} &middot; {reservation.partySize}p</p>
                             )}
                           </div>
                         )}
@@ -805,11 +908,10 @@ export default function ReservationsManagementPage() {
                   })}
                 </div>
 
-                {/* Summary */}
                 <div className="flex items-center justify-between rounded-lg bg-cream-100 px-4 py-3 text-sm">
                   <span className="text-brown-600">
                     <span className="font-semibold text-emerald-600">{tables.length - reservedIds.size}</span> available
-                    {" · "}
+                    {" \u00B7 "}
                     <span className="font-semibold text-red-600">{reservedIds.size}</span> reserved
                   </span>
                   <span className="text-brown-500">

@@ -2,10 +2,7 @@ import mongoose, { Schema, type Document, type Model } from "mongoose";
 import { OCCASIONS, RESERVATION_STATUSES } from "@/lib/constants";
 
 export interface IReservation extends Document {
-  customer?: mongoose.Types.ObjectId;
-  guestName?: string;
-  guestPhone?: string;
-  guestEmail?: string;
+  customer: mongoose.Types.ObjectId;
   date: Date;
   time: string;
   partySize: number;
@@ -20,10 +17,7 @@ export interface IReservation extends Document {
 
 const reservationSchema = new Schema<IReservation>(
   {
-    customer: { type: Schema.Types.ObjectId, ref: "User", index: true },
-    guestName: { type: String, trim: true },
-    guestPhone: { type: String, trim: true },
-    guestEmail: { type: String, lowercase: true, trim: true },
+    customer: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     date: { type: Date, required: true, index: true },
     time: { type: String, required: true },
     partySize: { type: Number, required: true, min: 1, max: 20 },

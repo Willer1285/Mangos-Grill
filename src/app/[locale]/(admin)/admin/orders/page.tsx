@@ -255,21 +255,21 @@ export default function OrdersManagementPage() {
     if (!customerIdNumber.trim()) return;
     setSearchingCustomer(true);
     try {
-      const res = await fetch(`/api/admin/users?search=${encodeURIComponent(customerIdNumber.trim())}&limit=1`);
+      const res = await fetch(`/api/admin/users?search=${encodeURIComponent(customerIdNumber.trim())}&limit=5`);
       if (res.ok) {
         const data = await res.json();
-        const user = data.users?.[0];
-        if (user && user.idNumber === customerIdNumber.trim()) {
+        const user = data.users?.find((u: { idNumber?: string }) => u.idNumber === customerIdNumber.trim());
+        if (user) {
           const fullName = `${user.firstName} ${user.lastName}`;
           setCustomerFound({ name: fullName, isNew: false });
           setCustomerName(fullName);
         } else {
-          setCustomerFound({ name: t("newClient"), isNew: true });
+          setCustomerFound(null);
           setCustomerName("");
         }
       }
     } catch {
-      setCustomerFound({ name: "New client (will be created)", isNew: true });
+      setCustomerFound(null);
       setCustomerName("");
     } finally {
       setSearchingCustomer(false);
@@ -346,8 +346,8 @@ export default function OrdersManagementPage() {
       setCreateError(t("addAtLeastOneProduct"));
       return;
     }
-    if (!customerIdNumber.trim()) {
-      setCreateError(t("customerIdRequired"));
+    if (!customerIdNumber.trim() || !customerFound) {
+      setCreateError(t("customerIdRequired") || "A registered customer is required. Search by ID number first.");
       return;
     }
     setSubmitting(true);
@@ -355,7 +355,6 @@ export default function OrdersManagementPage() {
     try {
       const body = {
         customerIdNumber: customerIdNumber.trim(),
-        customerName: customerName.trim(),
         items: orderItems.map((i) => ({
           product: i.productId,
           name: i.name,
@@ -383,7 +382,7 @@ export default function OrdersManagementPage() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Failed to create order");
+        throw new Error(err.error || err.message || "Failed to create order");
       }
       setCreateOpen(false);
       fetchOrders();
@@ -545,19 +544,17 @@ export default function OrdersManagementPage() {
                 </div>
               </div>
               {customerFound && (
-                <p className={`flex items-center gap-1 text-xs ${customerFound.isNew ? "text-warning-500" : "text-success-600"}`}>
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  {customerFound.isNew ? t("newClient") : customerFound.name}
-                </p>
+                <div className="rounded-lg border border-success-200 bg-success-50 px-3 py-2">
+                  <p className="flex items-center gap-1.5 text-xs font-medium text-success-700">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    {customerFound.name}
+                  </p>
+                </div>
               )}
-              {customerFound && (
-                <Input
-                  label={t("customerName")}
-                  placeholder={t("fullName")}
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  disabled={!customerFound.isNew}
-                />
+              {!customerFound && customerIdNumber.trim() && !searchingCustomer && (
+                <p className="text-xs text-error-500">
+                  {t("customerNotFound") || "Customer not found. Please register the user first in the Users section."}
+                </p>
               )}
             </div>
           )}

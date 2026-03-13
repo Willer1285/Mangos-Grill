@@ -3,6 +3,7 @@ import { requireAuth } from "@/lib/auth/require-auth";
 import { connectDB } from "@/lib/db/connection";
 import { sanitize, sanitizeString } from "@/lib/db/sanitize";
 import Reservation from "@/lib/db/models/reservation";
+import User from "@/lib/db/models/user";
 
 export async function GET(req: NextRequest) {
   try {
@@ -24,13 +25,21 @@ export async function GET(req: NextRequest) {
       nextDay.setDate(nextDay.getDate() + 1);
       filter.date = { $gte: d, $lt: nextDay };
     }
+
+    // Search by customer name, email, phone, or idNumber
     if (search) {
       const s = sanitizeString(search);
-      filter.$or = [
-        { guestName: { $regex: s, $options: "i" } },
-        { guestEmail: { $regex: s, $options: "i" } },
-        { guestPhone: { $regex: s, $options: "i" } },
-      ];
+      const matchingUsers = await User.find({
+        $or: [
+          { firstName: { $regex: s, $options: "i" } },
+          { lastName: { $regex: s, $options: "i" } },
+          { email: { $regex: s, $options: "i" } },
+          { phone: { $regex: s, $options: "i" } },
+          { idNumber: { $regex: s, $options: "i" } },
+        ],
+      }).select("_id").lean();
+      const userIds = matchingUsers.map((u) => u._id);
+      filter.customer = { $in: userIds };
     }
 
     // Manager can only see reservations from their assigned location
@@ -39,7 +48,7 @@ export async function GET(req: NextRequest) {
     }
 
     const reservations = await Reservation.find(filter)
-      .populate("customer", "firstName lastName email")
+      .populate("customer", "firstName lastName email phone idNumber")
       .populate("table")
       .sort({ date: -1 })
       .lean();
@@ -67,6 +76,16 @@ export async function POST(req: NextRequest) {
 
     if (!body.date || !body.time || !body.partySize || !body.location) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    if (!body.customer) {
+      return NextResponse.json({ error: "A registered customer is required" }, { status: 400 });
+    }
+
+    // Verify the customer exists
+    const customer = await User.findById(body.customer).lean();
+    if (!customer) {
+      return NextResponse.json({ error: "Customer not found. Please register the user first." }, { status: 404 });
     }
 
     const reservation = await Reservation.create(body);

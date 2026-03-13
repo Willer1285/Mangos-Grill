@@ -58,7 +58,6 @@ export async function POST(req: NextRequest) {
     const body = sanitize(await req.json());
     const {
       customerIdNumber,
-      customerName,
       items,
       deliveryType,
       tableNumber,
@@ -89,22 +88,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Location is required" }, { status: 400 });
     }
 
-    // Find or create customer by ID number
-    let customer = await User.findOne({ idNumber: customerIdNumber });
+    // Find customer by ID number — must be registered
+    const customer = await User.findOne({ idNumber: customerIdNumber });
     if (!customer) {
-      const guestEmail = `guest_${Date.now()}@mangos-grill.local`;
-      const nameParts = (customerName || "").trim().split(/\s+/);
-      const firstName = nameParts[0] || customerIdNumber;
-      const lastName = nameParts.slice(1).join(" ") || "";
-      customer = await User.create({
-        firstName,
-        lastName,
-        email: guestEmail,
-        idNumber: customerIdNumber,
-        role: "Client",
-        status: "Active",
-        provider: "credentials",
-      });
+      return NextResponse.json(
+        { error: "Customer not found. Please register the user first in the Users section." },
+        { status: 404 }
+      );
     }
     const customerId = customer._id.toString();
 

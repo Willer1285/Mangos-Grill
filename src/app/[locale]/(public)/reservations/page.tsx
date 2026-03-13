@@ -1,16 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { reservationSchema, type ReservationInput } from "@/lib/validators/reservation";
 import { OCCASIONS } from "@/lib/constants";
 import { Button, Input, Textarea, Card, CardContent } from "@/components/ui";
-import { CalendarDays, Clock, Phone, Mail, MapPin } from "lucide-react";
+import { CalendarDays, Clock, Phone, Mail, MapPin, Users, Sparkles, LogIn, UtensilsCrossed } from "lucide-react";
 import { InteractiveTableMap } from "./_components/interactive-table-map";
+import { Link } from "@/i18n/navigation";
 import { toast } from "sonner";
-
 
 interface LocationData {
   _id: string;
@@ -42,7 +43,7 @@ function generateTimeSlots(openTime?: string, closeTime?: string): string[] {
   };
 
   const start = openTime ? parseTime(openTime) : 11 * 60;
-  const end = closeTime ? parseTime(closeTime) - 60 : 21 * 60; // Last slot 1h before close
+  const end = closeTime ? parseTime(closeTime) - 60 : 21 * 60;
 
   for (let t = start; t <= end; t += 30) {
     slots.push(formatTime(t));
@@ -53,6 +54,7 @@ function generateTimeSlots(openTime?: string, closeTime?: string): string[] {
 export default function ReservationsPage() {
   const t = useTranslations("reservations");
   const tc = useTranslations("common");
+  const { data: session, status: authStatus } = useSession();
 
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedPartySize, setSelectedPartySize] = useState(2);
@@ -62,6 +64,7 @@ export default function ReservationsPage() {
   const [locations, setLocations] = useState<LocationData[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
+  const [currentStep, setCurrentStep] = useState(1);
 
   const {
     register,
@@ -118,6 +121,7 @@ export default function ReservationsPage() {
         setSelectedTable(null);
         setSelectedOccasion("");
         setSelectedPartySize(2);
+        setCurrentStep(1);
       } else {
         const json = await res.json();
         toast.error(json.error || t("failedCreate"));
@@ -131,7 +135,6 @@ export default function ReservationsPage() {
 
   const currentLocation = locations.find((l) => l.name === selectedLocation);
 
-  // Get hours for the selected day
   const selectedDayOfWeek = selectedDate
     ? new Date(selectedDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "long" })
     : "";
@@ -140,269 +143,382 @@ export default function ReservationsPage() {
     ? generateTimeSlots(dayHours.open, dayHours.close)
     : generateTimeSlots();
 
-  // Build opening hours from location data or from site config business hours
   const openingHours = currentLocation?.hours?.length
     ? currentLocation.hours.map((h) => ({
         day: h.day,
         hours: h.closed ? tc("closed") : `${h.open} - ${h.close}`,
+        closed: h.closed,
       }))
     : [];
 
+  const isAuthenticated = authStatus === "authenticated" && !!session?.user;
+  const isLoadingAuth = authStatus === "loading";
+
   return (
     <>
-      {/* Header */}
-      <section className="bg-brown-800 py-12 text-center">
-        <h1 className="text-4xl font-semibold text-white">{t("title")}</h1>
-        <p className="mt-2 text-cream-400">{t("subtitle")}</p>
+      {/* Hero Header */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-brown-900 via-brown-800 to-brown-900 py-16 text-center">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDE4YzMuMzE0IDAgNi0yLjY4NiA2LTZzLTIuNjg2LTYtNi02LTYgMi42ODYtNiA2IDIuNjg2IDYgNiA2eiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
+        <div className="relative mx-auto max-w-3xl px-4">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-terracotta-500/30 bg-terracotta-500/10 px-4 py-1.5">
+            <UtensilsCrossed className="h-4 w-4 text-terracotta-400" />
+            <span className="text-sm font-medium text-terracotta-300">{t("title")}</span>
+          </div>
+          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">
+            {t("title")}
+          </h1>
+          <p className="mx-auto mt-4 max-w-xl text-lg text-cream-300/80">
+            {t("subtitle")}
+          </p>
+        </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-8 lg:flex-row">
-          {/* Reservation form */}
+        {/* Login Required Banner */}
+        {!isLoadingAuth && !isAuthenticated && (
+          <div className="mb-10 overflow-hidden rounded-2xl border border-terracotta-200 bg-gradient-to-r from-terracotta-50 via-cream-50 to-terracotta-50 shadow-lg">
+            <div className="flex flex-col items-center gap-6 p-8 sm:flex-row sm:p-10">
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-terracotta-500 to-terracotta-600 shadow-lg shadow-terracotta-500/25">
+                <LogIn className="h-10 w-10 text-white" />
+              </div>
+              <div className="flex-1 text-center sm:text-left">
+                <h2 className="text-xl font-bold text-brown-900">
+                  {t("loginRequired") || "Login Required"}
+                </h2>
+                <p className="mt-2 text-sm text-brown-600 leading-relaxed">
+                  {t("loginRequiredDesc") || "You need to be logged in to make a reservation. This allows us to manage your bookings and send you confirmation details."}
+                </p>
+                <div className="mt-5 flex flex-wrap justify-center gap-3 sm:justify-start">
+                  <Link href="/login">
+                    <Button size="lg" className="gap-2 shadow-md shadow-terracotta-500/20">
+                      <LogIn className="h-4 w-4" />
+                      {tc("login") || "Log In"}
+                    </Button>
+                  </Link>
+                  <Link href="/register">
+                    <Button variant="secondary" size="lg">
+                      {tc("register") || "Register"}
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-10 lg:flex-row">
+          {/* Main Reservation Form */}
           <div className="flex-1">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Location Selector */}
-              {locations.length > 0 && (
-                <div>
-                  <label className="mb-2 flex items-center gap-2 text-sm font-medium text-brown-800">
-                    <MapPin className="h-4 w-4 text-terracotta-500" />
-                    {t("selectLocation")}
-                  </label>
-                  <div className="flex flex-wrap gap-3">
-                    {locations.map((loc) => (
-                      <button
-                        key={loc._id}
-                        type="button"
-                        onClick={() => handleLocationSelect(loc.name)}
-                        className={`rounded-xl border-2 px-4 py-3 text-left text-sm transition-all ${
-                          selectedLocation === loc.name
-                            ? "border-terracotta-500 bg-terracotta-500/10 text-terracotta-600"
-                            : "border-cream-200 bg-white text-brown-700 hover:border-terracotta-300"
-                        }`}
-                      >
-                        <span className="font-semibold">{loc.name}</span>
-                        <span className="mt-0.5 block text-xs text-brown-500">{loc.address}</span>
-                      </button>
-                    ))}
-                  </div>
-                  <input type="hidden" value={selectedLocation} {...register("location")} />
-                  {errors.location && (
-                    <p className="mt-1 text-xs text-error-500">{errors.location.message}</p>
+            <form onSubmit={handleSubmit(onSubmit)} className={`space-y-0 ${!isAuthenticated ? "pointer-events-none select-none opacity-40 blur-[2px]" : ""}`}>
+
+              {/* Step 1: Location & Date */}
+              <div className="overflow-hidden rounded-2xl border border-cream-200 bg-white shadow-sm">
+                <div className="flex items-center gap-3 border-b border-cream-100 bg-gradient-to-r from-brown-800 to-brown-900 px-6 py-4">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-terracotta-500 text-sm font-bold text-white">1</div>
+                  <h2 className="text-lg font-semibold text-white">{t("selectLocation") || "Location & Date"}</h2>
+                </div>
+                <div className="space-y-6 p-6">
+                  {/* Location Selector */}
+                  {locations.length > 0 && (
+                    <div>
+                      <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-brown-800">
+                        <MapPin className="h-4 w-4 text-terracotta-500" />
+                        {t("selectLocation")}
+                      </label>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {locations.map((loc) => (
+                          <button
+                            key={loc._id}
+                            type="button"
+                            onClick={() => handleLocationSelect(loc.name)}
+                            className={`group relative overflow-hidden rounded-xl border-2 p-4 text-left transition-all duration-300 ${
+                              selectedLocation === loc.name
+                                ? "border-terracotta-500 bg-gradient-to-br from-terracotta-50 to-terracotta-100/50 shadow-md shadow-terracotta-500/10"
+                                : "border-cream-200 bg-white hover:border-terracotta-300 hover:shadow-md"
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                                selectedLocation === loc.name
+                                  ? "bg-terracotta-500 text-white"
+                                  : "bg-cream-100 text-brown-500 group-hover:bg-terracotta-100 group-hover:text-terracotta-600"
+                              }`}>
+                                <MapPin className="h-5 w-5" />
+                              </div>
+                              <div>
+                                <span className="text-sm font-bold text-brown-900">{loc.name}</span>
+                                <span className="mt-1 block text-xs text-brown-500">{loc.address}</span>
+                              </div>
+                            </div>
+                            {selectedLocation === loc.name && (
+                              <div className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-terracotta-500">
+                                <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                      <input type="hidden" value={selectedLocation} {...register("location")} />
+                      {errors.location && (
+                        <p className="mt-2 text-xs font-medium text-error-500">{errors.location.message}</p>
+                      )}
+                    </div>
                   )}
-                </div>
-              )}
 
-              {/* Date */}
-              <Input
-                label={t("date")}
-                type="date"
-                min={new Date().toISOString().split("T")[0]}
-                error={errors.date?.message}
-                {...register("date", {
-                  onChange: (e) => {
-                    setSelectedDate(e.target.value);
-                    setSelectedTime("");
-                  },
-                })}
-              />
-
-              {/* Time slots */}
-              <div>
-                <label className="mb-2 block text-sm font-medium text-brown-800">
-                  {t("time")}
-                </label>
-                {dayHours?.closed ? (
-                  <p className="text-sm text-brown-500">{tc("closed")}</p>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {timeSlots.map((slot) => (
-                      <button
-                        key={slot}
-                        type="button"
-                        onClick={() => {
-                          setSelectedTime(slot);
-                          setValue("time", slot);
-                        }}
-                        className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                          selectedTime === slot
-                            ? "bg-terracotta-500 text-white"
-                            : "border border-cream-300 text-brown-700 hover:bg-cream-200"
-                        }`}
-                      >
-                        {slot}
-                      </button>
-                    ))}
+                  {/* Date */}
+                  <div>
+                    <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-brown-800">
+                      <CalendarDays className="h-4 w-4 text-terracotta-500" />
+                      {t("date")}
+                    </label>
+                    <Input
+                      type="date"
+                      min={new Date().toISOString().split("T")[0]}
+                      error={errors.date?.message}
+                      className="h-12 rounded-xl border-cream-300 bg-cream-50/50 text-brown-900 transition-all focus:border-terracotta-500 focus:bg-white focus:ring-2 focus:ring-terracotta-500/20"
+                      {...register("date", {
+                        onChange: (e) => {
+                          setSelectedDate(e.target.value);
+                          setSelectedTime("");
+                        },
+                      })}
+                    />
                   </div>
-                )}
-                <input type="hidden" value={selectedTime} {...register("time")} />
-                {errors.time && (
-                  <p className="mt-1 text-xs text-error-500">{errors.time.message}</p>
-                )}
+
+                  {/* Time slots */}
+                  <div>
+                    <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-brown-800">
+                      <Clock className="h-4 w-4 text-terracotta-500" />
+                      {t("time")}
+                    </label>
+                    {dayHours?.closed ? (
+                      <div className="rounded-xl border border-warning-200 bg-warning-50 px-4 py-3">
+                        <p className="text-sm font-medium text-warning-700">{tc("closed")}</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
+                        {timeSlots.map((slot) => (
+                          <button
+                            key={slot}
+                            type="button"
+                            onClick={() => {
+                              setSelectedTime(slot);
+                              setValue("time", slot);
+                            }}
+                            className={`rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                              selectedTime === slot
+                                ? "bg-gradient-to-r from-terracotta-500 to-terracotta-600 text-white shadow-md shadow-terracotta-500/25 scale-[1.02]"
+                                : "border border-cream-200 bg-white text-brown-700 hover:border-terracotta-300 hover:bg-terracotta-50 hover:text-terracotta-700"
+                            }`}
+                          >
+                            {slot}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <input type="hidden" value={selectedTime} {...register("time")} />
+                    {errors.time && (
+                      <p className="mt-2 text-xs font-medium text-error-500">{errors.time.message}</p>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              {/* Party size */}
-              <div>
-                <label className="mb-2 block text-sm font-medium text-brown-800">
-                  {t("partySize")}
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {partySizes.map((size) => (
-                    <button
-                      key={size}
-                      type="button"
-                      onClick={() => {
-                        setSelectedPartySize(size);
-                        setValue("partySize", size);
-                        setSelectedTable(null);
+              {/* Step 2: Party Size & Table */}
+              <div className="mt-6 overflow-hidden rounded-2xl border border-cream-200 bg-white shadow-sm">
+                <div className="flex items-center gap-3 border-b border-cream-100 bg-gradient-to-r from-brown-800 to-brown-900 px-6 py-4">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-terracotta-500 text-sm font-bold text-white">2</div>
+                  <h2 className="text-lg font-semibold text-white">{t("partySize") || "Party & Table"}</h2>
+                </div>
+                <div className="space-y-6 p-6">
+                  {/* Party size */}
+                  <div>
+                    <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-brown-800">
+                      <Users className="h-4 w-4 text-terracotta-500" />
+                      {t("partySize")}
+                    </label>
+                    <div className="flex flex-wrap gap-3">
+                      {partySizes.map((size) => (
+                        <button
+                          key={size}
+                          type="button"
+                          onClick={() => {
+                            setSelectedPartySize(size);
+                            setValue("partySize", size);
+                            setSelectedTable(null);
+                          }}
+                          className={`flex h-14 w-14 items-center justify-center rounded-xl text-base font-bold transition-all duration-200 ${
+                            selectedPartySize === size
+                              ? "bg-gradient-to-r from-terracotta-500 to-terracotta-600 text-white shadow-md shadow-terracotta-500/25 scale-[1.05]"
+                              : "border-2 border-cream-200 bg-white text-brown-700 hover:border-terracotta-300 hover:bg-terracotta-50"
+                          }`}
+                        >
+                          {size === 7 ? "7+" : size}
+                        </button>
+                      ))}
+                    </div>
+                    <input type="hidden" value={selectedPartySize} {...register("partySize", { valueAsNumber: true })} />
+                  </div>
+
+                  {/* Table Selector */}
+                  <div>
+                    <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-brown-800">
+                      {t("selectTable")}
+                    </label>
+                    <InteractiveTableMap
+                      selectedTable={selectedTable}
+                      onSelectTable={(id) => {
+                        setSelectedTable(id);
+                        setValue("tableId", id);
                       }}
-                      className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-colors ${
-                        selectedPartySize === size
-                          ? "bg-terracotta-500 text-white"
-                          : "border border-cream-300 text-brown-700 hover:bg-cream-200"
-                      }`}
-                    >
-                      {size === 7 ? "7+" : size}
-                    </button>
-                  ))}
-                </div>
-                <input type="hidden" value={selectedPartySize} {...register("partySize", { valueAsNumber: true })} />
-              </div>
-
-              {/* Table Selector */}
-              <div>
-                <label className="mb-2 block text-sm font-medium text-brown-800">
-                  {t("selectTable")}
-                </label>
-                <InteractiveTableMap
-                  selectedTable={selectedTable}
-                  onSelectTable={(id) => {
-                    setSelectedTable(id);
-                    setValue("tableId", id);
-                  }}
-                  partySize={selectedPartySize}
-                  location={selectedLocation}
-                />
-                <input type="hidden" value={selectedTable || ""} {...register("tableId")} />
-              </div>
-
-              {/* Personal info */}
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Input
-                  label={t("fullName")}
-                  placeholder="John Doe"
-                  error={errors.fullName?.message}
-                  {...register("fullName")}
-                />
-                <Input
-                  label={t("email")}
-                  type="email"
-                  placeholder="you@example.com"
-                  error={errors.email?.message}
-                  {...register("email")}
-                />
-              </div>
-
-              <Input
-                label={t("phone")}
-                type="tel"
-                placeholder="+1 (555) 123-4567"
-                error={errors.phone?.message}
-                {...register("phone")}
-              />
-
-              {/* Occasion chips */}
-              <div>
-                <label className="mb-2 block text-sm font-medium text-brown-800">
-                  {t("occasion")}
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {OCCASIONS.map((occ) => (
-                    <button
-                      key={occ}
-                      type="button"
-                      onClick={() => setSelectedOccasion(occ === selectedOccasion ? "" : occ)}
-                      className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                        selectedOccasion === occ
-                          ? "bg-terracotta-500 text-white"
-                          : "border border-cream-300 text-brown-700 hover:bg-cream-200"
-                      }`}
-                    >
-                      {occ}
-                    </button>
-                  ))}
+                      partySize={selectedPartySize}
+                      location={selectedLocation}
+                    />
+                    <input type="hidden" value={selectedTable || ""} {...register("tableId")} />
+                  </div>
                 </div>
               </div>
 
-              {/* Special requests */}
-              <Textarea
-                label={t("specialRequests")}
-                placeholder={t("specialRequestsPlaceholder")}
-                {...register("specialRequests")}
-              />
+              {/* Step 3: Occasion & Notes */}
+              <div className="mt-6 overflow-hidden rounded-2xl border border-cream-200 bg-white shadow-sm">
+                <div className="flex items-center gap-3 border-b border-cream-100 bg-gradient-to-r from-brown-800 to-brown-900 px-6 py-4">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-terracotta-500 text-sm font-bold text-white">3</div>
+                  <h2 className="text-lg font-semibold text-white">{t("occasion") || "Occasion & Notes"}</h2>
+                </div>
+                <div className="space-y-6 p-6">
+                  {/* Occasion chips */}
+                  <div>
+                    <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-brown-800">
+                      <Sparkles className="h-4 w-4 text-terracotta-500" />
+                      {t("occasion")}
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {OCCASIONS.map((occ) => (
+                        <button
+                          key={occ}
+                          type="button"
+                          onClick={() => {
+                            const newVal = occ === selectedOccasion ? "" : occ;
+                            setSelectedOccasion(newVal);
+                            setValue("occasion", newVal as typeof occ || undefined);
+                          }}
+                          className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                            selectedOccasion === occ
+                              ? "bg-gradient-to-r from-terracotta-500 to-terracotta-600 text-white shadow-sm shadow-terracotta-500/25"
+                              : "border border-cream-200 bg-white text-brown-600 hover:border-terracotta-300 hover:bg-terracotta-50 hover:text-terracotta-700"
+                          }`}
+                        >
+                          {occ}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-              <Button type="submit" size="lg" className="w-full gap-2" loading={loading}>
-                <CalendarDays className="h-5 w-5" />
-                {t("confirmReservation")}
-              </Button>
+                  {/* Special requests */}
+                  <div>
+                    <Textarea
+                      label={t("specialRequests")}
+                      placeholder={t("specialRequestsPlaceholder")}
+                      className="rounded-xl border-cream-300 bg-cream-50/50 transition-all focus:border-terracotta-500 focus:bg-white focus:ring-2 focus:ring-terracotta-500/20"
+                      rows={4}
+                      {...register("specialRequests")}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit */}
+              <div className="mt-8">
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="w-full gap-3 rounded-xl bg-gradient-to-r from-terracotta-500 to-terracotta-600 py-4 text-base font-bold shadow-lg shadow-terracotta-500/25 transition-all duration-300 hover:from-terracotta-600 hover:to-terracotta-700 hover:shadow-xl hover:shadow-terracotta-500/30"
+                  loading={loading}
+                  disabled={!isAuthenticated}
+                >
+                  <CalendarDays className="h-5 w-5" />
+                  {t("confirmReservation")}
+                </Button>
+              </div>
             </form>
           </div>
 
           {/* Right sidebar */}
-          <aside className="w-full shrink-0 space-y-6 lg:w-72">
+          <aside className="w-full shrink-0 space-y-6 lg:w-80">
+            {/* Logged-in user card */}
+            {isAuthenticated && session?.user && (
+              <div className="overflow-hidden rounded-2xl border border-cream-200 bg-white shadow-sm">
+                <div className="bg-gradient-to-r from-terracotta-500 to-terracotta-600 px-5 py-3">
+                  <h3 className="text-sm font-semibold text-white">{t("reservingAs") || "Reserving As"}</h3>
+                </div>
+                <div className="p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-terracotta-100 to-cream-100 text-lg font-bold text-terracotta-600">
+                      {(session.user.name || "U")[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-brown-900">{session.user.name}</p>
+                      <p className="text-xs text-brown-500">{session.user.email}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Opening Hours */}
             {openingHours.length > 0 && (
-              <Card>
-                <CardContent className="p-5">
-                  <h3 className="flex items-center gap-2 text-sm font-semibold text-brown-900">
-                    <Clock className="h-4 w-4 text-terracotta-500" />
-                    {t("openingHours")}
-                  </h3>
-                  <div className="mt-3 space-y-2">
+              <div className="overflow-hidden rounded-2xl border border-cream-200 bg-white shadow-sm">
+                <div className="flex items-center gap-2 border-b border-cream-100 bg-cream-50 px-5 py-4">
+                  <Clock className="h-4 w-4 text-terracotta-500" />
+                  <h3 className="text-sm font-semibold text-brown-900">{t("openingHours")}</h3>
+                </div>
+                <div className="p-5">
+                  <div className="space-y-2.5">
                     {openingHours.map((item) => (
-                      <div key={item.day} className="flex justify-between text-xs">
-                        <span className="font-medium text-brown-700">{item.day}</span>
-                        <span className="text-brown-600">{item.hours}</span>
+                      <div key={item.day} className={`flex justify-between rounded-lg px-3 py-2 text-xs ${
+                        item.closed ? "bg-error-50" : "bg-cream-50"
+                      }`}>
+                        <span className="font-semibold text-brown-700">{item.day}</span>
+                        <span className={item.closed ? "font-medium text-error-500" : "text-brown-600"}>{item.hours}</span>
                       </div>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
 
             {/* Contact info */}
-            <Card>
-              <CardContent className="p-5">
-                <h3 className="flex items-center gap-2 text-sm font-semibold text-brown-900">
-                  {t("contactUs")}
-                </h3>
-                <div className="mt-3 space-y-3">
-                  <div className="flex items-start gap-2">
-                    <Phone className="mt-0.5 h-4 w-4 text-terracotta-500" />
-                    <a
-                      href={`tel:${currentLocation?.phone || ""}`}
-                      className="text-xs text-brown-700 hover:text-terracotta-500"
-                    >
-                      {currentLocation?.phone || "—"}
-                    </a>
+            <div className="overflow-hidden rounded-2xl border border-cream-200 bg-white shadow-sm">
+              <div className="flex items-center gap-2 border-b border-cream-100 bg-cream-50 px-5 py-4">
+                <h3 className="text-sm font-semibold text-brown-900">{t("contactUs")}</h3>
+              </div>
+              <div className="space-y-4 p-5">
+                <a
+                  href={`tel:${currentLocation?.phone || ""}`}
+                  className="flex items-center gap-3 rounded-xl border border-cream-100 bg-cream-50/50 px-4 py-3 transition-all hover:border-terracotta-200 hover:bg-terracotta-50"
+                >
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-terracotta-100 text-terracotta-600">
+                    <Phone className="h-4 w-4" />
                   </div>
-                  <div className="flex items-start gap-2">
-                    <Mail className="mt-0.5 h-4 w-4 text-terracotta-500" />
-                    <a
-                      href={`mailto:${currentLocation?.email || ""}`}
-                      className="text-xs text-brown-700 hover:text-terracotta-500"
-                    >
-                      {currentLocation?.email || "—"}
-                    </a>
+                  <span className="text-sm font-medium text-brown-700">{currentLocation?.phone || "..."}</span>
+                </a>
+                <a
+                  href={`mailto:${currentLocation?.email || ""}`}
+                  className="flex items-center gap-3 rounded-xl border border-cream-100 bg-cream-50/50 px-4 py-3 transition-all hover:border-terracotta-200 hover:bg-terracotta-50"
+                >
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-terracotta-100 text-terracotta-600">
+                    <Mail className="h-4 w-4" />
                   </div>
-                  <div className="flex items-start gap-2">
-                    <MapPin className="mt-0.5 h-4 w-4 text-terracotta-500" />
-                    <span className="text-xs text-brown-700">
-                      {currentLocation?.address || "—"}
-                    </span>
+                  <span className="text-sm font-medium text-brown-700">{currentLocation?.email || "..."}</span>
+                </a>
+                <div className="flex items-center gap-3 rounded-xl border border-cream-100 bg-cream-50/50 px-4 py-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-terracotta-100 text-terracotta-600">
+                    <MapPin className="h-4 w-4" />
                   </div>
+                  <span className="text-sm font-medium text-brown-700">{currentLocation?.address || "..."}</span>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </aside>
         </div>
       </section>
