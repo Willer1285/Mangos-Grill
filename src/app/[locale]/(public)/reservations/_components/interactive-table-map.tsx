@@ -39,6 +39,11 @@ export function InteractiveTableMap({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!location) {
+      setTables([]);
+      setLoading(false);
+      return;
+    }
     async function fetchTables() {
       setLoading(true);
       try {
@@ -54,11 +59,11 @@ export function InteractiveTableMap({
       }
     }
     fetchTables();
-  }, []);
+  }, [location]);
 
   const filtered = location
     ? tables.filter((t) => t.location === location)
-    : tables;
+    : [];
 
   function canSelect(table: TableData): boolean {
     return table.status === "Available" && table.capacity >= partySize;
@@ -68,6 +73,14 @@ export function InteractiveTableMap({
     return (
       <div className="flex h-40 items-center justify-center rounded-xl border border-cream-300 bg-cream-50">
         <Loader2 className="h-5 w-5 animate-spin text-brown-400" />
+      </div>
+    );
+  }
+
+  if (!location) {
+    return (
+      <div className="flex h-40 items-center justify-center rounded-xl border border-cream-300 bg-cream-50">
+        <p className="text-sm text-brown-500">{t("selectLocationFirst")}</p>
       </div>
     );
   }

@@ -115,6 +115,7 @@
     "failedCreate": "No se pudo crear la reservacion.",
     "somethingWrong": "Algo salio mal. Intenta de nuevo.",
     "noTablesAvailable": "No hay mesas disponibles para esta ubicacion.",
+    "selectLocationFirst": "Selecciona una ubicacion para ver las mesas disponibles.",
     "seats": "asientos",
     "table": "Mesa",
     "available": "Disponible",

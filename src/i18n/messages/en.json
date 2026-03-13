@@ -115,6 +115,7 @@
     "failedCreate": "Failed to create reservation.",
     "somethingWrong": "Something went wrong. Please try again.",
     "noTablesAvailable": "No tables available for this location.",
+    "selectLocationFirst": "Select a location to see available tables.",
     "seats": "seats",
     "table": "Table",
     "available": "Available",

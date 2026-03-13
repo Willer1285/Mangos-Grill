@@ -176,7 +176,7 @@ export default function ReservationsPage() {
                 <h2 className="text-lg font-bold text-white">
                   {t("loginRequiredTitle")}
                 </h2>
-                <p className="mt-0.5 text-sm text-cream-300/80">
+                <p className="mt-0.5 text-sm text-cream-100">
                   {t("loginRequiredDesc")}
                 </p>
               </div>
@@ -213,12 +213,12 @@ export default function ReservationsPage() {
         <div className="relative mx-auto max-w-3xl px-4">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-terracotta-500/30 bg-terracotta-500/10 px-4 py-1.5">
             <UtensilsCrossed className="h-4 w-4 text-terracotta-400" />
-            <span className="text-sm font-medium text-terracotta-300">{t("title")}</span>
+            <span className="text-sm font-medium text-terracotta-400">{t("title")}</span>
           </div>
           <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">
             {t("title")}
           </h1>
-          <p className="mx-auto mt-4 max-w-xl text-lg text-cream-300/80">
+          <p className="mx-auto mt-4 max-w-xl text-lg text-cream-100">
             {t("subtitle")}
           </p>
         </div>
@@ -462,7 +462,7 @@ export default function ReservationsPage() {
           </div>
 
           {/* Right sidebar */}
-          <aside className="w-full shrink-0 space-y-6 lg:w-80">
+          <aside className="w-full shrink-0 lg:w-80 lg:self-start lg:sticky lg:top-6 space-y-6">
             {/* Logged-in user card */}
             {isAuthenticated && session?.user && (
               <div className="overflow-hidden rounded-2xl border border-cream-200 bg-white shadow-sm">
