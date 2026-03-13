@@ -91,26 +91,21 @@ const CURRENCIES = [
   { code: "UAH", name: "Ukrainian Hryvnia", symbol: "\u20B4" },
 ];
 
-const TIMEZONES = (() => {
-  try {
-    return Intl.supportedValuesOf("timeZone");
-  } catch {
-    return [
-      "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles",
-      "America/Anchorage", "Pacific/Honolulu", "America/Caracas", "America/Bogota",
-      "America/Lima", "America/Santiago", "America/Argentina/Buenos_Aires", "America/Sao_Paulo",
-      "America/Mexico_City", "America/Toronto", "Europe/London", "Europe/Paris",
-      "Europe/Berlin", "Europe/Madrid", "Europe/Rome", "Europe/Moscow",
-      "Asia/Tokyo", "Asia/Shanghai", "Asia/Kolkata", "Asia/Dubai",
-      "Australia/Sydney", "Pacific/Auckland",
-    ];
-  }
-})();
+const TIMEZONES_FALLBACK = [
+  "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles",
+  "America/Anchorage", "Pacific/Honolulu", "America/Caracas", "America/Bogota",
+  "America/Lima", "America/Santiago", "America/Argentina/Buenos_Aires", "America/Sao_Paulo",
+  "America/Mexico_City", "America/Toronto", "Europe/London", "Europe/Paris",
+  "Europe/Berlin", "Europe/Madrid", "Europe/Rome", "Europe/Moscow",
+  "Asia/Tokyo", "Asia/Shanghai", "Asia/Kolkata", "Asia/Dubai",
+  "Australia/Sydney", "Pacific/Auckland",
+];
 
 export default function SettingsPage() {
   const [currency, setCurrency] = useState("USD");
   const [timezone, setTimezone] = useState("America/New_York");
   const [currencySearch, setCurrencySearch] = useState("");
+  const [timezones, setTimezones] = useState(TIMEZONES_FALLBACK);
   const [timezoneSearch, setTimezoneSearch] = useState("");
   const [orderNotifications, setOrderNotifications] = useState(true);
   const [reservationNotifications, setReservationNotifications] = useState(true);
@@ -132,6 +127,13 @@ export default function SettingsPage() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingLogoDark, setUploadingLogoDark] = useState(false);
   const [savingBrand, setSavingBrand] = useState(false);
+
+  useEffect(() => {
+    try {
+      const allTz = Intl.supportedValuesOf("timeZone");
+      if (allTz.length > 0) setTimezones(allTz);
+    } catch { /* use fallback */ }
+  }, []);
 
   useEffect(() => {
     async function loadConfig() {
@@ -294,8 +296,8 @@ export default function SettingsPage() {
     : CURRENCIES;
 
   const filteredTimezones = timezoneSearch
-    ? TIMEZONES.filter((tz) => tz.toLowerCase().includes(timezoneSearch.toLowerCase()))
-    : TIMEZONES;
+    ? timezones.filter((tz) => tz.toLowerCase().includes(timezoneSearch.toLowerCase()))
+    : timezones;
 
   const currentCurrency = CURRENCIES.find((c) => c.code === currency);
 
