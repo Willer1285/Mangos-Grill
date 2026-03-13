@@ -22,7 +22,9 @@
     "subtotal": "Subtotal",
     "total": "Total",
     "closed": "Cerrado",
-    "addedToCart": "{name} agregado al carrito"
+    "addedToCart": "{name} agregado al carrito",
+    "login": "Iniciar Sesion",
+    "register": "Registrarse"
   },
   "nav": {
     "home": "Inicio",
@@ -117,7 +119,9 @@
     "table": "Mesa",
     "available": "Disponible",
     "occupied": "Ocupada",
-    "reserved": "Reservada"
+    "reserved": "Reservada",
+    "loginRequiredTitle": "Inicio de Sesion Requerido",
+    "loginRequiredDesc": "Necesitas iniciar sesion o registrarte para confirmar tu reservacion. Esto nos permite gestionar tus reservas y enviarte los detalles de confirmacion."
   },
   "jobs": {
     "title": "Unete a Nuestra Familia",

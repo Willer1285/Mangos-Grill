@@ -152,10 +152,61 @@ export default function ReservationsPage() {
     : [];
 
   const isAuthenticated = authStatus === "authenticated" && !!session?.user;
-  const isLoadingAuth = authStatus === "loading";
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+
+  function handleFormSubmit(data: ReservationInput) {
+    if (!isAuthenticated) {
+      setShowLoginPrompt(true);
+      return;
+    }
+    onSubmit(data);
+  }
 
   return (
     <>
+      {/* Login Prompt Modal */}
+      {showLoginPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowLoginPrompt(false)}>
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-terracotta-200 bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-4 bg-gradient-to-r from-brown-800 to-brown-900 px-6 py-5">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-terracotta-500 shadow-lg">
+                <LogIn className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-white">
+                  {t("loginRequiredTitle")}
+                </h2>
+                <p className="mt-0.5 text-sm text-cream-300/80">
+                  {t("loginRequiredDesc")}
+                </p>
+              </div>
+            </div>
+            <div className="space-y-4 p-6">
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Link href="/login" className="flex-1">
+                  <Button size="lg" className="w-full gap-2 shadow-md shadow-terracotta-500/20">
+                    <LogIn className="h-4 w-4" />
+                    {tc("login")}
+                  </Button>
+                </Link>
+                <Link href="/register" className="flex-1">
+                  <Button variant="secondary" size="lg" className="w-full">
+                    {tc("register")}
+                  </Button>
+                </Link>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowLoginPrompt(false)}
+                className="w-full text-center text-sm text-brown-500 hover:text-brown-700 transition-colors"
+              >
+                {tc("cancel")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hero Header */}
       <section className="relative overflow-hidden bg-gradient-to-br from-brown-900 via-brown-800 to-brown-900 py-16 text-center">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDE4YzMuMzE0IDAgNi0yLjY4NiA2LTZzLTIuNjg2LTYtNi02LTYgMi42ODYtNiA2IDIuNjg2IDYgNiA2eiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
@@ -174,42 +225,10 @@ export default function ReservationsPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        {/* Login Required Banner */}
-        {!isLoadingAuth && !isAuthenticated && (
-          <div className="mb-10 overflow-hidden rounded-2xl border border-terracotta-200 bg-gradient-to-r from-terracotta-50 via-cream-50 to-terracotta-50 shadow-lg">
-            <div className="flex flex-col items-center gap-6 p-8 sm:flex-row sm:p-10">
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-terracotta-500 to-terracotta-600 shadow-lg shadow-terracotta-500/25">
-                <LogIn className="h-10 w-10 text-white" />
-              </div>
-              <div className="flex-1 text-center sm:text-left">
-                <h2 className="text-xl font-bold text-brown-900">
-                  {t("loginRequired") || "Login Required"}
-                </h2>
-                <p className="mt-2 text-sm text-brown-600 leading-relaxed">
-                  {t("loginRequiredDesc") || "You need to be logged in to make a reservation. This allows us to manage your bookings and send you confirmation details."}
-                </p>
-                <div className="mt-5 flex flex-wrap justify-center gap-3 sm:justify-start">
-                  <Link href="/login">
-                    <Button size="lg" className="gap-2 shadow-md shadow-terracotta-500/20">
-                      <LogIn className="h-4 w-4" />
-                      {tc("login") || "Log In"}
-                    </Button>
-                  </Link>
-                  <Link href="/register">
-                    <Button variant="secondary" size="lg">
-                      {tc("register") || "Register"}
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         <div className="flex flex-col gap-10 lg:flex-row">
           {/* Main Reservation Form */}
           <div className="flex-1">
-            <form onSubmit={handleSubmit(onSubmit)} className={`space-y-0 ${!isAuthenticated ? "pointer-events-none select-none opacity-40 blur-[2px]" : ""}`}>
+            <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-0">
 
               {/* Step 1: Location & Date */}
               <div className="overflow-hidden rounded-2xl border border-cream-200 bg-white shadow-sm">
@@ -434,7 +453,6 @@ export default function ReservationsPage() {
                   size="lg"
                   className="w-full gap-3 rounded-xl bg-gradient-to-r from-terracotta-500 to-terracotta-600 py-4 text-base font-bold shadow-lg shadow-terracotta-500/25 transition-all duration-300 hover:from-terracotta-600 hover:to-terracotta-700 hover:shadow-xl hover:shadow-terracotta-500/30"
                   loading={loading}
-                  disabled={!isAuthenticated}
                 >
                   <CalendarDays className="h-5 w-5" />
                   {t("confirmReservation")}

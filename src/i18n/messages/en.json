@@ -22,7 +22,9 @@
     "subtotal": "Subtotal",
     "total": "Total",
     "closed": "Closed",
-    "addedToCart": "{name} added to cart"
+    "addedToCart": "{name} added to cart",
+    "login": "Log In",
+    "register": "Sign Up"
   },
   "nav": {
     "home": "Home",
@@ -117,7 +119,9 @@
     "table": "Table",
     "available": "Available",
     "occupied": "Occupied",
-    "reserved": "Reserved"
+    "reserved": "Reserved",
+    "loginRequiredTitle": "Login Required",
+    "loginRequiredDesc": "You need to log in or sign up to confirm your reservation. This allows us to manage your bookings and send you confirmation details."
   },
   "jobs": {
     "title": "Join Our Familia",
