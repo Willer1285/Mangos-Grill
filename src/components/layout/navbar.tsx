@@ -259,7 +259,7 @@ export function Navbar({ user, cartCount = 0, notificationCount = 0, onCartClick
 
             {/* Cart */}
             <button
-              className="relative rounded-full bg-terracotta-500 p-2 text-white shadow-sm transition-colors hover:bg-terracotta-600"
+              className="relative rounded-lg bg-terracotta-500 p-2 text-white shadow-sm transition-colors hover:bg-terracotta-600"
               onClick={onCartClick}
               aria-label={t("cart")}
             >

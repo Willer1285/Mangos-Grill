@@ -462,7 +462,7 @@ export default function ReservationsPage() {
           </div>
 
           {/* Right sidebar */}
-          <aside className="w-full shrink-0 lg:w-80 lg:self-start lg:sticky lg:top-6 space-y-6">
+          <aside className="w-full shrink-0 lg:w-80 lg:self-start lg:sticky lg:top-24 space-y-6">
             {/* Logged-in user card */}
             {isAuthenticated && session?.user && (
               <div className="overflow-hidden rounded-2xl border border-cream-200 bg-white shadow-sm">
