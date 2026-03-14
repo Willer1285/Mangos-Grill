@@ -344,7 +344,14 @@
     "addAddress": "Add Address",
     "defaultAddress": "Default",
     "newReservation": "New Reservation",
-    "dishSaved": "dishes saved"
+    "dishSaved": "dishes saved",
+    "noReservations": "No upcoming reservations",
+    "makeReservation": "Make a reservation",
+    "quickLinks": "Quick Links",
+    "browseMenu": "Browse Menu",
+    "bookTable": "Book a Table",
+    "orderHistory": "Order History",
+    "myProfile": "My Profile"
   },
   "footer": {
     "description": "Bringing authentic Venezuelan cuisine to the heart of Texas since 2018. Every dish tells a story of home.",

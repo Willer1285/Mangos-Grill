@@ -343,7 +343,14 @@
     "addAddress": "Agregar Direccion",
     "defaultAddress": "Predeterminada",
     "newReservation": "Nueva Reservacion",
-    "dishSaved": "platos guardados"
+    "dishSaved": "platos guardados",
+    "noReservations": "No hay reservaciones proximas",
+    "makeReservation": "Hacer una reservacion",
+    "quickLinks": "Enlaces Rapidos",
+    "browseMenu": "Ver Menu",
+    "bookTable": "Reservar Mesa",
+    "orderHistory": "Historial de Pedidos",
+    "myProfile": "Mi Perfil"
   },
   "footer": {
     "description": "Trayendo cocina venezolana autentica al corazon de Texas desde 2018. Cada plato cuenta una historia de hogar.",
