@@ -1,4 +1,4 @@
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui";
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 export const revalidate = 300; // Revalidate every 5 minutes
 
 export default async function HomePage() {
-  const t = useTranslations("home");
+  const t = await getTranslations("home");
   const { categories, bestSellers, galleryItems, reviews, faqs, ratings } =
     await getHomepageData();
 
