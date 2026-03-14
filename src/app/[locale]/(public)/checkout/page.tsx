@@ -157,105 +157,106 @@ export default function CheckoutPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Location Selector */}
-        {locations.length > 1 && (
-          <div className="mb-8">
-            <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-brown-900">
-              <MapPin className="h-4 w-4 text-terracotta-500" />
-              {t("selectLocation")}
-            </label>
-            <div className="flex flex-wrap gap-3">
-              {locations.map((loc) => (
-                <button
-                  key={loc._id}
-                  type="button"
-                  onClick={() => setSelectedLocation(loc.name)}
-                  className={`rounded-xl border-2 px-5 py-3 text-sm font-medium transition-all ${
-                    selectedLocation === loc.name
-                      ? "border-terracotta-500 bg-terracotta-500/10 text-terracotta-600"
-                      : "border-cream-200 bg-white text-brown-700 hover:border-terracotta-300"
-                  }`}
-                >
-                  <span className="font-semibold">{loc.name}</span>
-                  <span className="mt-0.5 block text-xs text-brown-500">{loc.address}</span>
-                </button>
-              ))}
-            </div>
-            {!selectedLocation && (
-              <p className="mt-2 text-xs text-error-500">{t("selectLocationRequired")}</p>
-            )}
-          </div>
-        )}
-
-        {/* Order Type Selection */}
-        <div className="mb-8">
-          <label className="mb-3 block text-sm font-semibold text-brown-900">
-            {t("orderType") || "Order Type"}
-          </label>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <button
-              type="button"
-              onClick={() => setOrderType("pickup")}
-              className={`flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-all ${
-                orderType === "pickup"
-                  ? "border-terracotta-500 bg-terracotta-500/5 shadow-sm"
-                  : "border-cream-300 hover:border-cream-400"
-              }`}
-            >
-              <div
-                className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                  orderType === "pickup"
-                    ? "bg-terracotta-500 text-white"
-                    : "bg-cream-200 text-brown-600"
-                }`}
-              >
-                <Store className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-brown-900">{t("pickup") || "Pickup"}</p>
-                <p className="text-xs text-brown-500">
-                  {t("pickupDesc") || "Pick up your order at the selected location"}
-                </p>
-              </div>
-            </button>
-            <button
-              type="button"
-              onClick={() => setOrderType("delivery")}
-              className={`flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-all ${
-                orderType === "delivery"
-                  ? "border-terracotta-500 bg-terracotta-500/5 shadow-sm"
-                  : "border-cream-300 hover:border-cream-400"
-              }`}
-            >
-              <div
-                className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                  orderType === "delivery"
-                    ? "bg-terracotta-500 text-white"
-                    : "bg-cream-200 text-brown-600"
-                }`}
-              >
-                <Truck className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-brown-900">{t("delivery") || "Delivery"}</p>
-                <p className="text-xs text-brown-500">
-                  {t("deliveryDesc") || "We deliver to your address"}
-                </p>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        {/* Stepper */}
-        <Stepper
-          steps={checkoutSteps}
-          currentStep={currentStep}
-          className="mb-10 w-full"
-        />
-
         <div className="flex flex-col gap-8 lg:flex-row">
           {/* Main content */}
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 rounded-2xl border border-cream-200 bg-white p-6">
+            {/* Location Selector */}
+            {locations.length > 1 && (
+              <div className="mb-8">
+                <label className="mb-3 flex items-center gap-2 text-sm font-semibold text-brown-900">
+                  <MapPin className="h-4 w-4 text-terracotta-500" />
+                  {t("selectLocation")}
+                </label>
+                <div className="flex flex-wrap gap-3">
+                  {locations.map((loc) => (
+                    <button
+                      key={loc._id}
+                      type="button"
+                      onClick={() => setSelectedLocation(loc.name)}
+                      className={`rounded-xl border-2 px-5 py-3 text-sm font-medium transition-all ${
+                        selectedLocation === loc.name
+                          ? "border-terracotta-500 bg-terracotta-500/10 text-terracotta-600"
+                          : "border-cream-200 bg-white text-brown-700 hover:border-terracotta-300"
+                      }`}
+                    >
+                      <span className="font-semibold">{loc.name}</span>
+                      <span className="mt-0.5 block text-xs text-brown-500">{loc.address}</span>
+                    </button>
+                  ))}
+                </div>
+                {!selectedLocation && (
+                  <p className="mt-2 text-xs text-error-500">{t("selectLocationRequired")}</p>
+                )}
+              </div>
+            )}
+
+            {/* Order Type Selection */}
+            <div className="mb-8">
+              <label className="mb-3 block text-sm font-semibold text-brown-900">
+                {t("orderType") || "Order Type"}
+              </label>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => setOrderType("pickup")}
+                  className={`flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-all ${
+                    orderType === "pickup"
+                      ? "border-terracotta-500 bg-terracotta-500/5 shadow-sm"
+                      : "border-cream-300 hover:border-cream-400"
+                  }`}
+                >
+                  <div
+                    className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                      orderType === "pickup"
+                        ? "bg-terracotta-500 text-white"
+                        : "bg-cream-200 text-brown-600"
+                    }`}
+                  >
+                    <Store className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-brown-900">{t("pickup") || "Pickup"}</p>
+                    <p className="text-xs text-brown-500">
+                      {t("pickupDesc") || "Pick up your order at the selected location"}
+                    </p>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOrderType("delivery")}
+                  className={`flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-all ${
+                    orderType === "delivery"
+                      ? "border-terracotta-500 bg-terracotta-500/5 shadow-sm"
+                      : "border-cream-300 hover:border-cream-400"
+                  }`}
+                >
+                  <div
+                    className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                      orderType === "delivery"
+                        ? "bg-terracotta-500 text-white"
+                        : "bg-cream-200 text-brown-600"
+                    }`}
+                  >
+                    <Truck className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-brown-900">{t("delivery") || "Delivery"}</p>
+                    <p className="text-xs text-brown-500">
+                      {t("deliveryDesc") || "We deliver to your address"}
+                    </p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Stepper */}
+            <Stepper
+              steps={checkoutSteps}
+              currentStep={currentStep}
+              className="mb-10 w-full"
+            />
+
+            {/* Step Content */}
             {currentStep === 1 && (
               <ShippingStep
                 orderType={orderType}
@@ -292,7 +293,7 @@ export default function CheckoutPage() {
             )}
           </div>
 
-          {/* Sidebar - Order Summary */}
+          {/* Sidebar - Order Summary (sticky) */}
           <aside className="w-full shrink-0 lg:w-80 lg:self-start lg:sticky lg:top-24">
             <OrderSummarySidebar
               deliveryOption={isPickup ? "standard" : deliveryOption}
