@@ -6,7 +6,6 @@ import {
   useState,
   useEffect,
   useCallback,
-  useMemo,
   type ReactNode,
 } from "react";
 import { useSession } from "next-auth/react";
@@ -68,13 +67,8 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     [session?.user]
   );
 
-  const value = useMemo(
-    () => ({ favorites, isFavorite, toggleFavorite, loading }),
-    [favorites, isFavorite, toggleFavorite, loading]
-  );
-
   return (
-    <FavoritesContext.Provider value={value}>
+    <FavoritesContext.Provider value={{ favorites, isFavorite, toggleFavorite, loading }}>
       {children}
     </FavoritesContext.Provider>
   );

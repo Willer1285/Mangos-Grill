@@ -1,8 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useLocale } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { Button } from "@/components/ui";
+import { Button, Spinner } from "@/components/ui";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui";
 import { ChevronRight } from "lucide-react";
 
@@ -12,8 +13,26 @@ interface FAQItem {
   answer: { en: string; es: string };
 }
 
-export function HomepageFAQs({ faqs }: { faqs: FAQItem[] }) {
+export function HomepageFAQs() {
+  const [faqs, setFaqs] = useState<FAQItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const locale = useLocale() as "en" | "es";
+
+  useEffect(() => {
+    fetch("/api/faqs")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setFaqs(data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="mt-8 flex justify-center py-8">
+        <Spinner />
+      </div>
+    );
+  }
 
   if (faqs.length === 0) return null;
 

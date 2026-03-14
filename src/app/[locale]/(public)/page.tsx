@@ -1,4 +1,4 @@
-import { getTranslations } from "next-intl/server";
+import { useTranslations } from "next-intl";
 import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui";
@@ -10,7 +10,6 @@ import { HomepageFAQs } from "./_components/homepage-faqs";
 import { ReservationCta } from "./_components/reservation-cta";
 import { restaurantSchema } from "@/lib/seo/schema";
 import { ChevronRight } from "lucide-react";
-import { getHomepageData } from "./_lib/get-homepage-data";
 
 export const metadata: Metadata = {
   title: "Mango's Grill | Authentic Venezuelan Cuisine in Texas",
@@ -18,12 +17,8 @@ export const metadata: Metadata = {
     "Experience the best arepas, pabellon criollo and authentic Venezuelan food in Houston, Austin and Dallas. Order online or reserve your table today.",
 };
 
-export const revalidate = 300; // Revalidate every 5 minutes
-
-export default async function HomePage() {
-  const t = await getTranslations("home");
-  const { categories, bestSellers, galleryItems, reviews, faqs, ratings } =
-    await getHomepageData();
+export default function HomePage() {
+  const t = useTranslations("home");
 
   return (
     <>
@@ -55,7 +50,7 @@ export default async function HomePage() {
       {/* Category Icons */}
       <section className="py-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <HomepageCategories categories={categories} />
+          <HomepageCategories />
         </div>
       </section>
 
@@ -69,7 +64,7 @@ export default async function HomePage() {
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-brown-600">
             Each dish is a celebration of Venezuelan culinary heritage, made with fresh ingredients and authentic recipes.
           </p>
-          <HomepageBestSellers dishes={bestSellers} ratings={ratings} />
+          <HomepageBestSellers />
         </div>
       </section>
 
@@ -85,7 +80,7 @@ export default async function HomePage() {
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-brown-600">
             Moments, dishes, and smiles from our kitchen to your table.
           </p>
-          <HomepageGallery items={galleryItems} />
+          <HomepageGallery />
         </div>
       </section>
 
@@ -96,7 +91,7 @@ export default async function HomePage() {
             What Our Guests Say
           </p>
           <h2 className="mt-2 mb-10 text-center text-3xl font-bold text-brown-900">A Taste of Home</h2>
-          <HomepageReviews reviews={reviews} />
+          <HomepageReviews />
         </div>
       </section>
 
@@ -115,7 +110,7 @@ export default async function HomePage() {
           <p className="mx-auto mt-3 max-w-lg text-center text-sm text-brown-600">
             Everything you need to know about Mango&apos;s Grill.
           </p>
-          <HomepageFAQs faqs={faqs} />
+          <HomepageFAQs />
         </div>
       </section>
     </>

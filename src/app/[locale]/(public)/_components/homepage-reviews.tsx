@@ -15,9 +15,17 @@ interface ReviewItem {
   createdAt: string;
 }
 
-export function HomepageReviews({ reviews }: { reviews: ReviewItem[] }) {
+export function HomepageReviews() {
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/reviews/homepage")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setReviews(data))
+      .catch(() => {});
+  }, []);
 
   // Infinite scroll animation
   useEffect(() => {
@@ -26,11 +34,12 @@ export function HomepageReviews({ reviews }: { reviews: ReviewItem[] }) {
 
     let animId: number;
     let pos = 0;
-    const speed = 0.5;
+    const speed = 0.5; // px per frame
 
     function step() {
       if (!paused && el) {
         pos += speed;
+        // Reset when we've scrolled through the first set
         if (pos >= el.scrollWidth / 2) {
           pos = 0;
         }
@@ -44,6 +53,7 @@ export function HomepageReviews({ reviews }: { reviews: ReviewItem[] }) {
 
   if (reviews.length === 0) return null;
 
+  // Duplicate reviews for seamless infinite scroll
   const displayReviews = reviews.length >= 2 ? [...reviews, ...reviews] : reviews;
 
   return (

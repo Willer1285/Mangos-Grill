@@ -29,8 +29,7 @@ import { useBrand } from "@/lib/brand/brand-context";
 import Image from "next/image";
 import { NotificationsPopover } from "./notifications-popover";
 import { LanguageSwitcher } from "./language-switcher";
-import { m, AnimatePresence } from "framer-motion";
-import { LazyMotionProvider } from "@/lib/framer-lazy";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface NavbarProps {
   user?: {
@@ -61,25 +60,23 @@ function MenuToggle({ isOpen, onClick }: { isOpen: boolean; onClick: () => void 
       onClick={onClick}
       aria-label={isOpen ? "Close menu" : "Open menu"}
     >
-      <LazyMotionProvider>
-        <div className="flex h-5 w-6 flex-col items-center justify-center">
-          <m.span
-            className="absolute h-[2px] w-5 rounded-full bg-cream-200"
-            animate={isOpen ? { rotate: 45, y: 0 } : { rotate: 0, y: -6 }}
-            transition={{ duration: 0.35, ease: [0.76, 0, 0.24, 1] }}
-          />
-          <m.span
-            className="absolute h-[2px] rounded-full bg-cream-200"
-            animate={isOpen ? { width: 0, opacity: 0 } : { width: 12, opacity: 1 }}
-            transition={{ duration: 0.25, ease: [0.76, 0, 0.24, 1] }}
-          />
-          <m.span
-            className="absolute h-[2px] w-5 rounded-full bg-cream-200"
-            animate={isOpen ? { rotate: -45, y: 0 } : { rotate: 0, y: 6 }}
-            transition={{ duration: 0.35, ease: [0.76, 0, 0.24, 1] }}
-          />
-        </div>
-      </LazyMotionProvider>
+      <div className="flex h-5 w-6 flex-col items-center justify-center">
+        <motion.span
+          className="absolute h-[2px] w-5 rounded-full bg-cream-200"
+          animate={isOpen ? { rotate: 45, y: 0 } : { rotate: 0, y: -6 }}
+          transition={{ duration: 0.35, ease: [0.76, 0, 0.24, 1] }}
+        />
+        <motion.span
+          className="absolute h-[2px] rounded-full bg-cream-200"
+          animate={isOpen ? { width: 0, opacity: 0 } : { width: 12, opacity: 1 }}
+          transition={{ duration: 0.25, ease: [0.76, 0, 0.24, 1] }}
+        />
+        <motion.span
+          className="absolute h-[2px] w-5 rounded-full bg-cream-200"
+          animate={isOpen ? { rotate: -45, y: 0 } : { rotate: 0, y: 6 }}
+          transition={{ duration: 0.35, ease: [0.76, 0, 0.24, 1] }}
+        />
+      </div>
     </button>
   );
 }
@@ -111,10 +108,9 @@ function MobileMenuOverlay({
   }, [isOpen]);
 
   return (
-    <LazyMotionProvider>
     <AnimatePresence>
       {isOpen && (
-        <m.div
+        <motion.div
           className="fixed inset-0 z-40 flex flex-col lg:hidden"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -122,7 +118,7 @@ function MobileMenuOverlay({
           transition={{ duration: 0.3, ease: [0.76, 0, 0.24, 1] }}
         >
           {/* Glassmorphism background */}
-          <m.div
+          <motion.div
             className="absolute inset-0 bg-brown-900/80 backdrop-blur-xl"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -131,7 +127,7 @@ function MobileMenuOverlay({
           />
 
           {/* Content slides from top */}
-          <m.nav
+          <motion.nav
             className="relative flex flex-1 flex-col items-center justify-center gap-2 px-8 pt-20"
             initial={{ y: "-30%", opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -139,7 +135,7 @@ function MobileMenuOverlay({
             transition={{ duration: 0.45, ease: [0.76, 0, 0.24, 1] }}
           >
             {navLinks.map((link, i) => (
-              <m.div
+              <motion.div
                 key={link.labelKey}
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -157,11 +153,11 @@ function MobileMenuOverlay({
                 >
                   {t(link.labelKey)}
                 </Link>
-              </m.div>
+              </motion.div>
             ))}
 
             {/* Decorative separator */}
-            <m.div
+            <motion.div
               className="my-4 h-px w-16 bg-cream-400/30"
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
@@ -171,7 +167,7 @@ function MobileMenuOverlay({
 
             {/* Login button in mobile menu for non-authenticated users */}
             {!user && (
-              <m.div
+              <motion.div
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: -20, opacity: 0 }}
@@ -182,11 +178,11 @@ function MobileMenuOverlay({
                     {t("login")}
                   </button>
                 </Link>
-              </m.div>
+              </motion.div>
             )}
 
             {/* Social icons */}
-            <m.div
+            <motion.div
               className="mt-4 flex items-center gap-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -210,12 +206,11 @@ function MobileMenuOverlay({
                   </svg>
                 </a>
               ))}
-            </m.div>
-          </m.nav>
-        </m.div>
+            </motion.div>
+          </motion.nav>
+        </motion.div>
       )}
     </AnimatePresence>
-    </LazyMotionProvider>
   );
 }
 

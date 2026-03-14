@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useMemo, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
 
 export interface BrandConfig {
   brandName: string;
@@ -49,9 +49,7 @@ export function BrandProvider({ children }: { children: ReactNode }) {
       });
   }, []);
 
-  const value = useMemo(() => brand, [brand.brandName, brand.logo, brand.logoDark, brand.logoSize, brand.displayMode, brand.currency, brand.timezone, brand.loaded]);
-
-  return <BrandContext.Provider value={value}>{children}</BrandContext.Provider>;
+  return <BrandContext.Provider value={brand}>{children}</BrandContext.Provider>;
 }
 
 export function useBrand() {
