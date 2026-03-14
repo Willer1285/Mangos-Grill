@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import Image from "next/image";
+import { LazyMotionProvider } from "@/lib/framer-lazy";
 import { Link } from "@/i18n/navigation";
 import { Card, Spinner, Badge } from "@/components/ui";
 import { Plus, ArrowRight, UtensilsCrossed, Star, Heart } from "lucide-react";
@@ -85,13 +86,16 @@ export default function MenuPage() {
     fetchData();
   }, []);
 
-  const filtered =
-    activeCategory === "all"
-      ? products
-      : products.filter((item) => {
-          const catId = typeof item.category === "object" ? item.category._id : item.category;
-          return catId === activeCategory;
-        });
+  const filtered = useMemo(
+    () =>
+      activeCategory === "all"
+        ? products
+        : products.filter((item) => {
+            const catId = typeof item.category === "object" ? item.category._id : item.category;
+            return catId === activeCategory;
+          }),
+    [products, activeCategory]
+  );
 
   return (
     <>
@@ -158,6 +162,7 @@ export default function MenuPage() {
                 {t("noProducts")}
               </div>
             ) : (
+              <LazyMotionProvider>
               <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {filtered.map((item, i) => {
                   const catName = typeof item.category === "object" ? (item.category.name[locale] || item.category.name.en) : "";
@@ -165,16 +170,16 @@ export default function MenuPage() {
                   const itemDesc = item.description[locale] || item.description.en;
                   const r = ratings[item._id];
                   return (
-                    <motion.div
+                    <m.div
                       key={item._id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: i * 0.05 }}
+                      transition={{ duration: 0.3, delay: Math.min(i * 0.05, 0.3) }}
                     >
                       <Card className="group flex h-full flex-col overflow-hidden transition-shadow hover:shadow-md">
                         <div className="relative aspect-[4/3] bg-cream-200">
                           {item.image ? (
-                            <Image src={item.image} alt={itemName} fill className="object-cover transition-transform group-hover:scale-105" />
+                            <Image src={item.image} alt={itemName} fill sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw" className="object-cover transition-transform group-hover:scale-105" loading="lazy" />
                           ) : (
                             <div className="flex h-full items-center justify-center text-sm text-brown-400">
                               {itemName}
@@ -264,10 +269,11 @@ export default function MenuPage() {
                           </div>
                         </div>
                       </Card>
-                    </motion.div>
+                    </m.div>
                   );
                 })}
               </div>
+              </LazyMotionProvider>
             )}
           </div>
         </div>

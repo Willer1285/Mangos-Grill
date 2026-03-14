@@ -10,6 +10,7 @@ import { HomepageFAQs } from "./_components/homepage-faqs";
 import { ReservationCta } from "./_components/reservation-cta";
 import { restaurantSchema } from "@/lib/seo/schema";
 import { ChevronRight } from "lucide-react";
+import { getHomepageData } from "./_lib/get-homepage-data";
 
 export const metadata: Metadata = {
   title: "Mango's Grill | Authentic Venezuelan Cuisine in Texas",
@@ -17,8 +18,12 @@ export const metadata: Metadata = {
     "Experience the best arepas, pabellon criollo and authentic Venezuelan food in Houston, Austin and Dallas. Order online or reserve your table today.",
 };
 
-export default function HomePage() {
+export const revalidate = 300; // Revalidate every 5 minutes
+
+export default async function HomePage() {
   const t = useTranslations("home");
+  const { categories, bestSellers, galleryItems, reviews, faqs, ratings } =
+    await getHomepageData();
 
   return (
     <>
@@ -50,7 +55,7 @@ export default function HomePage() {
       {/* Category Icons */}
       <section className="py-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <HomepageCategories />
+          <HomepageCategories categories={categories} />
         </div>
       </section>
 
@@ -64,7 +69,7 @@ export default function HomePage() {
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-brown-600">
             Each dish is a celebration of Venezuelan culinary heritage, made with fresh ingredients and authentic recipes.
           </p>
-          <HomepageBestSellers />
+          <HomepageBestSellers dishes={bestSellers} ratings={ratings} />
         </div>
       </section>
 
@@ -80,7 +85,7 @@ export default function HomePage() {
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-brown-600">
             Moments, dishes, and smiles from our kitchen to your table.
           </p>
-          <HomepageGallery />
+          <HomepageGallery items={galleryItems} />
         </div>
       </section>
 
@@ -91,7 +96,7 @@ export default function HomePage() {
             What Our Guests Say
           </p>
           <h2 className="mt-2 mb-10 text-center text-3xl font-bold text-brown-900">A Taste of Home</h2>
-          <HomepageReviews />
+          <HomepageReviews reviews={reviews} />
         </div>
       </section>
 
@@ -110,7 +115,7 @@ export default function HomePage() {
           <p className="mx-auto mt-3 max-w-lg text-center text-sm text-brown-600">
             Everything you need to know about Mango&apos;s Grill.
           </p>
-          <HomepageFAQs />
+          <HomepageFAQs faqs={faqs} />
         </div>
       </section>
     </>

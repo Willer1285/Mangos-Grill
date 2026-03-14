@@ -1,8 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Spinner } from "@/components/ui";
 
 interface GalleryItem {
   _id: string;
@@ -10,29 +8,9 @@ interface GalleryItem {
   caption?: string;
 }
 
-export function HomepageGallery() {
-  const [items, setItems] = useState<GalleryItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/gallery")
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data) => setItems(data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="mt-8 flex justify-center py-8">
-        <Spinner />
-      </div>
-    );
-  }
-
+export function HomepageGallery({ items }: { items: GalleryItem[] }) {
   if (items.length === 0) return null;
 
-  // Build a masonry-style grid: first image spans 2 cols/rows on md+
   return (
     <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
       {items.slice(0, 5).map((item, i) => (
@@ -45,7 +23,9 @@ export function HomepageGallery() {
               src={item.image}
               alt={item.caption || "Gallery"}
               fill
+              sizes={i === 0 ? "(max-width: 768px) 50vw, 50vw" : "(max-width: 768px) 50vw, 25vw"}
               className="object-cover transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
             />
           </div>
           {item.caption && (
