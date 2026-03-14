@@ -29,7 +29,7 @@ export async function PUT(req: NextRequest) {
     const body = sanitize(await req.json());
     const {
       brandName, logo, logoDark, logoSize, displayMode, homepageReviewsCount,
-      currency, timezone,
+      currency, timezone, deliveryOptions, paymentMethods,
     } = body;
 
     let config = await SiteConfig.findOne();
@@ -45,6 +45,8 @@ export async function PUT(req: NextRequest) {
     if (homepageReviewsCount !== undefined) config.homepageReviewsCount = homepageReviewsCount;
     if (currency !== undefined) config.currency = currency;
     if (timezone !== undefined) config.timezone = timezone;
+    if (deliveryOptions !== undefined) config.deliveryOptions = deliveryOptions;
+    if (paymentMethods !== undefined) config.paymentMethods = paymentMethods;
 
     await config.save();
 

@@ -6,10 +6,10 @@ export interface IPayment extends Document {
   customer: mongoose.Types.ObjectId;
   amount: number;
   status: "Completed" | "Pending" | "Failed" | "Refunded";
-  method: "Visa" | "Mastercard" | "Amex" | "Zelle" | "Binance" | "Cash";
+  method: string;
+  methodType: "automatic" | "manual";
   cardLast4?: string;
-  zelleReference?: string;
-  binanceReference?: string;
+  referenceNumber?: string;
   receiptImage?: string;
   approvedBy?: mongoose.Types.ObjectId;
   stripePaymentIntentId?: string;
@@ -40,12 +40,15 @@ const paymentSchema = new Schema<IPayment>(
     },
     method: {
       type: String,
-      enum: ["Visa", "Mastercard", "Amex", "Zelle", "Binance", "Cash"],
       required: true,
     },
+    methodType: {
+      type: String,
+      enum: ["automatic", "manual"],
+      default: "automatic",
+    },
     cardLast4: { type: String, maxlength: 4 },
-    zelleReference: { type: String },
-    binanceReference: { type: String },
+    referenceNumber: { type: String },
     receiptImage: { type: String },
     approvedBy: { type: Schema.Types.ObjectId, ref: "User" },
     stripePaymentIntentId: { type: String },

@@ -29,6 +29,7 @@ export default function OrderSuccessPage() {
   const t = useTranslations("orderSuccess");
   const searchParams = useSearchParams();
   const orderNumber = searchParams.get("order") || "MG-000000";
+  const isPending = searchParams.get("pending") === "true";
 
   return (
     <>
@@ -51,6 +52,13 @@ export default function OrderSuccessPage() {
           <h1 className="text-3xl font-semibold text-gold-500">{t("gracias")}</h1>
           <p className="mt-2 text-lg text-cream-400">{t("title")}</p>
           <p className="mt-4 text-sm text-cream-400/80">{t("desc")}</p>
+          {isPending && (
+            <div className="mx-auto mt-4 max-w-md rounded-lg bg-warning-500/20 px-4 py-3">
+              <p className="text-sm font-medium text-warning-500">
+                {t("pendingPayment") || "Your payment is being reviewed. Your order will be processed once the payment is confirmed by our team."}
+              </p>
+            </div>
+          )}
         </motion.div>
       </section>
 

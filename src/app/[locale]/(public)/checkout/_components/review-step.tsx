@@ -49,11 +49,11 @@ export function ReviewStep({
   const total = subtotal + tax + shippingCost - discount;
 
   const paymentLabel =
-    paymentData.method === "credit_card"
-      ? "Credit Card"
-      : paymentData.method === "zelle"
-        ? "Zelle"
-        : "Binance Pay";
+    paymentData.method === "stripe"
+      ? "Credit Card (Stripe)"
+      : paymentData.method === "cash"
+        ? t("cash") || "Cash"
+        : paymentData.method.charAt(0).toUpperCase() + paymentData.method.slice(1);
 
   return (
     <div className="space-y-6">
@@ -136,6 +136,14 @@ export function ReviewStep({
         <p className="mt-2 text-sm text-brown-600">{paymentLabel}</p>
         {paymentData.cardholderName && (
           <p className="text-xs text-brown-500">{paymentData.cardholderName}</p>
+        )}
+        {paymentData.referenceNumber && (
+          <p className="text-xs text-brown-500">Ref: {paymentData.referenceNumber}</p>
+        )}
+        {paymentData.methodType === "manual" && (
+          <p className="mt-1 text-xs text-warning-500">
+            {t("manualPaymentPending") || "This payment requires admin approval before the order is processed."}
+          </p>
         )}
       </div>
 

@@ -7,7 +7,6 @@ import {
   Globe,
   Bell,
   Clock,
-  DollarSign,
   Save,
   Database,
   Download,
@@ -114,7 +113,6 @@ export default function SettingsPage() {
   const [orderNotifications, setOrderNotifications] = useState(true);
   const [reservationNotifications, setReservationNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(false);
-  const [autoConfirmOrders, setAutoConfirmOrders] = useState(false);
   const [resetConfirmation, setResetConfirmation] = useState("");
   const [resetting, setResetting] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -137,15 +135,20 @@ export default function SettingsPage() {
   const [savingDelivery, setSavingDelivery] = useState(false);
 
   // Payment methods config
+  interface PaymentMethodField {
+    label: string;
+    value: string;
+  }
   interface PaymentMethodConfig {
     id: string;
     name: string;
     enabled: boolean;
+    type: "automatic" | "manual";
+    fields?: PaymentMethodField[];
   }
   const [paymentMethodsConfig, setPaymentMethodsConfig] = useState<PaymentMethodConfig[]>([
-    { id: "credit_card", name: "Credit Card", enabled: true },
-    { id: "zelle", name: "Zelle", enabled: true },
-    { id: "binance", name: "Binance Pay", enabled: true },
+    { id: "stripe", name: "Stripe", enabled: true, type: "automatic", fields: [] },
+    { id: "cash", name: "Cash", enabled: true, type: "automatic", fields: [] },
   ]);
   const [savingPaymentMethods, setSavingPaymentMethods] = useState(false);
 
@@ -700,29 +703,6 @@ export default function SettingsPage() {
           </Card>
         </motion.div>
 
-        {/* Order Settings */}
-        <motion.div variants={itemVariants}>
-          <Card className="border border-cream-200">
-            <CardContent className="p-6">
-              <div className="mb-6 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success-500/10">
-                  <DollarSign className="h-5 w-5 text-success-500" />
-                </div>
-                <h2 className="text-xl font-bold text-brown-900">Orders & Payments</h2>
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-brown-900">Auto-confirm orders</p>
-                    <p className="text-xs text-brown-600">Automatically confirm orders without manual review</p>
-                  </div>
-                  <Switch checked={autoConfirmOrders} onCheckedChange={setAutoConfirmOrders} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
         {/* Delivery Options */}
         <motion.div variants={itemVariants}>
           <Card className="border border-cream-200">
@@ -826,30 +806,193 @@ export default function SettingsPage() {
                 </div>
                 <h2 className="text-xl font-bold text-brown-900">Payment Methods</h2>
               </div>
-              <p className="mb-4 text-xs text-brown-500">Enable or disable payment methods available to customers during checkout.</p>
-              <div className="space-y-3">
-                {paymentMethodsConfig.map((pm, i) => (
-                  <div key={pm.id} className="flex items-center justify-between rounded-lg border border-cream-200 p-4">
-                    <div>
-                      <p className="text-sm font-medium text-brown-900">{pm.name}</p>
-                      <p className="text-xs text-brown-500">ID: {pm.id}</p>
-                    </div>
-                    <Switch
-                      checked={pm.enabled}
-                      onCheckedChange={(val) => {
-                        setPaymentMethodsConfig(
-                          paymentMethodsConfig.map((m, j) => (j === i ? { ...m, enabled: val } : m))
-                        );
-                      }}
-                    />
+
+              {/* Automatic Payments */}
+              <div className="mb-6">
+                <h3 className="mb-3 text-sm font-semibold text-brown-800">Automatic Payments</h3>
+                <p className="mb-3 text-xs text-brown-500">These payment methods are approved automatically.</p>
+                <div className="space-y-3">
+                  {paymentMethodsConfig.filter((pm) => pm.type === "automatic").map((pm) => {
+                    const idx = paymentMethodsConfig.findIndex((m) => m.id === pm.id);
+                    return (
+                      <div key={pm.id} className="flex items-center justify-between rounded-lg border border-cream-200 p-4">
+                        <div>
+                          <p className="text-sm font-medium text-brown-900">{pm.name}</p>
+                          <p className="text-xs text-brown-500">Auto-approved</p>
+                        </div>
+                        <Switch
+                          checked={pm.enabled}
+                          onCheckedChange={(val) => {
+                            setPaymentMethodsConfig(
+                              paymentMethodsConfig.map((m, j) => (j === idx ? { ...m, enabled: val } : m))
+                            );
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Manual Payments */}
+              <div className="mb-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold text-brown-800">Manual Payments</h3>
+                    <p className="mt-1 text-xs text-brown-500">These payment methods require receipt upload and admin approval.</p>
                   </div>
-                ))}
-                <div className="flex justify-end pt-2">
-                  <Button onClick={handleSavePaymentMethods} loading={savingPaymentMethods}>
-                    <Save className="h-4 w-4" />
-                    Save Payment Methods
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      const newId = `manual_${Date.now()}`;
+                      setPaymentMethodsConfig([
+                        ...paymentMethodsConfig,
+                        {
+                          id: newId,
+                          name: "",
+                          enabled: true,
+                          type: "manual",
+                          fields: [{ label: "", value: "" }],
+                        },
+                      ]);
+                    }}
+                    className="gap-1"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add
                   </Button>
                 </div>
+                <div className="space-y-4">
+                  {paymentMethodsConfig.filter((pm) => pm.type === "manual").map((pm) => {
+                    const idx = paymentMethodsConfig.findIndex((m) => m.id === pm.id);
+                    return (
+                      <div key={pm.id} className="rounded-lg border border-cream-200 bg-cream-50 p-4">
+                        <div className="mb-3 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={pm.enabled}
+                              onCheckedChange={(val) => {
+                                setPaymentMethodsConfig(
+                                  paymentMethodsConfig.map((m, j) => (j === idx ? { ...m, enabled: val } : m))
+                                );
+                              }}
+                            />
+                            <span className="text-xs text-brown-500">{pm.enabled ? "Enabled" : "Disabled"}</span>
+                          </div>
+                          <button
+                            onClick={() => {
+                              setPaymentMethodsConfig(paymentMethodsConfig.filter((_, j) => j !== idx));
+                            }}
+                            className="rounded p-1 text-error-500 hover:bg-error-500/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        {/* Method name */}
+                        <div className="mb-3">
+                          <label className="mb-1 block text-xs font-medium text-brown-700">Payment Method Name</label>
+                          <Input
+                            value={pm.name}
+                            onChange={(e) => {
+                              setPaymentMethodsConfig(
+                                paymentMethodsConfig.map((m, j) =>
+                                  j === idx
+                                    ? { ...m, name: e.target.value, id: m.id.startsWith("manual_") ? m.id : m.id }
+                                    : m
+                                )
+                              );
+                            }}
+                            placeholder="e.g. Binance, Zelle"
+                          />
+                        </div>
+
+                        {/* Fields (label + value pairs) */}
+                        <div className="space-y-2">
+                          <label className="block text-xs font-medium text-brown-700">Details (Label + Value)</label>
+                          {(pm.fields || []).map((field, fi) => (
+                            <div key={fi} className="flex gap-2">
+                              <div className="flex-1">
+                                <Input
+                                  value={field.label}
+                                  onChange={(e) => {
+                                    const newFields = [...(pm.fields || [])];
+                                    newFields[fi] = { ...newFields[fi], label: e.target.value };
+                                    setPaymentMethodsConfig(
+                                      paymentMethodsConfig.map((m, j) =>
+                                        j === idx ? { ...m, fields: newFields } : m
+                                      )
+                                    );
+                                  }}
+                                  placeholder="Label (e.g. Email, ID, Account Number)"
+                                />
+                              </div>
+                              <div className="flex-1">
+                                <Input
+                                  value={field.value}
+                                  onChange={(e) => {
+                                    const newFields = [...(pm.fields || [])];
+                                    newFields[fi] = { ...newFields[fi], value: e.target.value };
+                                    setPaymentMethodsConfig(
+                                      paymentMethodsConfig.map((m, j) =>
+                                        j === idx ? { ...m, fields: newFields } : m
+                                      )
+                                    );
+                                  }}
+                                  placeholder="Value (e.g. hello@example.com)"
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newFields = (pm.fields || []).filter((_, k) => k !== fi);
+                                  setPaymentMethodsConfig(
+                                    paymentMethodsConfig.map((m, j) =>
+                                      j === idx ? { ...m, fields: newFields } : m
+                                    )
+                                  );
+                                }}
+                                className="mt-1 rounded p-1 text-brown-400 hover:text-error-500"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const newFields = [...(pm.fields || []), { label: "", value: "" }];
+                              setPaymentMethodsConfig(
+                                paymentMethodsConfig.map((m, j) =>
+                                  j === idx ? { ...m, fields: newFields } : m
+                                )
+                              );
+                            }}
+                            className="gap-1 text-xs"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                            Add Field
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {paymentMethodsConfig.filter((pm) => pm.type === "manual").length === 0 && (
+                    <p className="py-4 text-center text-sm text-brown-400">
+                      No manual payment methods configured. Click &quot;+ Add&quot; to create one.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <Button onClick={handleSavePaymentMethods} loading={savingPaymentMethods}>
+                  <Save className="h-4 w-4" />
+                  Save Payment Methods
+                </Button>
               </div>
             </CardContent>
           </Card>

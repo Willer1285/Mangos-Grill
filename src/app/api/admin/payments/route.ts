@@ -30,7 +30,8 @@ export async function GET(req: NextRequest) {
 
     const [payments, total] = await Promise.all([
       Payment.find(filter)
-        .populate("order", "orderNumber")
+        .populate("order", "orderNumber total items deliveryType location status paymentStatus")
+        .populate("customer", "firstName lastName email")
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
         .limit(limit)

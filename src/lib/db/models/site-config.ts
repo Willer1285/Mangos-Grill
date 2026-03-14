@@ -8,10 +8,17 @@ export interface IDeliveryOption {
   enabled: boolean;
 }
 
+export interface IPaymentMethodField {
+  label: string;
+  value: string;
+}
+
 export interface IPaymentMethodConfig {
   id: string;
   name: string;
   enabled: boolean;
+  type: "automatic" | "manual";
+  fields?: IPaymentMethodField[];
 }
 
 export interface ISiteConfig extends Document {
@@ -40,11 +47,21 @@ const deliveryOptionSchema = new Schema<IDeliveryOption>(
   { _id: true }
 );
 
+const paymentMethodFieldSchema = new Schema(
+  {
+    label: { type: String, required: true, trim: true },
+    value: { type: String, required: true, trim: true },
+  },
+  { _id: false }
+);
+
 const paymentMethodConfigSchema = new Schema<IPaymentMethodConfig>(
   {
     id: { type: String, required: true, trim: true },
     name: { type: String, required: true, trim: true },
     enabled: { type: Boolean, default: true },
+    type: { type: String, enum: ["automatic", "manual"], default: "automatic" },
+    fields: { type: [paymentMethodFieldSchema], default: [] },
   },
   { _id: false }
 );
@@ -73,9 +90,8 @@ const siteConfigSchema = new Schema<ISiteConfig>(
     paymentMethods: {
       type: [paymentMethodConfigSchema],
       default: [
-        { id: "credit_card", name: "Credit Card", enabled: true },
-        { id: "zelle", name: "Zelle", enabled: true },
-        { id: "binance", name: "Binance Pay", enabled: true },
+        { id: "stripe", name: "Stripe", enabled: true, type: "automatic", fields: [] },
+        { id: "cash", name: "Cash", enabled: true, type: "automatic", fields: [] },
       ],
     },
   },

@@ -1,13 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
+import crypto from "crypto";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db/connection";
 import Order from "@/lib/db/models/order";
 import Product from "@/lib/db/models/product";
+import Payment from "@/lib/db/models/payment";
 import User from "@/lib/db/models/user";
 import { checkoutSchema } from "@/lib/validators/order";
 import { sanitize } from "@/lib/db/sanitize";
 import { TX_TAX_RATE } from "@/lib/constants";
 import { sendOrderConfirmation } from "@/lib/email/resend";
+
 async function generateOrderNumber(): Promise<string> {
   const lastOrder = await Order.findOne().sort({ createdAt: -1 }).select("orderNumber").lean();
   let nextNum = 1;
@@ -36,6 +39,9 @@ export async function POST(req: NextRequest) {
     }
 
     const data = sanitize(parsed.data);
+    const methodType = body.methodType || "automatic";
+    const stripePaymentIntentId = body.stripePaymentIntentId;
+    const referenceNumber = body.referenceNumber;
 
     await connectDB();
 
@@ -68,9 +74,13 @@ export async function POST(req: NextRequest) {
     });
 
     const taxAmount = subtotal * TX_TAX_RATE;
-    const shippingCost = 0; // determined client-side, simplified here
+    const shippingCost = 0;
     const tip = data.tip || 0;
     const total = subtotal + taxAmount + shippingCost + tip;
+
+    // Determine payment status based on method type
+    const isAutomatic = methodType === "automatic";
+    const paymentStatus = isAutomatic ? "Completed" : "Pending";
 
     const order = await Order.create({
       orderNumber: await generateOrderNumber(),
@@ -82,8 +92,7 @@ export async function POST(req: NextRequest) {
       location: data.location,
       status: "New",
       paymentMethod: data.paymentMethod,
-      paymentStatus:
-        data.paymentMethod === "credit_card" ? "Completed" : "Pending",
+      paymentStatus,
       subtotal,
       taxAmount,
       taxRate: TX_TAX_RATE,
@@ -94,16 +103,46 @@ export async function POST(req: NextRequest) {
       notes: data.notes,
     });
 
-    const customer = await User.findById(session.user.id)
-      .select("email firstName")
-      .lean();
-    if (customer?.email) {
-      sendOrderConfirmation(
-        customer.email,
-        customer.firstName || "Customer",
-        order.orderNumber,
-        total
-      ).catch((err) => console.error("Failed to send order email:", err));
+    // Create payment record
+    const isStripe = data.paymentMethod === "stripe";
+    const isCash = data.paymentMethod === "cash";
+
+    let transactionId: string;
+    if (isStripe && stripePaymentIntentId) {
+      transactionId = stripePaymentIntentId;
+    } else if (isCash) {
+      transactionId = `CASH-${crypto.randomBytes(6).toString("hex").toUpperCase()}`;
+    } else if (referenceNumber) {
+      transactionId = referenceNumber;
+    } else {
+      transactionId = `TXN-${crypto.randomBytes(6).toString("hex").toUpperCase()}`;
+    }
+
+    await Payment.create({
+      transactionId,
+      order: order._id,
+      customer: session.user.id,
+      amount: total,
+      status: paymentStatus,
+      method: data.paymentMethod,
+      methodType,
+      stripePaymentIntentId: isStripe ? stripePaymentIntentId : undefined,
+      referenceNumber: referenceNumber || undefined,
+    });
+
+    // Send confirmation email for automatic payments
+    if (isAutomatic) {
+      const customer = await User.findById(session.user.id)
+        .select("email firstName")
+        .lean();
+      if (customer?.email) {
+        sendOrderConfirmation(
+          customer.email,
+          customer.firstName || "Customer",
+          order.orderNumber,
+          total
+        ).catch((err) => console.error("Failed to send order email:", err));
+      }
     }
 
     return NextResponse.json(

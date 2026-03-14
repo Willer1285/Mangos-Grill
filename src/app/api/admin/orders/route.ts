@@ -21,6 +21,9 @@ export async function GET(req: NextRequest) {
     const filter: Record<string, unknown> = {};
     if (status) filter.status = sanitize(status);
 
+    // Only show orders with confirmed payments (Stripe/Cash auto-confirm, manual needs approval)
+    filter.paymentStatus = { $ne: "Pending" };
+
     // Manager can only see orders from their assigned location
     if (result.user!.role === "Manager" && result.user!.location) {
       filter.location = result.user!.location;

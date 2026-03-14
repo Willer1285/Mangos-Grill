@@ -12,8 +12,18 @@ import { ReviewStep } from "./_components/review-step";
 import { OrderSummarySidebar } from "./_components/order-summary-sidebar";
 import { CheckoutLoginPrompt } from "./_components/checkout-login-prompt";
 import { toast } from "sonner";
+import { loadStripe, type Stripe } from "@stripe/stripe-js";
 import { MapPin, Store, Truck } from "lucide-react";
 import type { ShippingAddressInput } from "@/lib/validators/order";
+
+let _stripePromise: Promise<Stripe | null> | null = null;
+function getStripePromise() {
+  if (!_stripePromise) {
+    const key = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+    if (key) _stripePromise = loadStripe(key);
+  }
+  return _stripePromise;
+}
 
 type OrderType = "pickup" | "delivery";
 
@@ -45,7 +55,7 @@ export default function CheckoutPage() {
   const [shippingData, setShippingData] = useState<ShippingAddressInput | null>(null);
   const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
   const [deliveryOption, setDeliveryOption] = useState<"standard" | "express">("standard");
-  const [paymentMethod, setPaymentMethod] = useState<"credit_card" | "zelle" | "binance">("credit_card");
+  const [paymentMethod, setPaymentMethod] = useState<string>("stripe");
   const [loading, setLoading] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState("");
   const [locations, setLocations] = useState<Location[]>([]);
@@ -111,6 +121,35 @@ export default function CheckoutPage() {
 
     setLoading(true);
     try {
+      // Step 1: For Stripe, create payment intent and confirm
+      let stripePaymentIntentId: string | undefined;
+      if (paymentData.method === "stripe" && paymentData.stripePaymentMethodId) {
+        const intentRes = await fetch("/api/payments/create-intent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount: subtotal * 1.0825, currency: "usd" }),
+        });
+        if (!intentRes.ok) {
+          toast.error("Failed to process card payment.");
+          return;
+        }
+        const { clientSecret, paymentIntentId } = await intentRes.json();
+        stripePaymentIntentId = paymentIntentId;
+
+        // Confirm the payment on the client
+        const stripeJs = await getStripePromise();
+        if (stripeJs && clientSecret) {
+          const { error: confirmError } = await stripeJs.confirmCardPayment(clientSecret, {
+            payment_method: paymentData.stripePaymentMethodId,
+          });
+          if (confirmError) {
+            toast.error(confirmError.message || "Payment failed.");
+            return;
+          }
+        }
+      }
+
+      // Step 2: Create the order
       const orderPayload = {
         items: state.items.map((item) => ({
           productId: item.productId,
@@ -122,6 +161,9 @@ export default function CheckoutPage() {
         deliveryAddress: orderType === "delivery" ? shippingData : undefined,
         location: selectedLocation,
         paymentMethod: paymentData.method,
+        methodType: paymentData.methodType,
+        stripePaymentIntentId,
+        referenceNumber: paymentData.referenceNumber,
         promoCode: state.promoCode || undefined,
       };
 
@@ -137,9 +179,28 @@ export default function CheckoutPage() {
         return;
       }
 
-      const { orderNumber } = await res.json();
+      const { orderNumber, orderId } = await res.json();
+
+      // Step 3: For manual payments, upload receipt
+      if (paymentData.methodType === "manual" && paymentData.receiptFile) {
+        const formData = new FormData();
+        formData.append("file", paymentData.receiptFile);
+        formData.append("orderId", orderId);
+        formData.append("paymentMethod", paymentData.method);
+        formData.append("reference", paymentData.referenceNumber || "");
+
+        await fetch("/api/payments/upload-receipt", {
+          method: "POST",
+          body: formData,
+        });
+      }
+
       clearCart();
-      router.push(`/order-success?order=${orderNumber}`);
+      if (paymentData.methodType === "manual") {
+        router.push(`/order-success?order=${orderNumber}&pending=true`);
+      } else {
+        router.push(`/order-success?order=${orderNumber}`);
+      }
     } catch {
       toast.error("Something went wrong. Please try again.");
     } finally {
