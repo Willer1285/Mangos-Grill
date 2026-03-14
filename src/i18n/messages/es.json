@@ -293,6 +293,7 @@
     "phone": "Telefono",
     "cardDetails": "Detalles de Tarjeta",
     "stripeSecure": "Tu pago se procesa de forma segura a traves de Stripe.",
+    "stripeNotConfigured": "Stripe no esta configurado. Establece NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY para habilitar pagos con tarjeta.",
     "loginRequired": "Inicio de Sesion Requerido",
     "loginRequiredDesc": "Por favor inicia sesion para completar tu pedido. Tu carrito se conservara.",
     "email": "Correo electronico",
