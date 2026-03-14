@@ -302,7 +302,12 @@
     "orContinueWith": "or continue with",
     "noAccount": "Don't have an account?",
     "register": "Register",
-    "loginError": "Invalid email or password. Please try again."
+    "loginError": "Invalid email or password. Please try again.",
+    "geoNotSupported": "Geolocation is not supported by your browser.",
+    "geoFetchError": "Could not fetch address from your location.",
+    "geoPermissionDenied": "Location permission denied. Please enter your address manually.",
+    "geoUnavailable": "Location unavailable. Please enter your address manually.",
+    "geoTimeout": "Location request timed out. Please try again."
   },
   "orderSuccess": {
     "title": "Your order is confirmed",

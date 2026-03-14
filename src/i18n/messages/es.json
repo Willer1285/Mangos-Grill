@@ -301,7 +301,12 @@
     "orContinueWith": "o continuar con",
     "noAccount": "No tienes una cuenta?",
     "register": "Registrate",
-    "loginError": "Correo electronico o contrasena invalidos."
+    "loginError": "Correo electronico o contrasena invalidos.",
+    "geoNotSupported": "La geolocalizacion no es compatible con tu navegador.",
+    "geoFetchError": "No se pudo obtener la direccion desde tu ubicacion.",
+    "geoPermissionDenied": "Permiso de ubicacion denegado. Por favor ingresa tu direccion manualmente.",
+    "geoUnavailable": "Ubicacion no disponible. Por favor ingresa tu direccion manualmente.",
+    "geoTimeout": "La solicitud de ubicacion expiro. Por favor intenta de nuevo."
   },
   "orderSuccess": {
     "title": "Tu pedido esta confirmado",
