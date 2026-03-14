@@ -2,26 +2,32 @@
 
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui";
-import { ArrowLeft, Lock, Edit2, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Lock, Edit2, ShoppingBag, Store } from "lucide-react";
 import { useCart } from "@/lib/cart/cart-context";
 import { useBrand, formatPrice } from "@/lib/brand/brand-context";
 import { TX_TAX_RATE } from "@/lib/constants";
 import type { ShippingAddressInput } from "@/lib/validators/order";
 import type { PaymentData } from "./payment-step";
 
+type OrderType = "pickup" | "delivery";
+
 interface ReviewStepProps {
-  shippingData: ShippingAddressInput;
+  orderType: OrderType;
+  shippingData: ShippingAddressInput | null;
   paymentData: PaymentData;
   deliveryOption: "standard" | "express";
   onEditShipping: () => void;
   onEditPayment: () => void;
   onPlaceOrder: () => void;
   loading: boolean;
+  selectedLocationName?: string;
+  selectedLocationAddress?: string;
 }
 
 const SHIPPING_COSTS = { standard: 0, express: 12.99 } as const;
 
 export function ReviewStep({
+  orderType,
   shippingData,
   paymentData,
   deliveryOption,
@@ -29,12 +35,15 @@ export function ReviewStep({
   onEditPayment,
   onPlaceOrder,
   loading,
+  selectedLocationName,
+  selectedLocationAddress,
 }: ReviewStepProps) {
   const t = useTranslations("checkout");
   const { currency } = useBrand();
   const { state, subtotal } = useCart();
 
-  const shippingCost = SHIPPING_COSTS[deliveryOption];
+  const isPickup = orderType === "pickup";
+  const shippingCost = isPickup ? 0 : SHIPPING_COSTS[deliveryOption];
   const tax = subtotal * TX_TAX_RATE;
   const discount = state.promoDiscount;
   const total = subtotal + tax + shippingCost - discount;
@@ -80,25 +89,39 @@ export function ReviewStep({
         </ul>
       </div>
 
-      {/* Shipping address */}
+      {/* Shipping address or Pickup location */}
       <div className="rounded-lg border border-cream-200 p-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-brown-900">{t("shippingTitle")}</h3>
+          <h3 className="text-sm font-semibold text-brown-900">
+            {isPickup ? (t("pickupLocation") || "Pickup Location") : t("shippingTitle")}
+          </h3>
           <button onClick={onEditShipping} className="flex items-center gap-1 text-xs text-terracotta-500 hover:text-terracotta-600">
             <Edit2 className="h-3.5 w-3.5" />
             Edit
           </button>
         </div>
-        <div className="mt-2 text-sm text-brown-600">
-          <p className="font-medium text-brown-900">{shippingData.fullName}</p>
-          <p>{shippingData.street}</p>
-          <p>{shippingData.city}, {shippingData.state} {shippingData.zip}</p>
-          <p>{shippingData.phone}</p>
-        </div>
-        <div className="mt-2 text-xs text-brown-500">
-          Delivery: {deliveryOption === "express" ? "Express (15-20 min)" : "Standard (30-45 min)"}
-          {shippingCost > 0 && ` — ${formatPrice(shippingCost, currency)}`}
-        </div>
+        {isPickup ? (
+          <div className="mt-2 flex items-start gap-2 text-sm text-brown-600">
+            <Store className="mt-0.5 h-4 w-4 shrink-0 text-terracotta-500" />
+            <div>
+              <p className="font-medium text-brown-900">{selectedLocationName}</p>
+              {selectedLocationAddress && <p>{selectedLocationAddress}</p>}
+            </div>
+          </div>
+        ) : shippingData ? (
+          <>
+            <div className="mt-2 text-sm text-brown-600">
+              <p className="font-medium text-brown-900">{shippingData.fullName}</p>
+              <p>{shippingData.street}</p>
+              <p>{shippingData.city}, {shippingData.state} {shippingData.zip}</p>
+              <p>{shippingData.phone}</p>
+            </div>
+            <div className="mt-2 text-xs text-brown-500">
+              Delivery: {deliveryOption === "express" ? "Express (15-20 min)" : "Standard (30-45 min)"}
+              {shippingCost > 0 && ` — ${formatPrice(shippingCost, currency)}`}
+            </div>
+          </>
+        ) : null}
       </div>
 
       {/* Payment method */}
@@ -127,10 +150,12 @@ export function ReviewStep({
             <span>Tax (8.25%)</span>
             <span>{formatPrice(tax, currency)}</span>
           </div>
-          <div className="flex justify-between text-brown-600">
-            <span>Shipping</span>
-            <span>{shippingCost === 0 ? "Free" : formatPrice(shippingCost, currency)}</span>
-          </div>
+          {!isPickup && (
+            <div className="flex justify-between text-brown-600">
+              <span>Shipping</span>
+              <span>{shippingCost === 0 ? "Free" : formatPrice(shippingCost, currency)}</span>
+            </div>
+          )}
           {discount > 0 && (
             <div className="flex justify-between text-success-500">
               <span>Discount ({state.promoCode})</span>

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import {
   LayoutDashboard,
   User,
@@ -17,8 +17,9 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { Avatar, getInitials, Badge } from "@/components/ui";
-import { Navbar, Footer } from "@/components/layout";
+import { Avatar, getInitials, Badge, Spinner } from "@/components/ui";
+import { Navbar, Footer, CartSidebar } from "@/components/layout";
+import { useCart } from "@/lib/cart/cart-context";
 
 const sidebarLinks = [
   { href: "/account", icon: LayoutDashboard, labelKey: "dashboard" },
@@ -34,14 +35,34 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
   const t = useTranslations("nav");
   const ct = useTranslations("customer");
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { data: session, status } = useSession();
+  const { itemCount } = useCart();
+  const [cartOpen, setCartOpen] = useState(false);
 
-  // TODO: Get user data from session
-  const user = {
-    firstName: "John",
-    lastName: "Doe",
-    email: "john@example.com",
-  };
+  // Redirect to login if not authenticated
+  if (status === "unauthenticated") {
+    router.push("/login");
+    return null;
+  }
+
+  if (status === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Spinner className="h-8 w-8" />
+      </div>
+    );
+  }
+
+  const user = session?.user
+    ? {
+        firstName: session.user.firstName || session.user.name?.split(" ")[0] || "",
+        lastName: session.user.lastName || session.user.name?.split(" ").slice(1).join(" ") || "",
+        email: session.user.email || "",
+        avatar: session.user.image || null,
+      }
+    : { firstName: "", lastName: "", email: "" };
 
   function isActive(href: string) {
     const cleanPath = pathname.replace(/^\/(en|es)/, "");
@@ -53,7 +74,8 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
     <>
       <Navbar
         user={user}
-        cartCount={0}
+        cartCount={itemCount}
+        onCartClick={() => setCartOpen(true)}
       />
       <div className="mx-auto flex min-h-screen max-w-7xl gap-0 px-4 py-6 sm:px-6 lg:gap-8 lg:px-8">
         {/* Sidebar */}
@@ -151,6 +173,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
         <main className="min-w-0 flex-1">{children}</main>
       </div>
       <Footer />
+      <CartSidebar open={cartOpen} onClose={() => setCartOpen(false)} />
     </>
   );
 }

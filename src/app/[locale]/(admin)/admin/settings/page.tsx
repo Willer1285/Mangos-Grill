@@ -15,6 +15,10 @@ import {
   AlertTriangle,
   ImageIcon,
   Search,
+  Truck,
+  CreditCard,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -117,6 +121,34 @@ export default function SettingsPage() {
   const [importing, setImporting] = useState(false);
   const [savingRegional, setSavingRegional] = useState(false);
 
+  // Delivery options
+  interface DeliveryOption {
+    _id?: string;
+    name: string;
+    time: string;
+    hasFee: boolean;
+    price: number;
+    enabled: boolean;
+  }
+  const [deliveryOptions, setDeliveryOptions] = useState<DeliveryOption[]>([
+    { name: "Standard (Free)", time: "30-45 min", hasFee: false, price: 0, enabled: true },
+    { name: "Express", time: "15-20 min", hasFee: true, price: 12.99, enabled: true },
+  ]);
+  const [savingDelivery, setSavingDelivery] = useState(false);
+
+  // Payment methods config
+  interface PaymentMethodConfig {
+    id: string;
+    name: string;
+    enabled: boolean;
+  }
+  const [paymentMethodsConfig, setPaymentMethodsConfig] = useState<PaymentMethodConfig[]>([
+    { id: "credit_card", name: "Credit Card", enabled: true },
+    { id: "zelle", name: "Zelle", enabled: true },
+    { id: "binance", name: "Binance Pay", enabled: true },
+  ]);
+  const [savingPaymentMethods, setSavingPaymentMethods] = useState(false);
+
   // Brand settings
   const [brandName, setBrandName] = useState("Mango's Grill");
   const [logoUrl, setLogoUrl] = useState("");
@@ -149,6 +181,8 @@ export default function SettingsPage() {
           setDisplayMode(data.displayMode || "both");
           setCurrency(data.currency || "USD");
           setTimezone(data.timezone || "America/New_York");
+          if (data.deliveryOptions?.length) setDeliveryOptions(data.deliveryOptions);
+          if (data.paymentMethods?.length) setPaymentMethodsConfig(data.paymentMethods);
         }
       } catch { /* empty */ }
     }
@@ -285,6 +319,52 @@ export default function SettingsPage() {
     } finally {
       setResetting(false);
     }
+  }
+
+  async function handleSaveDeliveryOptions() {
+    setSavingDelivery(true);
+    try {
+      const res = await fetch("/api/admin/site-config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deliveryOptions }),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      toast.success("Delivery options saved");
+    } catch {
+      toast.error("Failed to save delivery options");
+    } finally {
+      setSavingDelivery(false);
+    }
+  }
+
+  async function handleSavePaymentMethods() {
+    setSavingPaymentMethods(true);
+    try {
+      const res = await fetch("/api/admin/site-config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentMethods: paymentMethodsConfig }),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      toast.success("Payment methods saved");
+    } catch {
+      toast.error("Failed to save payment methods");
+    } finally {
+      setSavingPaymentMethods(false);
+    }
+  }
+
+  function addDeliveryOption() {
+    setDeliveryOptions([...deliveryOptions, { name: "", time: "", hasFee: false, price: 0, enabled: true }]);
+  }
+
+  function removeDeliveryOption(index: number) {
+    setDeliveryOptions(deliveryOptions.filter((_, i) => i !== index));
+  }
+
+  function updateDeliveryOption(index: number, field: keyof DeliveryOption, value: string | number | boolean) {
+    setDeliveryOptions(deliveryOptions.map((opt, i) => (i === index ? { ...opt, [field]: value } : opt)));
   }
 
   const filteredCurrencies = currencySearch
@@ -637,6 +717,138 @@ export default function SettingsPage() {
                     <p className="text-xs text-brown-600">Automatically confirm orders without manual review</p>
                   </div>
                   <Switch checked={autoConfirmOrders} onCheckedChange={setAutoConfirmOrders} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Delivery Options */}
+        <motion.div variants={itemVariants}>
+          <Card className="border border-cream-200">
+            <CardContent className="p-6">
+              <div className="mb-6 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-terracotta-500/10">
+                    <Truck className="h-5 w-5 text-terracotta-500" />
+                  </div>
+                  <h2 className="text-xl font-bold text-brown-900">Delivery Options</h2>
+                </div>
+                <Button variant="secondary" size="sm" onClick={addDeliveryOption} className="gap-1">
+                  <Plus className="h-4 w-4" />
+                  Add Option
+                </Button>
+              </div>
+              <div className="space-y-4">
+                {deliveryOptions.map((opt, i) => (
+                  <div key={i} className="rounded-lg border border-cream-200 bg-cream-50 p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <span className="text-xs font-medium text-brown-500">Option {i + 1}</span>
+                      <div className="flex items-center gap-2">
+                        <label className="flex items-center gap-2 text-xs text-brown-600">
+                          Enabled
+                          <Switch
+                            checked={opt.enabled}
+                            onCheckedChange={(val) => updateDeliveryOption(i, "enabled", val)}
+                          />
+                        </label>
+                        {deliveryOptions.length > 1 && (
+                          <button
+                            onClick={() => removeDeliveryOption(i)}
+                            className="rounded p-1 text-error-500 hover:bg-error-500/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-brown-700">Name</label>
+                        <Input
+                          value={opt.name}
+                          onChange={(e) => updateDeliveryOption(i, "name", e.target.value)}
+                          placeholder="e.g. Standard (Free)"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-brown-700">Time</label>
+                        <Input
+                          value={opt.time}
+                          onChange={(e) => updateDeliveryOption(i, "time", e.target.value)}
+                          placeholder="e.g. 30-45 min"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-brown-700">Charge Fee</label>
+                        <div className="flex h-10 items-center gap-2">
+                          <Switch
+                            checked={opt.hasFee}
+                            onCheckedChange={(val) => updateDeliveryOption(i, "hasFee", val)}
+                          />
+                          <span className="text-xs text-brown-500">{opt.hasFee ? "Paid" : "Free"}</span>
+                        </div>
+                      </div>
+                      {opt.hasFee && (
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-brown-700">Price</label>
+                          <Input
+                            type="number"
+                            min={0}
+                            step={0.01}
+                            value={opt.price}
+                            onChange={(e) => updateDeliveryOption(i, "price", Number(e.target.value))}
+                            placeholder="0.00"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                <div className="flex justify-end">
+                  <Button onClick={handleSaveDeliveryOptions} loading={savingDelivery}>
+                    <Save className="h-4 w-4" />
+                    Save Delivery Options
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Payment Methods */}
+        <motion.div variants={itemVariants}>
+          <Card className="border border-cream-200">
+            <CardContent className="p-6">
+              <div className="mb-6 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success-500/10">
+                  <CreditCard className="h-5 w-5 text-success-500" />
+                </div>
+                <h2 className="text-xl font-bold text-brown-900">Payment Methods</h2>
+              </div>
+              <p className="mb-4 text-xs text-brown-500">Enable or disable payment methods available to customers during checkout.</p>
+              <div className="space-y-3">
+                {paymentMethodsConfig.map((pm, i) => (
+                  <div key={pm.id} className="flex items-center justify-between rounded-lg border border-cream-200 p-4">
+                    <div>
+                      <p className="text-sm font-medium text-brown-900">{pm.name}</p>
+                      <p className="text-xs text-brown-500">ID: {pm.id}</p>
+                    </div>
+                    <Switch
+                      checked={pm.enabled}
+                      onCheckedChange={(val) => {
+                        setPaymentMethodsConfig(
+                          paymentMethodsConfig.map((m, j) => (j === i ? { ...m, enabled: val } : m))
+                        );
+                      }}
+                    />
+                  </div>
+                ))}
+                <div className="flex justify-end pt-2">
+                  <Button onClick={handleSavePaymentMethods} loading={savingPaymentMethods}>
+                    <Save className="h-4 w-4" />
+                    Save Payment Methods
+                  </Button>
                 </div>
               </div>
             </CardContent>

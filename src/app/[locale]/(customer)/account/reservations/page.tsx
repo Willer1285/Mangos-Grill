@@ -1,80 +1,119 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
-import { Card, CardContent, Badge, Button } from "@/components/ui";
+import { Card, CardContent, Badge, Button, Skeleton } from "@/components/ui";
 import { CalendarDays, Clock, MapPin, Users, Plus } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 
-/* ── Types ───────────────────────────────────────────────── */
-type ReservationStatus = "confirmed" | "completed" | "cancelled";
-
 interface Reservation {
-  id: number;
-  month: string;
-  day: number;
-  dayName: string;
+  id: string;
+  date: string;
   time: string;
-  location: string;
   guests: number;
-  status: ReservationStatus;
+  location: string;
+  occasion: string | null;
+  status: string;
+  specialRequests: string | null;
 }
 
-/* ── Mock data ───────────────────────────────────────────── */
-const upcomingReservation: Reservation = {
-  id: 1,
-  month: "MAR",
-  day: 5,
-  dayName: "Thursday",
-  time: "7:30 PM",
-  location: "Houston - Montrose",
-  guests: 4,
-  status: "confirmed",
-};
-
-const pastReservations: Reservation[] = [
-  {
-    id: 2,
-    month: "FEB",
-    day: 20,
-    dayName: "Thursday",
-    time: "6:00 PM",
-    location: "Houston - Heights",
-    guests: 2,
-    status: "completed",
-  },
-  {
-    id: 3,
-    month: "FEB",
-    day: 10,
-    dayName: "Monday",
-    time: "8:00 PM",
-    location: "Houston - Montrose",
-    guests: 6,
-    status: "completed",
-  },
-  {
-    id: 4,
-    month: "JAN",
-    day: 25,
-    dayName: "Saturday",
-    time: "7:00 PM",
-    location: "Houston - Katy",
-    guests: 3,
-    status: "cancelled",
-  },
-];
+function getStatusVariant(status: string) {
+  switch (status) {
+    case "Confirmed": return "confirmed" as const;
+    case "Completed": case "Seated": return "delivered" as const;
+    case "Cancelled": case "No-show": return "cancelled" as const;
+    default: return "active" as const;
+  }
+}
 
 export default function ReservationsPage() {
   const t = useTranslations("customer");
+  const [upcoming, setUpcoming] = useState<Reservation[]>([]);
+  const [past, setPast] = useState<Reservation[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchReservations() {
+      try {
+        const res = await fetch("/api/account/reservations");
+        if (res.ok) {
+          const data = await res.json();
+          setUpcoming(data.upcoming || []);
+          setPast(data.past || []);
+        }
+      } catch { /* empty */ }
+      finally { setLoading(false); }
+    }
+    fetchReservations();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <Skeleton className="h-10 w-48" />
+        <Skeleton className="h-32 rounded-xl" />
+        <Skeleton className="h-32 rounded-xl" />
+      </div>
+    );
+  }
+
+  function ReservationCard({ reservation, large = false }: { reservation: Reservation; large?: boolean }) {
+    const date = new Date(reservation.date);
+    const month = date.toLocaleDateString("en-US", { month: "short" }).toUpperCase();
+    const day = date.getDate();
+    const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
+
+    return (
+      <Card className="border border-cream-200">
+        <CardContent className={large ? "p-5" : "p-4"}>
+          <div className="flex items-center gap-4">
+            <div className={`flex shrink-0 flex-col items-center justify-center rounded-lg ${
+              large ? "h-20 w-20 bg-terracotta-500/10" : "h-14 w-14 bg-cream-200"
+            }`}>
+              <span className={`font-medium uppercase ${large ? "text-xs text-terracotta-500" : "text-[10px] text-brown-500"}`}>
+                {month}
+              </span>
+              <span className={`font-bold ${large ? "text-3xl text-terracotta-500" : "text-xl text-brown-700"}`}>
+                {day}
+              </span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <p className={`font-medium text-brown-900 ${large ? "text-lg" : "text-sm"}`}>
+                  {dayName}{large ? "" : `, ${reservation.time}`}
+                </p>
+                <Badge variant={getStatusVariant(reservation.status)}>
+                  {reservation.status}
+                </Badge>
+              </div>
+              <div className={`mt-1 ${large ? "space-y-1 text-sm" : "flex items-center gap-3 text-xs"} text-brown-600`}>
+                {large && (
+                  <p className="flex items-center gap-1.5">
+                    <Clock className="h-4 w-4 text-terracotta-500" />
+                    {reservation.time}
+                  </p>
+                )}
+                <span className="flex items-center gap-1.5">
+                  <MapPin className={large ? "h-4 w-4 text-terracotta-500" : "h-3.5 w-3.5"} />
+                  {reservation.location}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Users className={large ? "h-4 w-4 text-terracotta-500" : "h-3.5 w-3.5"} />
+                  {reservation.guests} guests
+                </span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-brown-900">
-          {t("reservations")}
-        </h1>
+        <h1 className="text-2xl font-semibold text-brown-900">{t("reservations")}</h1>
         <Button size="sm" asChild>
           <Link href="/reservations">
             <Plus className="h-4 w-4" />
@@ -83,128 +122,53 @@ export default function ReservationsPage() {
         </Button>
       </div>
 
-      {/* ── Upcoming Reservation ────────────────────────────── */}
+      {/* Upcoming */}
       <div>
-        <h2 className="mb-4 text-lg font-semibold text-brown-900">
-          {t("upcomingReservation")}
-        </h2>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <Card className="border border-cream-200">
-            <CardContent className="p-5">
-              <div className="flex gap-4">
-                {/* Large date box */}
-                <div className="flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-lg bg-terracotta-500/10">
-                  <span className="text-xs font-medium uppercase text-terracotta-500">
-                    {upcomingReservation.month}
-                  </span>
-                  <span className="text-3xl font-bold text-terracotta-500">
-                    {upcomingReservation.day}
-                  </span>
-                </div>
-
-                {/* Details */}
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-lg font-medium text-brown-900">
-                      {upcomingReservation.dayName}
-                    </p>
-                    <Badge variant="confirmed">
-                      {upcomingReservation.status.charAt(0).toUpperCase() +
-                        upcomingReservation.status.slice(1)}
-                    </Badge>
-                  </div>
-
-                  <div className="mt-2 space-y-1 text-sm text-brown-600">
-                    <p className="flex items-center gap-1.5">
-                      <Clock className="h-4 w-4 text-terracotta-500" />
-                      {upcomingReservation.time}
-                    </p>
-                    <p className="flex items-center gap-1.5">
-                      <MapPin className="h-4 w-4 text-terracotta-500" />
-                      {upcomingReservation.location}
-                    </p>
-                    <p className="flex items-center gap-1.5">
-                      <Users className="h-4 w-4 text-terracotta-500" />
-                      {upcomingReservation.guests} guests
-                    </p>
-                  </div>
-
-                  <div className="mt-4 flex gap-2">
-                    <Button variant="secondary" size="sm">
-                      {t("modify")}
-                    </Button>
-                    <Button variant="destructive" size="sm">
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              </div>
+        <h2 className="mb-4 text-lg font-semibold text-brown-900">{t("upcomingReservation")}</h2>
+        {upcoming.length > 0 ? (
+          <div className="space-y-3">
+            {upcoming.map((r, i) => (
+              <motion.div
+                key={r.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: i * 0.08 }}
+              >
+                <ReservationCard reservation={r} large={i === 0} />
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="flex flex-col items-center p-8 text-center">
+              <CalendarDays className="mb-2 h-10 w-10 text-cream-400" />
+              <p className="text-sm text-brown-500">{t("noReservations") || "No upcoming reservations"}</p>
+              <Link href="/reservations" className="mt-2 text-xs font-medium text-terracotta-500 hover:text-terracotta-600">
+                {t("makeReservation") || "Make a reservation"}
+              </Link>
             </CardContent>
           </Card>
-        </motion.div>
+        )}
       </div>
 
-      {/* ── Past Reservations ───────────────────────────────── */}
-      <div>
-        <h2 className="mb-4 text-lg font-semibold text-brown-900">
-          Past Reservations
-        </h2>
-
-        <div className="space-y-3">
-          {pastReservations.map((reservation, i) => (
-            <motion.div
-              key={reservation.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: i * 0.08 }}
-            >
-              <Card className="border border-cream-200">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    {/* Date box */}
-                    <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg bg-cream-200">
-                      <span className="text-[10px] font-medium uppercase text-brown-500">
-                        {reservation.month}
-                      </span>
-                      <span className="text-xl font-bold text-brown-700">
-                        {reservation.day}
-                      </span>
-                    </div>
-
-                    {/* Info */}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-brown-900">
-                          {reservation.dayName}, {reservation.time}
-                        </p>
-                        <Badge variant={reservation.status}>
-                          {reservation.status.charAt(0).toUpperCase() +
-                            reservation.status.slice(1)}
-                        </Badge>
-                      </div>
-                      <div className="mt-1 flex items-center gap-3 text-xs text-brown-600">
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3.5 w-3.5" />
-                          {reservation.location}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Users className="h-3.5 w-3.5" />
-                          {reservation.guests} guests
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+      {/* Past */}
+      {past.length > 0 && (
+        <div>
+          <h2 className="mb-4 text-lg font-semibold text-brown-900">Past Reservations</h2>
+          <div className="space-y-3">
+            {past.map((r, i) => (
+              <motion.div
+                key={r.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: i * 0.08 }}
+              >
+                <ReservationCard reservation={r} />
+              </motion.div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

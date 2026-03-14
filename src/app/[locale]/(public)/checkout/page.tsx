@@ -2,16 +2,20 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { useSession } from "next-auth/react";
 import { useRouter } from "@/i18n/navigation";
-import { Stepper } from "@/components/ui";
+import { Stepper, Button } from "@/components/ui";
 import { useCart } from "@/lib/cart/cart-context";
 import { ShippingStep } from "./_components/shipping-step";
 import { PaymentStep, type PaymentData } from "./_components/payment-step";
 import { ReviewStep } from "./_components/review-step";
 import { OrderSummarySidebar } from "./_components/order-summary-sidebar";
+import { CheckoutLoginPrompt } from "./_components/checkout-login-prompt";
 import { toast } from "sonner";
-import { MapPin } from "lucide-react";
+import { MapPin, Store, Truck } from "lucide-react";
 import type { ShippingAddressInput } from "@/lib/validators/order";
+
+type OrderType = "pickup" | "delivery";
 
 interface Location {
   _id: string;
@@ -33,9 +37,11 @@ export default function CheckoutPage() {
   const tc = useTranslations("cart");
   const router = useRouter();
   const { state, clearCart, subtotal } = useCart();
+  const { data: session, status: authStatus } = useSession();
   const checkoutSteps = useCheckoutSteps();
 
   const [currentStep, setCurrentStep] = useState(1);
+  const [orderType, setOrderType] = useState<OrderType>("delivery");
   const [shippingData, setShippingData] = useState<ShippingAddressInput | null>(null);
   const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
   const [deliveryOption, setDeliveryOption] = useState<"standard" | "express">("standard");
@@ -43,6 +49,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState("");
   const [locations, setLocations] = useState<Location[]>([]);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   useEffect(() => {
     async function fetchLocations() {
@@ -81,13 +88,26 @@ export default function CheckoutPage() {
     setCurrentStep(2);
   }
 
+  function handlePickupNext() {
+    // For pickup, we don't need shipping address data
+    setShippingData(null);
+    setCurrentStep(2);
+  }
+
   function handlePaymentNext(data: PaymentData) {
     setPaymentData(data);
     setCurrentStep(3);
   }
 
   async function handlePlaceOrder() {
-    if (!shippingData || !paymentData || !selectedLocation) return;
+    if (!paymentData || !selectedLocation) return;
+    if (orderType === "delivery" && !shippingData) return;
+
+    // Check if user is logged in before placing order
+    if (authStatus !== "authenticated") {
+      setShowLoginPrompt(true);
+      return;
+    }
 
     setLoading(true);
     try {
@@ -98,8 +118,8 @@ export default function CheckoutPage() {
           modifiers: item.modifiers,
           extras: item.extras,
         })),
-        deliveryType: "Delivery" as const,
-        deliveryAddress: shippingData,
+        deliveryType: orderType === "pickup" ? "Pickup" : "Delivery",
+        deliveryAddress: orderType === "delivery" ? shippingData : undefined,
         location: selectedLocation,
         paymentMethod: paymentData.method,
         promoCode: state.promoCode || undefined,
@@ -127,11 +147,13 @@ export default function CheckoutPage() {
     }
   }
 
+  const isPickup = orderType === "pickup";
+
   return (
     <>
       {/* Header */}
       <section className="bg-brown-800 py-8 text-center">
-        <h1 className="text-3xl font-semibold text-white">{t("shipping")}</h1>
+        <h1 className="text-3xl font-semibold text-white">{t("title") || "Checkout"}</h1>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -165,22 +187,85 @@ export default function CheckoutPage() {
           </div>
         )}
 
+        {/* Order Type Selection */}
+        <div className="mb-8">
+          <label className="mb-3 block text-sm font-semibold text-brown-900">
+            {t("orderType") || "Order Type"}
+          </label>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setOrderType("pickup")}
+              className={`flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-all ${
+                orderType === "pickup"
+                  ? "border-terracotta-500 bg-terracotta-500/5 shadow-sm"
+                  : "border-cream-300 hover:border-cream-400"
+              }`}
+            >
+              <div
+                className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                  orderType === "pickup"
+                    ? "bg-terracotta-500 text-white"
+                    : "bg-cream-200 text-brown-600"
+                }`}
+              >
+                <Store className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-brown-900">{t("pickup") || "Pickup"}</p>
+                <p className="text-xs text-brown-500">
+                  {t("pickupDesc") || "Pick up your order at the selected location"}
+                </p>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setOrderType("delivery")}
+              className={`flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-all ${
+                orderType === "delivery"
+                  ? "border-terracotta-500 bg-terracotta-500/5 shadow-sm"
+                  : "border-cream-300 hover:border-cream-400"
+              }`}
+            >
+              <div
+                className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                  orderType === "delivery"
+                    ? "bg-terracotta-500 text-white"
+                    : "bg-cream-200 text-brown-600"
+                }`}
+              >
+                <Truck className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-brown-900">{t("delivery") || "Delivery"}</p>
+                <p className="text-xs text-brown-500">
+                  {t("deliveryDesc") || "We deliver to your address"}
+                </p>
+              </div>
+            </button>
+          </div>
+        </div>
+
         {/* Stepper */}
         <Stepper
           steps={checkoutSteps}
           currentStep={currentStep}
-          className="mb-10"
+          className="mb-10 w-full"
         />
 
         <div className="flex flex-col gap-8 lg:flex-row">
           {/* Main content */}
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             {currentStep === 1 && (
               <ShippingStep
+                orderType={orderType}
                 defaultValues={shippingData || undefined}
                 deliveryOption={deliveryOption}
                 onDeliveryOptionChange={setDeliveryOption}
                 onNext={handleShippingNext}
+                onPickupNext={handlePickupNext}
+                selectedLocationName={selectedLocation}
+                selectedLocationAddress={locations.find((l) => l.name === selectedLocation)?.address}
               />
             )}
             {currentStep === 2 && (
@@ -191,25 +276,36 @@ export default function CheckoutPage() {
                 onBack={() => setCurrentStep(1)}
               />
             )}
-            {currentStep === 3 && shippingData && paymentData && (
+            {currentStep === 3 && paymentData && (
               <ReviewStep
+                orderType={orderType}
                 shippingData={shippingData}
                 paymentData={paymentData}
-                deliveryOption={deliveryOption}
+                deliveryOption={isPickup ? "standard" : deliveryOption}
                 onEditShipping={() => setCurrentStep(1)}
                 onEditPayment={() => setCurrentStep(2)}
                 onPlaceOrder={handlePlaceOrder}
                 loading={loading}
+                selectedLocationName={selectedLocation}
+                selectedLocationAddress={locations.find((l) => l.name === selectedLocation)?.address}
               />
             )}
           </div>
 
           {/* Sidebar - Order Summary */}
-          <aside className="w-full shrink-0 lg:w-80">
-            <OrderSummarySidebar deliveryOption={deliveryOption} />
+          <aside className="w-full shrink-0 lg:w-80 lg:self-start lg:sticky lg:top-24">
+            <OrderSummarySidebar
+              deliveryOption={isPickup ? "standard" : deliveryOption}
+              isPickup={isPickup}
+            />
           </aside>
         </div>
       </section>
+
+      {/* Login prompt modal */}
+      {showLoginPrompt && (
+        <CheckoutLoginPrompt onClose={() => setShowLoginPrompt(false)} />
+      )}
     </>
   );
 }

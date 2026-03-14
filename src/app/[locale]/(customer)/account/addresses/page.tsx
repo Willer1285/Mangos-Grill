@@ -6,56 +6,31 @@ import { motion } from "framer-motion";
 import { Card, CardContent, Badge, Button } from "@/components/ui";
 import { MapPin, Edit2, Trash2, Plus } from "lucide-react";
 
-/* Mock data — will be fetched from API in production */
-const mockAddresses = [
-  {
-    id: 1,
-    type: "Home",
-    isDefault: true,
-    fullName: "John Doe",
-    street: "1234 Elm Street, Apt 5B",
-    city: "Houston",
-    state: "TX",
-    zip: "77006",
-    phone: "(713) 555-0192",
-  },
-  {
-    id: 2,
-    type: "Office",
-    isDefault: false,
-    fullName: "John Doe",
-    street: "500 Westheimer Rd, Suite 200",
-    city: "Houston",
-    state: "TX",
-    zip: "77027",
-    phone: "(713) 555-0284",
-  },
-  {
-    id: 3,
-    type: "Other",
-    isDefault: false,
-    fullName: "John Doe",
-    street: "8720 Katy Freeway",
-    city: "Houston",
-    state: "TX",
-    zip: "77024",
-    phone: "(713) 555-0371",
-  },
-];
+interface Address {
+  id: number;
+  type: string;
+  isDefault: boolean;
+  fullName: string;
+  street: string;
+  city: string;
+  state: string;
+  zip: string;
+  phone: string;
+}
 
 export default function AddressesPage() {
   const t = useTranslations("customer");
   const ct = useTranslations("common");
 
-  const [addresses, setAddresses] = useState(mockAddresses);
-  const [editingAddress, setEditingAddress] = useState<typeof mockAddresses[number] | null>(null);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [showForm, setShowForm] = useState(false);
 
   function handleDelete(id: number) {
     setAddresses((prev) => prev.filter((a) => a.id !== id));
   }
 
-  function handleEdit(address: typeof mockAddresses[number]) {
+  function handleEdit(address: Address) {
     setEditingAddress(address);
     setShowForm(true);
   }

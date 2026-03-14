@@ -9,16 +9,17 @@ import { TX_TAX_RATE } from "@/lib/constants";
 
 interface OrderSummarySidebarProps {
   deliveryOption: "standard" | "express";
+  isPickup?: boolean;
 }
 
 const SHIPPING_COSTS = { standard: 0, express: 12.99 } as const;
 
-export function OrderSummarySidebar({ deliveryOption }: OrderSummarySidebarProps) {
+export function OrderSummarySidebar({ deliveryOption, isPickup = false }: OrderSummarySidebarProps) {
   const t = useTranslations("checkout");
   const { currency } = useBrand();
   const { state, subtotal } = useCart();
 
-  const shippingCost = SHIPPING_COSTS[deliveryOption];
+  const shippingCost = isPickup ? 0 : SHIPPING_COSTS[deliveryOption];
   const tax = subtotal * TX_TAX_RATE;
   const discount = state.promoDiscount;
   const total = subtotal + tax + shippingCost - discount;

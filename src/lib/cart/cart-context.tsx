@@ -55,12 +55,42 @@ function itemKey(item: CartItem): string {
 }
 
 const STORAGE_KEY = "mangos_cart";
+const CART_EXPIRY_MS = 2 * 60 * 60 * 1000; // 2 hours
+
+interface PersistedCart {
+  state: CartState;
+  updatedAt: number;
+}
 
 function persist(state: CartState) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    const data: PersistedCart = { state, updatedAt: Date.now() };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch {
     /* SSR or quota exceeded */
+  }
+}
+
+function loadCart(): CartState | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+
+    // Support new format with expiry
+    if (parsed.updatedAt && parsed.state) {
+      const elapsed = Date.now() - parsed.updatedAt;
+      if (elapsed > CART_EXPIRY_MS) {
+        localStorage.removeItem(STORAGE_KEY);
+        return null; // Cart expired
+      }
+      return parsed.state as CartState;
+    }
+
+    // Legacy format (plain CartState)
+    return parsed as CartState;
+  } catch {
+    return null;
   }
 }
 
@@ -162,16 +192,11 @@ const CartContext = createContext<CartContextValue | null>(null);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, initialState);
 
-  /* Hydrate from localStorage on mount */
+  /* Hydrate from localStorage on mount (auto-clears if older than 2 hours) */
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as CartState;
-        dispatch({ type: "HYDRATE", payload: parsed });
-      }
-    } catch {
-      /* ignore */
+    const saved = loadCart();
+    if (saved && saved.items.length > 0) {
+      dispatch({ type: "HYDRATE", payload: saved });
     }
   }, []);
 
