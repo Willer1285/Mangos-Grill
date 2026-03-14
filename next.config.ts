@@ -11,6 +11,9 @@ const withPWA = withPWAInit({
 });
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: __dirname,
+  },
   images: {
     formats: ["image/webp"],
     remotePatterns: [
