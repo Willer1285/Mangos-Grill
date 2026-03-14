@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { Toaster } from "sonner";
 import { CartProvider } from "@/lib/cart/cart-context";
+import { FavoritesProvider } from "@/lib/favorites/favorites-context";
 import { AuthProvider } from "@/lib/auth/auth-provider";
 import { BrandProvider } from "@/lib/brand/brand-context";
 import "@/app/globals.css";
@@ -71,7 +72,9 @@ export default async function LocaleLayout({
           <AuthProvider>
             <BrandProvider>
               <CartProvider>
-                {children}
+                <FavoritesProvider>
+                  {children}
+                </FavoritesProvider>
               </CartProvider>
             </BrandProvider>
           </AuthProvider>

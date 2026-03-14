@@ -351,7 +351,13 @@
     "browseMenu": "Browse Menu",
     "bookTable": "Book a Table",
     "orderHistory": "Order History",
-    "myProfile": "My Profile"
+    "myProfile": "My Profile",
+    "noFavorites": "No favorites yet",
+    "noFavoritesDesc": "Browse our menu and save your favorite dishes.",
+    "addToFavorites": "Add to favorites",
+    "removeFromFavorites": "Remove from favorites",
+    "addedToFavorites": "Added to favorites",
+    "removedFromFavorites": "Removed from favorites"
   },
   "footer": {
     "description": "Bringing authentic Venezuelan cuisine to the heart of Texas since 2018. Every dish tells a story of home.",

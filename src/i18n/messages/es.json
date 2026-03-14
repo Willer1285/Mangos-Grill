@@ -350,7 +350,13 @@
     "browseMenu": "Ver Menu",
     "bookTable": "Reservar Mesa",
     "orderHistory": "Historial de Pedidos",
-    "myProfile": "Mi Perfil"
+    "myProfile": "Mi Perfil",
+    "noFavorites": "Aun no tienes favoritos",
+    "noFavoritesDesc": "Explora nuestro menu y guarda tus platos favoritos.",
+    "addToFavorites": "Agregar a favoritos",
+    "removeFromFavorites": "Quitar de favoritos",
+    "addedToFavorites": "Agregado a favoritos",
+    "removedFromFavorites": "Eliminado de favoritos"
   },
   "footer": {
     "description": "Trayendo cocina venezolana autentica al corazon de Texas desde 2018. Cada plato cuenta una historia de hogar.",

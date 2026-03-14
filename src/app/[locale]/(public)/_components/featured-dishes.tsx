@@ -6,9 +6,11 @@ import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { Card, Badge } from "@/components/ui";
 import type { BadgeVariant } from "@/components/ui/badge";
-import { Plus, ArrowRight, Star } from "lucide-react";
+import { Plus, ArrowRight, Star, Heart } from "lucide-react";
 import { useCart } from "@/lib/cart/cart-context";
+import { useFavorites } from "@/lib/favorites/favorites-context";
 import { useBrand, formatPrice } from "@/lib/brand/brand-context";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 interface FeaturedProduct {
@@ -39,6 +41,8 @@ type RatingsMap = Record<string, { avgRating: number; count: number }>;
 
 export function FeaturedDishes({ dishes }: FeaturedDishesProps) {
   const { addItem } = useCart();
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const tf = useTranslations("customer");
   const { currency } = useBrand();
   const [ratings, setRatings] = useState<RatingsMap>({});
 
@@ -120,6 +124,17 @@ export function FeaturedDishes({ dishes }: FeaturedDishesProps) {
                     >
                       <ArrowRight className="h-4 w-4" />
                     </Link>
+                    <button
+                      onClick={async () => {
+                        const action = await toggleFavorite(dish._id);
+                        if (action === "added") toast.success(tf("addedToFavorites"));
+                        else if (action === "removed") toast.success(tf("removedFromFavorites"));
+                      }}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-cream-200 text-brown-600 transition-colors hover:bg-cream-300 hover:text-brown-900"
+                      aria-label={isFavorite(dish._id) ? tf("removeFromFavorites") : tf("addToFavorites")}
+                    >
+                      <Heart className={`h-4 w-4 ${isFavorite(dish._id) ? "fill-terracotta-500 text-terracotta-500" : ""}`} />
+                    </button>
                     <button
                       onClick={() => {
                         addItem({
